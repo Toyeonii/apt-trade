@@ -38,8 +38,8 @@ def fetch_one_month(api_key, lawd_cd, deal_ymd):
     # 오류 코드 확인
     result_code = root.findtext('.//resultCode') or ''
     result_msg  = root.findtext('.//resultMsg')  or ''
-    if result_code not in ('', '00', '0000'):
-        raise ValueError(f'API 오류 [{result_code}]: {result_msg}')
+    if result_code not in ('', '00', '0000', '000'):
+    raise ValueError(f'API 오류 [{result_code}]: {result_msg}')
 
     items = []
     for item in root.findall('.//item'):
