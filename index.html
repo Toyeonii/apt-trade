@@ -7,51 +7,70 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,'Pretendard','Apple SD Gothic Neo',sans-serif;background:#f5f6f8;color:#1a1a1a;min-height:100vh}
-.app-header{background:#0C447C;color:#fff;padding:1rem 1.25rem 0.875rem;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.18)}
-.app-header h1{font-size:17px;font-weight:600;letter-spacing:-0.3px;display:flex;align-items:center;gap:8px}
-.dot{width:8px;height:8px;background:#60D4A4;border-radius:50%;display:inline-block;flex-shrink:0;animation:pulse 2s infinite}
+.app-header{background:#0C447C;color:#fff;padding:1rem 1.25rem 0.75rem;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.18)}
+.app-header h1{font-size:17px;font-weight:600;display:flex;align-items:center;gap:8px}
+.dot{width:8px;height:8px;background:#60D4A4;border-radius:50%;flex-shrink:0;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
 .header-sub{font-size:11px;color:rgba(255,255,255,0.6);margin-top:2px}
+
+/* 탭 */
+.tab-bar{display:flex;background:#0a3a6e;border-bottom:1px solid rgba(255,255,255,0.15)}
+.tab-btn{flex:1;height:40px;border:none;background:transparent;color:rgba(255,255,255,0.6);font-size:14px;font-weight:500;cursor:pointer;transition:all 0.15s;letter-spacing:-0.2px}
+.tab-btn.active{color:#fff;background:rgba(255,255,255,0.12);border-bottom:2px solid #60D4A4}
+
 .search-panel{background:#fff;border-bottom:0.5px solid #e0e0e0;padding:1rem}
 .search-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
-.search-grid select{height:38px;border:0.5px solid #ccc;border-radius:8px;padding:0 8px;font-size:14px;background:#fff;width:100%;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
-.search-grid select:focus{outline:none;border-color:#185FA5}
-.dong-select{margin-bottom:8px}
-.dong-select select{width:100%;height:38px;border:0.5px solid #ccc;border-radius:8px;padding:0 8px;font-size:14px;background:#fff;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
-.dong-select select:focus{outline:none;border-color:#185FA5}
-.dong-select select:disabled{background:#f5f5f5;color:#aaa}
+.search-grid select, .full-select{height:38px;border:0.5px solid #ccc;border-radius:8px;padding:0 8px;font-size:14px;background:#fff;width:100%;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
+.search-grid select:focus, .full-select:focus{outline:none;border-color:#185FA5}
+.full-select:disabled{background:#f5f5f5;color:#aaa}
+.mb8{margin-bottom:8px}
 .month-label{font-size:11px;color:#5F5E5A;margin-bottom:4px}
 .month-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
 .month-row input[type=month]{height:38px;border:0.5px solid #ccc;border-radius:8px;padding:0 8px;font-size:14px;background:#fff;width:100%}
 .month-row input:focus{outline:none;border-color:#185FA5}
-.btn-search{width:100%;height:44px;background:#0C447C;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background 0.15s}
-.btn-search:hover{background:#042C53}
+.btn-search{width:100%;height:44px;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background 0.15s}
+.btn-search.trade{background:#0C447C}.btn-search.trade:hover{background:#042C53}
+.btn-search.rent{background:#0F6E56}.btn-search.rent:hover{background:#085041}
 .btn-search:active{transform:scale(0.98)}
 .btn-search:disabled{background:#B4B2A9;cursor:not-allowed}
 .search-tip{font-size:11px;color:#999;margin-top:7px;text-align:center;line-height:1.5}
+
 .filter-bar{background:#fff;padding:8px 12px;border-bottom:0.5px solid #e8e8e8;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .filter-bar input{flex:1;min-width:120px;height:32px;border:0.5px solid #ccc;border-radius:8px;padding:0 10px;font-size:13px}
 .filter-bar input:focus{outline:none;border-color:#185FA5}
 .sort-btn{height:30px;padding:0 10px;font-size:12px;border:0.5px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;white-space:nowrap;color:#555}
-.sort-btn.active{background:#E6F1FB;border-color:#185FA5;color:#0C447C;font-weight:600}
-.summary-strip{display:grid;grid-template-columns:repeat(4,1fr);background:#E6F1FB;border-bottom:0.5px solid #c8d8f0}
-.sum-item{padding:8px 4px;text-align:center;border-right:0.5px solid #c8d8f0}
+.sort-btn.active-trade{background:#E6F1FB;border-color:#185FA5;color:#0C447C;font-weight:600}
+.sort-btn.active-rent{background:#E1F5EE;border-color:#0F6E56;color:#0F6E56;font-weight:600}
+
+.summary-strip{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:0.5px solid #c8d8f0}
+.summary-strip.trade{background:#E6F1FB;border-color:#c8d8f0}
+.summary-strip.rent{background:#E1F5EE;border-color:#9FE1CB}
+.sum-item{padding:8px 4px;text-align:center;border-right:0.5px solid rgba(0,0,0,0.08)}
 .sum-item:last-child{border-right:none}
-.sum-label{font-size:10px;color:#185FA5;margin-bottom:2px;font-weight:500}
-.sum-value{font-size:12px;font-weight:600;color:#042C53}
+.sum-label{font-size:10px;margin-bottom:2px;font-weight:500}
+.trade .sum-label{color:#185FA5}.rent .sum-label{color:#0F6E56}
+.sum-value{font-size:12px;font-weight:600}
+.trade .sum-value{color:#042C53}.rent .sum-value{color:#085041}
+
 .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;background:#fff}
 table{width:100%;border-collapse:collapse;font-size:13px;min-width:560px}
 thead th{background:#2C2C2A;color:#fff;padding:9px 10px;text-align:left;font-weight:500;font-size:11.5px;white-space:nowrap}
 thead th.r{text-align:right}
 tbody tr{border-bottom:0.5px solid #f0f0f0}
-tbody tr:hover{background:#EDF5FF}
+tbody tr:hover{background:#f0f7ff}
 tbody tr:nth-child(even){background:#FAFAFA}
-tbody tr:nth-child(even):hover{background:#EDF5FF}
+tbody tr:nth-child(even):hover{background:#f0f7ff}
 td{padding:8px 10px;white-space:nowrap;font-size:13px}
 td.price{font-weight:600;color:#0C447C;text-align:right}
 td.hi{color:#A32D2D;font-weight:700;text-align:right}
 td.lo{color:#0F6E56;font-weight:700;text-align:right}
+td.deposit{font-weight:600;color:#0F6E56;text-align:right}
 .badge{display:inline-block;background:#F1EFE8;border:0.5px solid #D3D1C7;border-radius:4px;padding:1px 6px;font-size:11px;color:#5F5E5A}
+.badge-type{display:inline-block;border-radius:4px;padding:1px 6px;font-size:11px}
+.badge-jeonse{background:#E1F5EE;border:0.5px solid #9FE1CB;color:#085041}
+.badge-monthly{background:#FAEEDA;border:0.5px solid #FAC775;color:#633806}
+.badge-renew{background:#EEEDFE;border:0.5px solid #AFA9EC;color:#26215C;font-size:10px;margin-left:3px}
+
 .state-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3.5rem 2rem;text-align:center;color:#5F5E5A}
 .state-icon{font-size:44px;margin-bottom:14px}
 .state-title{font-size:15px;font-weight:600;color:#333;margin-bottom:8px}
@@ -59,67 +78,76 @@ td.lo{color:#0F6E56;font-weight:700;text-align:right}
 .spinner{width:36px;height:36px;border:3px solid #dde5f4;border-top-color:#185FA5;border-radius:50%;animation:spin 0.7s linear infinite;margin-bottom:14px}
 @keyframes spin{to{transform:rotate(360deg)}}
 .prog-wrap{width:220px;height:5px;background:#dde5f4;border-radius:3px;overflow:hidden;margin-bottom:10px}
-.prog-bar{height:100%;background:#185FA5;border-radius:3px;transition:width 0.4s ease}
+.prog-bar{height:100%;background:#185FA5;border-radius:3px;transition:width 0.4s}
 .prog-text{font-size:13px;font-weight:500;color:#333;margin-bottom:4px}
 .prog-sub{font-size:12px;color:#888}
+
 .pagination{display:flex;justify-content:center;align-items:center;gap:5px;padding:14px 12px;background:#fff;border-top:0.5px solid #eee;flex-wrap:wrap}
 .pg-btn{min-width:34px;height:34px;padding:0 7px;border:0.5px solid #ccc;border-radius:8px;background:#fff;cursor:pointer;font-size:13px;color:#444}
 .pg-btn:hover:not(:disabled){background:#f0f0f0}
 .pg-btn.active{background:#0C447C;color:#fff;border-color:#0C447C;font-weight:600}
 .pg-btn:disabled{opacity:0.35;cursor:not-allowed}
 .pg-info{font-size:12px;color:#888;margin-left:4px}
+
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:11px 20px;border-radius:12px;font-size:13px;z-index:9999;opacity:0;pointer-events:none;transition:opacity 0.25s;white-space:nowrap}
 .toast.show{opacity:1}
 .app-footer{text-align:center;font-size:11px;color:#888;padding:16px;background:#2C2C2A}
 @media(max-width:480px){
   .summary-strip{grid-template-columns:repeat(2,1fr)}
   .sum-item:nth-child(2){border-right:none}
-  .sum-item:nth-child(3){border-right:0.5px solid #c8d8f0;border-top:0.5px solid #c8d8f0}
-  .sum-item:nth-child(4){border-top:0.5px solid #c8d8f0}
-  table{font-size:12px}
-  td,thead th{padding:7px 8px}
+  .sum-item:nth-child(3){border-right:0.5px solid rgba(0,0,0,0.08);border-top:0.5px solid rgba(0,0,0,0.08)}
+  .sum-item:nth-child(4){border-top:0.5px solid rgba(0,0,0,0.08)}
+  table{font-size:12px}td,thead th{padding:7px 8px}
 }
 </style>
 </head>
 <body>
+
 <header class="app-header">
   <h1><span class="dot"></span>아파트 실거래가 조회</h1>
   <div class="header-sub">국토교통부 실거래가 공개시스템</div>
 </header>
 
+<div class="tab-bar">
+  <button class="tab-btn active" id="tab-trade" onclick="switchMode('trade')">🏠 매매</button>
+  <button class="tab-btn" id="tab-rent"  onclick="switchMode('rent')">📋 전월세</button>
+</div>
+
 <section class="search-panel">
   <div class="search-grid">
     <select id="sido" onchange="loadSgg()"><option value="">시/도 선택</option></select>
-    <select id="sigungu" onchange="loadDong()"><option value="">시/군/구 선택</option></select>
+    <select id="sigungu" onchange="onSggChange()"><option value="">시/군/구 선택</option></select>
   </div>
-  <div class="dong-select">
-    <select id="dong" disabled><option value="">동 선택 (전체)</option></select>
+  <div class="mb8">
+    <select id="dong" class="full-select" disabled onchange="applyFilter()">
+      <option value="">동 선택 (전체)</option>
+    </select>
   </div>
   <div class="month-label">조회 기간</div>
   <div class="month-row">
     <input type="month" id="startM"/>
     <input type="month" id="endM"/>
   </div>
-  <button class="btn-search" id="btnSearch" onclick="doSearch()">
+  <button class="btn-search trade" id="btnSearch" onclick="doSearch()">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
     조회하기
   </button>
-  <div class="search-tip" id="tip">시/군/구 → 동 선택 후 조회 · 최대 24개월</div>
+  <div class="search-tip" id="tip">시/군/구 → 동(선택) → 기간 선택 후 조회</div>
 </section>
 
 <div id="filterBar" class="filter-bar" style="display:none">
   <input type="text" id="aptFilter" placeholder="아파트명 검색..." oninput="applyFilter()"/>
-  <button class="sort-btn active" id="sort-date"       onclick="setSort('date')">최신순</button>
-  <button class="sort-btn"        id="sort-price-desc" onclick="setSort('price-desc')">고가순</button>
-  <button class="sort-btn"        id="sort-price-asc"  onclick="setSort('price-asc')">저가순</button>
-  <button class="sort-btn"        id="sort-area"       onclick="setSort('area')">면적순</button>
+  <button class="sort-btn" id="sort-date"       onclick="setSort('date')">최신순</button>
+  <button class="sort-btn" id="sort-price-desc" onclick="setSort('price-desc')">고가순</button>
+  <button class="sort-btn" id="sort-price-asc"  onclick="setSort('price-asc')">저가순</button>
+  <button class="sort-btn" id="sort-area"       onclick="setSort('area')">면적순</button>
 </div>
 
-<div id="summaryStrip" class="summary-strip" style="display:none">
+<div id="summaryStrip" class="summary-strip trade" style="display:none">
   <div class="sum-item"><div class="sum-label">총 거래</div><div class="sum-value" id="s-total">-</div></div>
-  <div class="sum-item"><div class="sum-label">평균가</div><div class="sum-value" id="s-avg">-</div></div>
-  <div class="sum-item"><div class="sum-label">최고가</div><div class="sum-value" id="s-max">-</div></div>
-  <div class="sum-item"><div class="sum-label">최저가</div><div class="sum-value" id="s-min">-</div></div>
+  <div class="sum-item"><div class="sum-label" id="s-label-avg">평균가</div><div class="sum-value" id="s-avg">-</div></div>
+  <div class="sum-item"><div class="sum-label" id="s-label-max">최고가</div><div class="sum-value" id="s-max">-</div></div>
+  <div class="sum-item"><div class="sum-label" id="s-label-min">최저가</div><div class="sum-value" id="s-min">-</div></div>
 </div>
 
 <main id="main">
@@ -131,7 +159,7 @@ td.lo{color:#0F6E56;font-weight:700;text-align:right}
 </main>
 
 <div class="toast" id="toast"></div>
-<footer class="app-footer">데이터 출처: 국토교통부 아파트 매매 실거래가 상세자료 · 공공데이터포털 Open API</footer>
+<footer class="app-footer">데이터 출처: 국토교통부 아파트 실거래가 공개시스템 · 공공데이터포털 Open API</footer>
 
 <script>
 const RD={
@@ -154,63 +182,82 @@ const RD={
   "제주특별자치도":{"50110":"제주시","50130":"서귀포시"}
 };
 
-let allData=[],filteredData=[],currentSort='date',currentPage=1;
+let allData=[],filteredData=[],currentSort='date',currentPage=1,currentMode='trade';
 const PAGE_SIZE=50;
 
 function init(){
   const s=document.getElementById('sido');
-  Object.keys(RD).forEach(n=>{
-    const o=document.createElement('option');o.value=n;o.textContent=n;s.appendChild(o);
-  });
+  Object.keys(RD).forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;s.appendChild(o);});
   const now=new Date();
   const ym=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
   document.getElementById('startM').value=ym(new Date(now.getFullYear(),now.getMonth()-2,1));
   document.getElementById('endM').value=ym(now);
+  setSort('date');
+}
+
+function switchMode(mode){
+  currentMode=mode;
+  allData=[];filteredData=[];
+  document.getElementById('filterBar').style.display='none';
+  document.getElementById('summaryStrip').style.display='none';
+  document.getElementById('main').innerHTML=`<div class="state-screen"><div class="state-icon">${mode==='trade'?'🏠':'📋'}</div><div class="state-title">지역과 기간을 선택하세요</div><div class="state-sub">조회하기를 눌러주세요</div></div>`;
+
+  document.getElementById('tab-trade').classList.toggle('active',mode==='trade');
+  document.getElementById('tab-rent').classList.toggle('active',mode==='rent');
+
+  const btn=document.getElementById('btnSearch');
+  btn.className=`btn-search ${mode}`;
+
+  const strip=document.getElementById('summaryStrip');
+  strip.className=`summary-strip ${mode}`;
+
+  if(mode==='trade'){
+    document.getElementById('s-label-avg').textContent='평균가';
+    document.getElementById('s-label-max').textContent='최고가';
+    document.getElementById('s-label-min').textContent='최저가';
+  } else {
+    document.getElementById('s-label-avg').textContent='평균보증금';
+    document.getElementById('s-label-max').textContent='최고보증금';
+    document.getElementById('s-label-min').textContent='최저보증금';
+  }
 }
 
 function loadSgg(){
   const sido=document.getElementById('sido').value;
   const sg=document.getElementById('sigungu');
   sg.innerHTML='<option value="">시/군/구 선택</option>';
-  const dong=document.getElementById('dong');
-  dong.innerHTML='<option value="">동 선택 (전체)</option>';
-  dong.disabled=true;
+  resetDong();
   if(!sido||!RD[sido])return;
   Object.entries(RD[sido]).forEach(([code,name])=>{
     const o=document.createElement('option');o.value=code;o.textContent=name;sg.appendChild(o);
   });
 }
 
-function loadDong(){
+function onSggChange(){ resetDong(); }
+
+function resetDong(){
   const dong=document.getElementById('dong');
   dong.innerHTML='<option value="">동 선택 (전체)</option>';
   dong.disabled=true;
+}
 
-  // 이미 조회된 데이터가 있으면 거기서 동 목록 추출
-  if(allData.length>0){
-    const dongs=[...new Set(allData.map(d=>d.umdNm).filter(Boolean))].sort();
-    dongs.forEach(name=>{
-      const o=document.createElement('option');o.value=name;o.textContent=name;dong.appendChild(o);
-    });
-    dong.disabled=false;
-  }
+function buildDongList(){
+  const dong=document.getElementById('dong');
+  const prev=dong.value;
+  dong.innerHTML='<option value="">동 선택 (전체)</option>';
+  const dongs=[...new Set(allData.map(d=>d.umdNm).filter(Boolean))].sort();
+  dongs.forEach(name=>{const o=document.createElement('option');o.value=name;o.textContent=name;dong.appendChild(o);});
+  dong.disabled=false;
+  if(prev)dong.value=prev;
 }
 
 function getMonths(s,e){
-  const ms=[];
-  let cur=new Date(s+'-01');
-  const end=new Date(e+'-01');
-  while(cur<=end){
-    ms.push(`${cur.getFullYear()}${String(cur.getMonth()+1).padStart(2,'0')}`);
-    cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);
-  }
+  const ms=[];let cur=new Date(s+'-01');const end=new Date(e+'-01');
+  while(cur<=end){ms.push(`${cur.getFullYear()}${String(cur.getMonth()+1).padStart(2,'0')}`);cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);}
   return ms;
 }
 
-function parsePrice(s){
-  if(!s)return 0;
-  return parseInt(String(s).replace(/,/g,'').trim())||0;
-}
+function parsePrice(s){if(!s)return 0;return parseInt(String(s).replace(/,/g,'').trim())||0;}
 
 function fmtPrice(v){
   if(!v)return '-';
@@ -218,14 +265,10 @@ function fmtPrice(v){
   return `${v.toLocaleString()}만`;
 }
 
-function fmtArea(a){
-  const n=parseFloat(a);
-  if(!n)return '-';
-  return `${n.toFixed(1)}㎡ (${(n/3.3058).toFixed(1)}평)`;
-}
+function fmtArea(a){const n=parseFloat(a);if(!n)return '-';return `${n.toFixed(1)}㎡(${(n/3.3058).toFixed(1)}평)`;}
 
-async function fetchAllMonths(lawdCd,months){
-  const params=new URLSearchParams({LAWD_CD:lawdCd,months:months.join(',')});
+async function fetchAll(lawdCd,months,mode){
+  const params=new URLSearchParams({LAWD_CD:lawdCd,months:months.join(','),mode});
   const resp=await fetch(`/api/trade/bulk?${params}`,{signal:AbortSignal.timeout(60000)});
   const json=await resp.json();
   if(!resp.ok)throw new Error(json.error||`HTTP ${resp.status}`);
@@ -250,29 +293,21 @@ async function doSearch(){
   allData=[];filteredData=[];
   document.getElementById('filterBar').style.display='none';
   document.getElementById('summaryStrip').style.display='none';
-  showLoading(months.length);
+  showLoading();
 
   try{
-    const result=await fetchAllMonths(lawdCd,months);
+    const result=await fetchAll(lawdCd,months,currentMode);
     allData=result.items||[];
     const errors=result.errors||[];
 
     if(allData.length===0){
       errors.length>0?showError('조회 오류',errors.slice(0,3).join('\n')):showEmpty();
     } else {
-      // 동 목록 자동 구성
-      const dongEl=document.getElementById('dong');
-      dongEl.innerHTML='<option value="">동 선택 (전체)</option>';
-      const dongs=[...new Set(allData.map(d=>d.umdNm).filter(Boolean))].sort();
-      dongs.forEach(name=>{
-        const o=document.createElement('option');o.value=name;o.textContent=name;dongEl.appendChild(o);
-      });
-      dongEl.disabled=false;
-
+      buildDongList();
       const sggEl=document.getElementById('sigungu');
       const sggName=sggEl.options[sggEl.selectedIndex]?.text||'';
-      document.getElementById('tip').textContent=
-        `${sido} ${sggName} · ${startM}~${endM} · ${allData.length.toLocaleString()}건 완료`;
+      const modeLabel=currentMode==='trade'?'매매':'전월세';
+      document.getElementById('tip').textContent=`${sido} ${sggName} · ${modeLabel} · ${startM}~${endM} · ${allData.length.toLocaleString()}건`;
       applyFilter();
       document.getElementById('filterBar').style.display='flex';
       document.getElementById('summaryStrip').style.display='grid';
@@ -289,7 +324,7 @@ function applyFilter(){
   const dong=document.getElementById('dong')?.value||'';
   filteredData=allData.filter(d=>{
     const nameOk=!q||(d.aptNm||'').toLowerCase().includes(q);
-    const dongOk=!dong||(d.umdNm||'')=== dong;
+    const dongOk=!dong||(d.umdNm||'')===dong;
     return nameOk&&dongOk;
   });
   sortData();
@@ -297,13 +332,14 @@ function applyFilter(){
 
 function setSort(type){
   currentSort=type;
-  document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('sort-'+type)?.classList.add('active');
-  sortData();
+  const ac=currentMode==='trade'?'active-trade':'active-rent';
+  document.querySelectorAll('.sort-btn').forEach(b=>{b.classList.remove('active-trade','active-rent');});
+  document.getElementById('sort-'+type)?.classList.add(ac);
+  if(filteredData.length>0)sortData();
 }
 
 function sortData(){
-  const gP=d=>parsePrice(d.dealAmount);
+  const gP=d=>currentMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
   const gD=d=>`${d.dealYear||''}${String(d.dealMonth||'').padStart(2,'0')}${String(d.dealDay||'').padStart(2,'0')}`;
   const gA=d=>parseFloat(d.excluUseAr||0);
   if(currentSort==='date')            filteredData.sort((a,b)=>gD(b).localeCompare(gD(a)));
@@ -315,89 +351,125 @@ function sortData(){
 }
 
 function renderTable(){
+  if(currentMode==='trade') renderTradeTable();
+  else renderRentTable();
+}
+
+function renderTradeTable(){
   const prices=filteredData.map(d=>parsePrice(d.dealAmount)).filter(p=>p>0);
   const maxP=prices.length?Math.max(...prices):0;
   const minP=prices.length?Math.min(...prices):0;
   const avgP=prices.length?Math.round(prices.reduce((a,b)=>a+b,0)/prices.length):0;
-
   document.getElementById('s-total').textContent=filteredData.length.toLocaleString()+'건';
   document.getElementById('s-avg').textContent=fmtPrice(avgP);
   document.getElementById('s-max').textContent=fmtPrice(maxP);
   document.getElementById('s-min').textContent=fmtPrice(minP);
 
-  const total=filteredData.length;
-  const tp=Math.ceil(total/PAGE_SIZE)||1;
+  const total=filteredData.length,tp=Math.ceil(total/PAGE_SIZE)||1;
   if(currentPage>tp)currentPage=1;
-  const st=(currentPage-1)*PAGE_SIZE;
-  const pg=filteredData.slice(st,st+PAGE_SIZE);
+  const pg=filteredData.slice((currentPage-1)*PAGE_SIZE,currentPage*PAGE_SIZE);
 
-  let html=`<div class="table-wrap"><table>
-    <thead><tr>
-      <th>아파트명</th><th>전용면적</th><th>층</th>
-      <th class="r">거래금액</th><th>계약일</th><th>건축년도</th><th>법정동</th>
-    </tr></thead><tbody>`;
+  let html=`<div class="table-wrap"><table><thead><tr>
+    <th>아파트명</th><th>전용면적</th><th>층</th>
+    <th class="r">거래금액</th><th>계약일</th><th>건축</th><th>법정동</th>
+  </tr></thead><tbody>`;
 
   pg.forEach(d=>{
     const p=parsePrice(d.dealAmount);
-    const isH=p===maxP&&p>0&&prices.length>1;
-    const isL=p===minP&&p>0&&prices.length>1;
-    const pc=isH?'hi':isL?'lo':'price';
-    const dt=d.dealYear&&d.dealMonth
-      ?`${d.dealYear}.${String(d.dealMonth).padStart(2,'0')}.${String(d.dealDay||'').padStart(2,'0')}`
-      :'-';
+    const isH=p===maxP&&p>0&&prices.length>1,isL=p===minP&&p>0&&prices.length>1;
+    const dt=d.dealYear&&d.dealMonth?`${d.dealYear}.${String(d.dealMonth).padStart(2,'0')}.${String(d.dealDay||'').padStart(2,'0')}`:'-';
     html+=`<tr>
       <td style="font-weight:500">${d.aptNm||'-'}</td>
       <td style="color:#555;font-size:12px">${fmtArea(d.excluUseAr)}</td>
       <td><span class="badge">${d.floor||'-'}층</span></td>
-      <td class="${pc}">${fmtPrice(p)}</td>
+      <td class="${isH?'hi':isL?'lo':'price'}">${fmtPrice(p)}</td>
       <td style="color:#666;font-size:12px">${dt}</td>
       <td style="color:#888;font-size:12px">${d.buildYear||'-'}</td>
       <td style="color:#888;font-size:12px">${d.umdNm||'-'}</td>
     </tr>`;
   });
   html+='</tbody></table></div>';
-
-  if(tp>1){
-    html+='<div class="pagination">';
-    html+=`<button class="pg-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
-    let ps=Math.max(1,currentPage-3),pe=Math.min(tp,currentPage+3);
-    if(ps>1)html+=`<button class="pg-btn" onclick="goPage(1)">1</button>${ps>2?'<span class="pg-info">…</span>':''}`;
-    for(let p=ps;p<=pe;p++)
-      html+=`<button class="pg-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
-    if(pe<tp)html+=`${pe<tp-1?'<span class="pg-info">…</span>':''}<button class="pg-btn" onclick="goPage(${tp})">${tp}</button>`;
-    html+=`<span class="pg-info">${currentPage}/${tp}페이지 · 총 ${total.toLocaleString()}건</span></div>`;
-  }
-
+  html+=buildPagination(tp,filteredData.length);
   document.getElementById('main').innerHTML=html;
+}
+
+function renderRentTable(){
+  const deposits=filteredData.map(d=>parsePrice(d.deposit)).filter(p=>p>0);
+  const maxD=deposits.length?Math.max(...deposits):0;
+  const minD=deposits.length?Math.min(...deposits):0;
+  const avgD=deposits.length?Math.round(deposits.reduce((a,b)=>a+b,0)/deposits.length):0;
+  const jeonseCount=filteredData.filter(d=>!parsePrice(d.monthlyRent)).length;
+
+  document.getElementById('s-total').textContent=filteredData.length.toLocaleString()+'건';
+  document.getElementById('s-avg').textContent=fmtPrice(avgD);
+  document.getElementById('s-max').textContent=fmtPrice(maxD);
+  document.getElementById('s-min').textContent=fmtPrice(minD);
+
+  const total=filteredData.length,tp=Math.ceil(total/PAGE_SIZE)||1;
+  if(currentPage>tp)currentPage=1;
+  const pg=filteredData.slice((currentPage-1)*PAGE_SIZE,currentPage*PAGE_SIZE);
+
+  let html=`<div class="table-wrap"><table><thead><tr>
+    <th>아파트명</th><th>전용면적</th><th>층</th>
+    <th class="r">보증금</th><th class="r">월세</th>
+    <th>계약일</th><th>계약기간</th><th>법정동</th>
+  </tr></thead><tbody>`;
+
+  pg.forEach(d=>{
+    const dep=parsePrice(d.deposit);
+    const mon=parsePrice(d.monthlyRent);
+    const isJeonse=!mon;
+    const isRenew=(d.contractType||'').includes('갱신');
+    const dt=d.dealYear&&d.dealMonth?`${d.dealYear}.${String(d.dealMonth).padStart(2,'0')}.${String(d.dealDay||'').padStart(2,'0')}`:'-';
+    html+=`<tr>
+      <td style="font-weight:500">${d.aptNm||'-'}${isRenew?'<span class="badge-renew">갱신</span>':''}</td>
+      <td style="color:#555;font-size:12px">${fmtArea(d.excluUseAr)}</td>
+      <td><span class="badge">${d.floor||'-'}층</span></td>
+      <td class="deposit">${fmtPrice(dep)}</td>
+      <td style="text-align:right;font-size:12px">${isJeonse?'<span class="badge-jeonse">전세</span>':`<span class="badge-monthly">${fmtPrice(mon)}</span>`}</td>
+      <td style="color:#666;font-size:12px">${dt}</td>
+      <td style="color:#888;font-size:12px">${d.contractTerm||'-'}</td>
+      <td style="color:#888;font-size:12px">${d.umdNm||'-'}</td>
+    </tr>`;
+  });
+  html+='</tbody></table></div>';
+  html+=buildPagination(tp,filteredData.length);
+  document.getElementById('main').innerHTML=html;
+}
+
+function buildPagination(tp,total){
+  if(tp<=1)return '';
+  let html='<div class="pagination">';
+  html+=`<button class="pg-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
+  let ps=Math.max(1,currentPage-3),pe=Math.min(tp,currentPage+3);
+  if(ps>1)html+=`<button class="pg-btn" onclick="goPage(1)">1</button>${ps>2?'<span class="pg-info">…</span>':''}`;
+  for(let p=ps;p<=pe;p++)html+=`<button class="pg-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
+  if(pe<tp)html+=`${pe<tp-1?'<span class="pg-info">…</span>':''}<button class="pg-btn" onclick="goPage(${tp})">${tp}</button>`;
+  html+=`<span class="pg-info">${currentPage}/${tp}페이지 · 총 ${total.toLocaleString()}건</span></div>`;
+  return html;
 }
 
 function goPage(p){
   const tp=Math.ceil(filteredData.length/PAGE_SIZE)||1;
   if(p<1||p>tp)return;
-  currentPage=p;
-  renderTable();
+  currentPage=p;renderTable();
   window.scrollTo({top:document.getElementById('main').offsetTop-60,behavior:'smooth'});
 }
 
-function showLoading(total){
+function showLoading(){
   document.getElementById('main').innerHTML=`<div class="state-screen">
     <div class="spinner"></div>
-    <div class="prog-wrap"><div class="prog-bar" id="prog" style="width:5%"></div></div>
-    <div class="prog-text">데이터 조회 중...</div>
-    <div class="prog-sub">총 ${total}개월 병렬 조회 중</div>
-  </div>`;
-}
-
-function updateProgress(done,total){
-  const pct=Math.round(done/total*100);
-  const b=document.getElementById('prog');
-  if(b)b.style.width=pct+'%';
+    <div class="prog-wrap"><div class="prog-bar" style="width:30%;animation:prog 2s infinite"></div></div>
+    <div class="prog-text">${currentMode==='trade'?'매매':'전월세'} 데이터 조회 중...</div>
+    <div class="prog-sub">병렬 조회 중입니다</div>
+  </div>
+  <style>@keyframes prog{0%{width:10%}50%{width:80%}100%{width:10%}}</style>`;
 }
 
 function showEmpty(){
   document.getElementById('main').innerHTML=`<div class="state-screen">
     <div class="state-icon">📭</div>
-    <div class="state-title">조회된 거래 내역이 없습니다</div>
+    <div class="state-title">조회된 내역이 없습니다</div>
     <div class="state-sub">해당 지역/기간에 신고된 거래가 없습니다</div>
   </div>`;
 }
@@ -416,11 +488,7 @@ function showToast(msg){
   setTimeout(()=>t.classList.remove('show'),2500);
 }
 
-// 동 선택 변경 시 필터 적용
-document.addEventListener('DOMContentLoaded',()=>{
-  document.getElementById('dong').addEventListener('change',applyFilter);
-  init();
-});
+document.addEventListener('DOMContentLoaded',init);
 </script>
 </body>
 </html>
