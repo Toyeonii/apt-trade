@@ -249,12 +249,16 @@ function fmtArea(a){
   return `${n.toFixed(1)}㎡ (${(n/3.3058).toFixed(1)}평)`;
 }
 
-async function fetchMonth(apiKey,lawdCd,dealYmd){
-  const params=new URLSearchParams({serviceKey:apiKey,LAWD_CD:lawdCd,DEAL_YMD:dealYmd});
-  const resp=await fetch(`/api/trade?${params}`,{signal:AbortSignal.timeout(20000)});
+async function fetchAllMonths(apiKey,lawdCd,months){
+  const params=new URLSearchParams({
+    serviceKey:apiKey,
+    LAWD_CD:lawdCd,
+    months:months.join(',')
+  });
+  const resp=await fetch(`/api/trade/bulk?${params}`,{signal:AbortSignal.timeout(60000)});
   const json=await resp.json();
   if(!resp.ok) throw new Error(json.error||`HTTP ${resp.status}`);
-  return json.items||[];
+  return json;
 }
 
 async function doSearch(){
@@ -279,28 +283,13 @@ async function doSearch(){
   allData=[];filteredData=[];
   document.getElementById('filterBar').style.display='none';
   document.getElementById('summaryStrip').style.display='none';
-  showLoading(months.length);
-
-  const BATCH=4;
-  let done=0;
-  const errors=[];
 
   try{
-    for(let i=0;i<months.length;i+=BATCH){
-      const batch=months.slice(i,i+BATCH);
-      const results=await Promise.allSettled(
-        batch.map(ym=>fetchMonth(apiKey,lawdCd,ym))
-      );
-      results.forEach((r,idx)=>{
-        if(r.status==='fulfilled'){
-          allData.push(...r.value.map(item=>({...item,_ym:batch[idx]})));
-        } else {
-          errors.push(`${batch[idx]}: ${r.reason?.message||'실패'}`);
-        }
-      });
-      done+=batch.length;
-      updateProgress(done,months.length);
-    }
+    showLoading(months.length);
+    const result=await fetchAllMonths(apiKey,lawdCd,months);
+    allData=result.items||[];
+    const errors=result.errors||[];
+    updateProgress(months.length,months.length);
 
     if(allData.length===0){
       errors.length>0?showError('조회 오류',errors.slice(0,3).join('\n')):showEmpty();
