@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import requests
 import xml.etree.ElementTree as ET
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 import os
 
@@ -63,13 +64,16 @@ def parse_xml_items(xml_text, mode='trade'):
     return items
 
 
-def fetch_month(lawd_cd, deal_ymd, mode, api_key, api_url):
+def fetch_month(lawd_cd, deal_ymd, mode='trade'):
     cache_key = f"{mode}_{lawd_cd}_{deal_ymd}"
     now = time.time()
     if cache_key in _cache:
         ts, items = _cache[cache_key]
         if now - ts < CACHE_TTL:
-            return items
+            return deal_ymd, items, True
+
+    api_url = TRADE_API if mode == 'trade' else RENT_API
+    api_key = API_KEY_TRADE if mode == 'trade' else API_KEY_RENT
 
     params = {
         'serviceKey': api_key,
@@ -78,20 +82,11 @@ def fetch_month(lawd_cd, deal_ymd, mode, api_key, api_url):
         'pageNo':     1,
         'numOfRows':  999,
     }
-
-    for attempt in range(2):  # 최대 2회 시도
-        try:
-            resp = requests.get(api_url, params=params, timeout=30)
-            resp.raise_for_status()
-            items = parse_xml_items(resp.text, mode)
-            _cache[cache_key] = (time.time(), items)
-            return items
-        except requests.exceptions.Timeout:
-            if attempt == 0:
-                time.sleep(2)
-            else:
-                raise
-    return []
+    resp = requests.get(api_url, params=params, timeout=30)
+    resp.raise_for_status()
+    items = parse_xml_items(resp.text, mode)
+    _cache[cache_key] = (time.time(), items)
+    return deal_ymd, items, False
 
 
 @app.route('/api/trade/bulk')
@@ -101,8 +96,6 @@ def api_bulk():
     months  = request.args.get('months', '')
 
     api_key = API_KEY_TRADE if mode == 'trade' else API_KEY_RENT
-    api_url = TRADE_API if mode == 'trade' else RENT_API
-
     if not api_key:
         return jsonify({'error': f'API 키 미설정 (mode={mode})'}), 500
     if not all([lawd_cd, months]):
@@ -112,32 +105,26 @@ def api_bulk():
     if len(month_list) > 24:
         return jsonify({'error': '최대 24개월'}), 400
 
-    # 메모리 절약을 위해 순차 처리 (병렬 제거)
     all_items, errors = [], []
-    for ym in month_list:
-        try:
-            items = fetch_month(lawd_cd, ym, mode, api_key, api_url)
-            all_items.extend(items)
-        except Exception as e:
-            errors.append(f"{ym}: {str(e)}")
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        futures = {executor.submit(fetch_month, lawd_cd, ym, mode): ym for ym in month_list}
+        for future in as_completed(futures):
+            try:
+                _, items, _ = future.result()
+                all_items.extend(items)
+            except Exception as e:
+                errors.append(f"{futures[future]}: {str(e)}")
 
-    return jsonify({
-        'ok': True,
-        'items': all_items,
-        'count': len(all_items),
-        'errors': errors
-    })
+    return jsonify({'ok': True, 'items': all_items, 'count': len(all_items), 'errors': errors})
 
 
 @app.route('/')
 def index():
     return open('index.html', encoding='utf-8').read()
 
-
 @app.route('/health')
 def health():
     return jsonify({'status': 'ok', 'trade_key': bool(API_KEY_TRADE), 'rent_key': bool(API_KEY_RENT)})
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
