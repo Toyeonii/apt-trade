@@ -7,54 +7,43 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,'Pretendard','Apple SD Gothic Neo',sans-serif;background:#f5f6f8;color:#1a1a1a;min-height:100vh}
-
 .app-header{background:#0C447C;color:#fff;padding:1rem 1.25rem 0.875rem;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.18)}
 .app-header h1{font-size:17px;font-weight:600;letter-spacing:-0.3px;display:flex;align-items:center;gap:8px}
 .dot{width:8px;height:8px;background:#60D4A4;border-radius:50%;display:inline-block;flex-shrink:0;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
 .header-sub{font-size:11px;color:rgba(255,255,255,0.6);margin-top:2px}
-
 .search-panel{background:#fff;border-bottom:0.5px solid #e0e0e0;padding:1rem}
-.api-key-row{display:flex;gap:8px;margin-bottom:10px;align-items:center}
-.api-key-row input{flex:1;height:36px;border:0.5px solid #ccc;border-radius:8px;padding:0 10px;font-size:13px;background:#F1EFE8;font-family:monospace;color:#444}
-.api-key-row input:focus{outline:none;border-color:#185FA5;background:#fff}
-.btn-sm{height:36px;padding:0 12px;font-size:12px;border:0.5px solid #ccc;border-radius:8px;background:#fff;cursor:pointer;color:#5F5E5A;white-space:nowrap}
-.btn-sm:hover{background:#F1EFE8}
-
-.search-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.search-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
 .search-grid select{height:38px;border:0.5px solid #ccc;border-radius:8px;padding:0 8px;font-size:14px;background:#fff;width:100%;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
 .search-grid select:focus{outline:none;border-color:#185FA5}
-
+.dong-select{margin-bottom:8px}
+.dong-select select{width:100%;height:38px;border:0.5px solid #ccc;border-radius:8px;padding:0 8px;font-size:14px;background:#fff;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
+.dong-select select:focus{outline:none;border-color:#185FA5}
+.dong-select select:disabled{background:#f5f5f5;color:#aaa}
 .month-label{font-size:11px;color:#5F5E5A;margin-bottom:4px}
 .month-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
 .month-row input[type=month]{height:38px;border:0.5px solid #ccc;border-radius:8px;padding:0 8px;font-size:14px;background:#fff;width:100%}
 .month-row input:focus{outline:none;border-color:#185FA5}
-
-.btn-search{width:100%;height:44px;background:#0C447C;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background 0.15s;letter-spacing:-0.2px}
+.btn-search{width:100%;height:44px;background:#0C447C;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background 0.15s}
 .btn-search:hover{background:#042C53}
 .btn-search:active{transform:scale(0.98)}
 .btn-search:disabled{background:#B4B2A9;cursor:not-allowed}
-
 .search-tip{font-size:11px;color:#999;margin-top:7px;text-align:center;line-height:1.5}
-
 .filter-bar{background:#fff;padding:8px 12px;border-bottom:0.5px solid #e8e8e8;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .filter-bar input{flex:1;min-width:120px;height:32px;border:0.5px solid #ccc;border-radius:8px;padding:0 10px;font-size:13px}
 .filter-bar input:focus{outline:none;border-color:#185FA5}
-.sort-btn{height:30px;padding:0 10px;font-size:12px;border:0.5px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;white-space:nowrap;color:#555;transition:all 0.1s}
-.sort-btn:hover{border-color:#999}
+.sort-btn{height:30px;padding:0 10px;font-size:12px;border:0.5px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;white-space:nowrap;color:#555}
 .sort-btn.active{background:#E6F1FB;border-color:#185FA5;color:#0C447C;font-weight:600}
-
 .summary-strip{display:grid;grid-template-columns:repeat(4,1fr);background:#E6F1FB;border-bottom:0.5px solid #c8d8f0}
 .sum-item{padding:8px 4px;text-align:center;border-right:0.5px solid #c8d8f0}
 .sum-item:last-child{border-right:none}
 .sum-label{font-size:10px;color:#185FA5;margin-bottom:2px;font-weight:500}
 .sum-value{font-size:12px;font-weight:600;color:#042C53}
-
 .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;background:#fff}
 table{width:100%;border-collapse:collapse;font-size:13px;min-width:560px}
-thead th{background:#2C2C2A;color:#fff;padding:9px 10px;text-align:left;font-weight:500;font-size:11.5px;white-space:nowrap;letter-spacing:0.2px}
+thead th{background:#2C2C2A;color:#fff;padding:9px 10px;text-align:left;font-weight:500;font-size:11.5px;white-space:nowrap}
 thead th.r{text-align:right}
-tbody tr{border-bottom:0.5px solid #f0f0f0;transition:background 0.1s}
+tbody tr{border-bottom:0.5px solid #f0f0f0}
 tbody tr:hover{background:#EDF5FF}
 tbody tr:nth-child(even){background:#FAFAFA}
 tbody tr:nth-child(even):hover{background:#EDF5FF}
@@ -63,32 +52,25 @@ td.price{font-weight:600;color:#0C447C;text-align:right}
 td.hi{color:#A32D2D;font-weight:700;text-align:right}
 td.lo{color:#0F6E56;font-weight:700;text-align:right}
 .badge{display:inline-block;background:#F1EFE8;border:0.5px solid #D3D1C7;border-radius:4px;padding:1px 6px;font-size:11px;color:#5F5E5A}
-.badge-new{background:#E1F5EE;border-color:#9FE1CB;color:#085041}
-
 .state-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3.5rem 2rem;text-align:center;color:#5F5E5A}
 .state-icon{font-size:44px;margin-bottom:14px}
 .state-title{font-size:15px;font-weight:600;color:#333;margin-bottom:8px}
 .state-sub{font-size:13px;line-height:1.8;color:#888}
-
 .spinner{width:36px;height:36px;border:3px solid #dde5f4;border-top-color:#185FA5;border-radius:50%;animation:spin 0.7s linear infinite;margin-bottom:14px}
 @keyframes spin{to{transform:rotate(360deg)}}
 .prog-wrap{width:220px;height:5px;background:#dde5f4;border-radius:3px;overflow:hidden;margin-bottom:10px}
-.prog-bar{height:100%;background:linear-gradient(90deg,#185FA5,#1D9E75);border-radius:3px;transition:width 0.4s ease}
+.prog-bar{height:100%;background:#185FA5;border-radius:3px;transition:width 0.4s ease}
 .prog-text{font-size:13px;font-weight:500;color:#333;margin-bottom:4px}
 .prog-sub{font-size:12px;color:#888}
-
 .pagination{display:flex;justify-content:center;align-items:center;gap:5px;padding:14px 12px;background:#fff;border-top:0.5px solid #eee;flex-wrap:wrap}
-.pg-btn{min-width:34px;height:34px;padding:0 7px;border:0.5px solid #ccc;border-radius:8px;background:#fff;cursor:pointer;font-size:13px;color:#444;transition:all 0.1s}
+.pg-btn{min-width:34px;height:34px;padding:0 7px;border:0.5px solid #ccc;border-radius:8px;background:#fff;cursor:pointer;font-size:13px;color:#444}
 .pg-btn:hover:not(:disabled){background:#f0f0f0}
 .pg-btn.active{background:#0C447C;color:#fff;border-color:#0C447C;font-weight:600}
 .pg-btn:disabled{opacity:0.35;cursor:not-allowed}
 .pg-info{font-size:12px;color:#888;margin-left:4px}
-
-.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:11px 20px;border-radius:12px;font-size:13px;z-index:9999;opacity:0;pointer-events:none;transition:opacity 0.25s;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,0.2)}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:11px 20px;border-radius:12px;font-size:13px;z-index:9999;opacity:0;pointer-events:none;transition:opacity 0.25s;white-space:nowrap}
 .toast.show{opacity:1}
-
-.app-footer{text-align:center;font-size:11px;color:#888;padding:16px;background:#2C2C2A;color:#888}
-
+.app-footer{text-align:center;font-size:11px;color:#888;padding:16px;background:#2C2C2A}
 @media(max-width:480px){
   .summary-strip{grid-template-columns:repeat(2,1fr)}
   .sum-item:nth-child(2){border-right:none}
@@ -100,38 +82,29 @@ td.lo{color:#0F6E56;font-weight:700;text-align:right}
 </style>
 </head>
 <body>
-
 <header class="app-header">
   <h1><span class="dot"></span>아파트 실거래가 조회</h1>
-  <div class="header-sub">국토교통부 실거래가 공개시스템 · 로컬 서버 연동</div>
+  <div class="header-sub">국토교통부 실거래가 공개시스템</div>
 </header>
 
 <section class="search-panel">
-  <div class="api-key-row">
-    <input type="password" id="apiKey" placeholder="공공데이터포털 디코딩 인증키" autocomplete="off"/>
-    <button class="btn-sm" onclick="toggleKey()" id="btnToggle">보기</button>
-  </div>
-
   <div class="search-grid">
-    <select id="sido" onchange="loadSgg()">
-      <option value="">시/도 선택</option>
-    </select>
-    <select id="sigungu">
-      <option value="">시/군/구 선택</option>
-    </select>
+    <select id="sido" onchange="loadSgg()"><option value="">시/도 선택</option></select>
+    <select id="sigungu" onchange="loadDong()"><option value="">시/군/구 선택</option></select>
   </div>
-
+  <div class="dong-select">
+    <select id="dong" disabled><option value="">동 선택 (전체)</option></select>
+  </div>
   <div class="month-label">조회 기간</div>
   <div class="month-row">
     <input type="month" id="startM"/>
     <input type="month" id="endM"/>
   </div>
-
   <button class="btn-search" id="btnSearch" onclick="doSearch()">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
     조회하기
   </button>
-  <div class="search-tip" id="tip">최대 24개월 · 월별 병렬 조회 · 로컬 서버 경유</div>
+  <div class="search-tip" id="tip">시/군/구 → 동 선택 후 조회 · 최대 24개월</div>
 </section>
 
 <div id="filterBar" class="filter-bar" style="display:none">
@@ -153,15 +126,12 @@ td.lo{color:#0F6E56;font-weight:700;text-align:right}
   <div class="state-screen">
     <div class="state-icon">🏢</div>
     <div class="state-title">지역과 기간을 선택하세요</div>
-    <div class="state-sub">시/도 → 시/군/구 → 기간 선택 후<br>조회하기를 누르세요</div>
+    <div class="state-sub">시/도 → 시/군/구 → 동(선택) → 기간<br>순서로 선택 후 조회하기를 누르세요</div>
   </div>
 </main>
 
 <div class="toast" id="toast"></div>
-
-<footer class="app-footer">
-  데이터 출처: 국토교통부 아파트 매매 실거래가 상세자료 · 공공데이터포털 Open API
-</footer>
+<footer class="app-footer">데이터 출처: 국토교통부 아파트 매매 실거래가 상세자료 · 공공데이터포털 Open API</footer>
 
 <script>
 const RD={
@@ -186,7 +156,6 @@ const RD={
 
 let allData=[],filteredData=[],currentSort='date',currentPage=1;
 const PAGE_SIZE=50;
-let keyVis=false;
 
 function init(){
   const s=document.getElementById('sido');
@@ -197,25 +166,34 @@ function init(){
   const ym=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
   document.getElementById('startM').value=ym(new Date(now.getFullYear(),now.getMonth()-2,1));
   document.getElementById('endM').value=ym(now);
-  const saved=sessionStorage.getItem('apt_key');
-  if(saved)document.getElementById('apiKey').value=saved;
 }
 
 function loadSgg(){
   const sido=document.getElementById('sido').value;
   const sg=document.getElementById('sigungu');
   sg.innerHTML='<option value="">시/군/구 선택</option>';
+  const dong=document.getElementById('dong');
+  dong.innerHTML='<option value="">동 선택 (전체)</option>';
+  dong.disabled=true;
   if(!sido||!RD[sido])return;
   Object.entries(RD[sido]).forEach(([code,name])=>{
     const o=document.createElement('option');o.value=code;o.textContent=name;sg.appendChild(o);
   });
 }
 
-function toggleKey(){
-  const inp=document.getElementById('apiKey');
-  keyVis=!keyVis;
-  inp.type=keyVis?'text':'password';
-  document.getElementById('btnToggle').textContent=keyVis?'숨기기':'보기';
+function loadDong(){
+  const dong=document.getElementById('dong');
+  dong.innerHTML='<option value="">동 선택 (전체)</option>';
+  dong.disabled=true;
+
+  // 이미 조회된 데이터가 있으면 거기서 동 목록 추출
+  if(allData.length>0){
+    const dongs=[...new Set(allData.map(d=>d.umdNm).filter(Boolean))].sort();
+    dongs.forEach(name=>{
+      const o=document.createElement('option');o.value=name;o.textContent=name;dong.appendChild(o);
+    });
+    dong.disabled=false;
+  }
 }
 
 function getMonths(s,e){
@@ -236,10 +214,7 @@ function parsePrice(s){
 
 function fmtPrice(v){
   if(!v)return '-';
-  if(v>=10000){
-    const e=Math.floor(v/10000),r=v%10000;
-    return r>0?`${e}억 ${r.toLocaleString()}만`:`${e}억`;
-  }
+  if(v>=10000){const e=Math.floor(v/10000),r=v%10000;return r>0?`${e}억 ${r.toLocaleString()}만`:`${e}억`;}
   return `${v.toLocaleString()}만`;
 }
 
@@ -249,31 +224,23 @@ function fmtArea(a){
   return `${n.toFixed(1)}㎡ (${(n/3.3058).toFixed(1)}평)`;
 }
 
-async function fetchAllMonths(apiKey,lawdCd,months){
-  const params=new URLSearchParams({
-    serviceKey:apiKey,
-    LAWD_CD:lawdCd,
-    months:months.join(',')
-  });
+async function fetchAllMonths(lawdCd,months){
+  const params=new URLSearchParams({LAWD_CD:lawdCd,months:months.join(',')});
   const resp=await fetch(`/api/trade/bulk?${params}`,{signal:AbortSignal.timeout(60000)});
   const json=await resp.json();
-  if(!resp.ok) throw new Error(json.error||`HTTP ${resp.status}`);
+  if(!resp.ok)throw new Error(json.error||`HTTP ${resp.status}`);
   return json;
 }
 
 async function doSearch(){
-  const apiKey=document.getElementById('apiKey').value.trim();
   const sido=document.getElementById('sido').value;
   const lawdCd=document.getElementById('sigungu').value;
   const startM=document.getElementById('startM').value;
   const endM=document.getElementById('endM').value;
 
-  if(!apiKey){showToast('인증키를 입력해 주세요');return;}
   if(!lawdCd){showToast('시/군/구를 선택해 주세요');return;}
   if(!startM||!endM){showToast('조회 기간을 선택해 주세요');return;}
   if(startM>endM){showToast('시작 월이 종료 월보다 늦습니다');return;}
-
-  sessionStorage.setItem('apt_key',apiKey);
 
   const months=getMonths(startM,endM);
   if(months.length>24){showToast('최대 24개월까지 조회 가능합니다');return;}
@@ -283,17 +250,25 @@ async function doSearch(){
   allData=[];filteredData=[];
   document.getElementById('filterBar').style.display='none';
   document.getElementById('summaryStrip').style.display='none';
+  showLoading(months.length);
 
   try{
-    showLoading(months.length);
-    const result=await fetchAllMonths(apiKey,lawdCd,months);
+    const result=await fetchAllMonths(lawdCd,months);
     allData=result.items||[];
     const errors=result.errors||[];
-    updateProgress(months.length,months.length);
 
     if(allData.length===0){
       errors.length>0?showError('조회 오류',errors.slice(0,3).join('\n')):showEmpty();
     } else {
+      // 동 목록 자동 구성
+      const dongEl=document.getElementById('dong');
+      dongEl.innerHTML='<option value="">동 선택 (전체)</option>';
+      const dongs=[...new Set(allData.map(d=>d.umdNm).filter(Boolean))].sort();
+      dongs.forEach(name=>{
+        const o=document.createElement('option');o.value=name;o.textContent=name;dongEl.appendChild(o);
+      });
+      dongEl.disabled=false;
+
       const sggEl=document.getElementById('sigungu');
       const sggName=sggEl.options[sggEl.selectedIndex]?.text||'';
       document.getElementById('tip').textContent=
@@ -311,7 +286,12 @@ async function doSearch(){
 
 function applyFilter(){
   const q=(document.getElementById('aptFilter')?.value||'').trim().toLowerCase();
-  filteredData=q?allData.filter(d=>(d.aptNm||'').toLowerCase().includes(q)):[...allData];
+  const dong=document.getElementById('dong')?.value||'';
+  filteredData=allData.filter(d=>{
+    const nameOk=!q||(d.aptNm||'').toLowerCase().includes(q);
+    const dongOk=!dong||(d.umdNm||'')=== dong;
+    return nameOk&&dongOk;
+  });
   sortData();
 }
 
@@ -326,7 +306,7 @@ function sortData(){
   const gP=d=>parsePrice(d.dealAmount);
   const gD=d=>`${d.dealYear||''}${String(d.dealMonth||'').padStart(2,'0')}${String(d.dealDay||'').padStart(2,'0')}`;
   const gA=d=>parseFloat(d.excluUseAr||0);
-  if(currentSort==='date')           filteredData.sort((a,b)=>gD(b).localeCompare(gD(a)));
+  if(currentSort==='date')            filteredData.sort((a,b)=>gD(b).localeCompare(gD(a)));
   else if(currentSort==='price-desc') filteredData.sort((a,b)=>gP(b)-gP(a));
   else if(currentSort==='price-asc')  filteredData.sort((a,b)=>gP(a)-gP(b));
   else if(currentSort==='area')       filteredData.sort((a,b)=>gA(b)-gA(a));
@@ -365,13 +345,12 @@ function renderTable(){
     const dt=d.dealYear&&d.dealMonth
       ?`${d.dealYear}.${String(d.dealMonth).padStart(2,'0')}.${String(d.dealDay||'').padStart(2,'0')}`
       :'-';
-    const isNew=(new Date()-new Date(d.dealYear,d.dealMonth-1,d.dealDay||1))<30*86400000;
     html+=`<tr>
       <td style="font-weight:500">${d.aptNm||'-'}</td>
       <td style="color:#555;font-size:12px">${fmtArea(d.excluUseAr)}</td>
       <td><span class="badge">${d.floor||'-'}층</span></td>
       <td class="${pc}">${fmtPrice(p)}</td>
-      <td style="color:#666;font-size:12px">${dt}${isNew?'<span class="badge-new" style="margin-left:4px;font-size:10px">NEW</span>':''}</td>
+      <td style="color:#666;font-size:12px">${dt}</td>
       <td style="color:#888;font-size:12px">${d.buildYear||'-'}</td>
       <td style="color:#888;font-size:12px">${d.umdNm||'-'}</td>
     </tr>`;
@@ -382,10 +361,10 @@ function renderTable(){
     html+='<div class="pagination">';
     html+=`<button class="pg-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
     let ps=Math.max(1,currentPage-3),pe=Math.min(tp,currentPage+3);
-    if(ps>1) html+=`<button class="pg-btn" onclick="goPage(1)">1</button>${ps>2?'<span class="pg-info">…</span>':''}`;
+    if(ps>1)html+=`<button class="pg-btn" onclick="goPage(1)">1</button>${ps>2?'<span class="pg-info">…</span>':''}`;
     for(let p=ps;p<=pe;p++)
       html+=`<button class="pg-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
-    if(pe<tp) html+=`${pe<tp-1?'<span class="pg-info">…</span>':''}<button class="pg-btn" onclick="goPage(${tp})">${tp}</button>`;
+    if(pe<tp)html+=`${pe<tp-1?'<span class="pg-info">…</span>':''}<button class="pg-btn" onclick="goPage(${tp})">${tp}</button>`;
     html+=`<span class="pg-info">${currentPage}/${tp}페이지 · 총 ${total.toLocaleString()}건</span></div>`;
   }
 
@@ -403,24 +382,23 @@ function goPage(p){
 function showLoading(total){
   document.getElementById('main').innerHTML=`<div class="state-screen">
     <div class="spinner"></div>
-    <div class="prog-wrap"><div class="prog-bar" id="prog" style="width:0%"></div></div>
-    <div class="prog-text" id="lmsg">데이터 불러오는 중...</div>
-    <div class="prog-sub">총 ${total}개월 · 4개월씩 병렬 조회</div>
+    <div class="prog-wrap"><div class="prog-bar" id="prog" style="width:5%"></div></div>
+    <div class="prog-text">데이터 조회 중...</div>
+    <div class="prog-sub">총 ${total}개월 병렬 조회 중</div>
   </div>`;
 }
 
 function updateProgress(done,total){
   const pct=Math.round(done/total*100);
-  const b=document.getElementById('prog'),m=document.getElementById('lmsg');
+  const b=document.getElementById('prog');
   if(b)b.style.width=pct+'%';
-  if(m)m.textContent=done>=total?`${total}개월 완료!`:`${done}/${total}개월 조회 중... (${pct}%)`;
 }
 
 function showEmpty(){
   document.getElementById('main').innerHTML=`<div class="state-screen">
     <div class="state-icon">📭</div>
     <div class="state-title">조회된 거래 내역이 없습니다</div>
-    <div class="state-sub">해당 지역/기간에 신고된 거래가 없거나<br>인증키를 다시 확인해 주세요</div>
+    <div class="state-sub">해당 지역/기간에 신고된 거래가 없습니다</div>
   </div>`;
 }
 
@@ -438,7 +416,11 @@ function showToast(msg){
   setTimeout(()=>t.classList.remove('show'),2500);
 }
 
-init();
+// 동 선택 변경 시 필터 적용
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('dong').addEventListener('change',applyFilter);
+  init();
+});
 </script>
 </body>
 </html>

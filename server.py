@@ -4,29 +4,30 @@ import requests
 import xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
+import os
 
 app = Flask(__name__)
 CORS(app)
 
 API_BASE = 'https://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev'
+API_KEY  = os.environ.get('API_KEY', '')
 
 # 캐시: { "11680_202501": (timestamp, items) }
 _cache = {}
 CACHE_TTL = 3600  # 1시간
 
 
-def fetch_one_month(api_key, lawd_cd, deal_ymd):
+def fetch_one_month(lawd_cd, deal_ymd):
     cache_key = f"{lawd_cd}_{deal_ymd}"
     now = time.time()
 
-    # 캐시 히트
     if cache_key in _cache:
         ts, items = _cache[cache_key]
         if now - ts < CACHE_TTL:
-            return deal_ymd, items, True  # (월, 데이터, 캐시여부)
+            return deal_ymd, items, True
 
     params = {
-        'serviceKey': api_key,
+        'serviceKey': API_KEY,
         'LAWD_CD': lawd_cd,
         'DEAL_YMD': deal_ymd,
         'pageNo': 1,
@@ -64,36 +65,15 @@ def fetch_one_month(api_key, lawd_cd, deal_ymd):
     return deal_ymd, items, False
 
 
-@app.route('/api/trade')
-def api_trade():
-    api_key  = request.args.get('serviceKey', '')
-    lawd_cd  = request.args.get('LAWD_CD', '')
-    deal_ymd = request.args.get('DEAL_YMD', '')
-
-    if not all([api_key, lawd_cd, deal_ymd]):
-        return jsonify({'error': '필수 파라미터 누락'}), 400
-
-    try:
-        _, items, cached = fetch_one_month(api_key, lawd_cd, deal_ymd)
-        return jsonify({'ok': True, 'items': items, 'count': len(items), 'cached': cached})
-    except requests.exceptions.Timeout:
-        return jsonify({'error': '응답 시간 초과'}), 504
-    except requests.exceptions.RequestException as e:
-        return jsonify({'error': f'네트워크 오류: {str(e)}'}), 502
-    except ValueError as e:
-        return jsonify({'error': str(e)}), 400
-    except Exception as e:
-        return jsonify({'error': f'서버 오류: {str(e)}'}), 500
-
-
 @app.route('/api/trade/bulk')
 def api_trade_bulk():
-    """여러 달을 한 번에 병렬 조회"""
-    api_key  = request.args.get('serviceKey', '')
-    lawd_cd  = request.args.get('LAWD_CD', '')
-    months   = request.args.get('months', '')  # "202501,202502,202503"
+    if not API_KEY:
+        return jsonify({'error': '서버에 API_KEY가 설정되지 않았습니다'}), 500
 
-    if not all([api_key, lawd_cd, months]):
+    lawd_cd = request.args.get('LAWD_CD', '')
+    months  = request.args.get('months', '')
+
+    if not all([lawd_cd, months]):
         return jsonify({'error': '필수 파라미터 누락'}), 400
 
     month_list = [m.strip() for m in months.split(',') if m.strip()]
@@ -103,10 +83,9 @@ def api_trade_bulk():
     all_items = []
     errors = []
 
-    # 최대 8개 스레드로 병렬 처리
     with ThreadPoolExecutor(max_workers=8) as executor:
         futures = {
-            executor.submit(fetch_one_month, api_key, lawd_cd, ym): ym
+            executor.submit(fetch_one_month, lawd_cd, ym): ym
             for ym in month_list
         }
         for future in as_completed(futures):
@@ -131,7 +110,7 @@ def index():
 
 @app.route('/health')
 def health():
-    return jsonify({'status': 'ok'})
+    return jsonify({'status': 'ok', 'api_key_set': bool(API_KEY)})
 
 
 if __name__ == '__main__':
