@@ -10,7 +10,12 @@ import requests
 import xml.etree.ElementTree as ET
 import os
 
-app = Flask(__name__, static_folder='.')
+app = Flask(__name__)
+
+@app.route('/')
+def index():
+    return open('index.html', encoding='utf-8').read()
+    
 CORS(app)
 
 API_BASE = 'https://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev'
@@ -80,12 +85,6 @@ def api_trade():
         return jsonify({'error': str(e)}), 400
     except Exception as e:
         return jsonify({'error': f'서버 오류: {str(e)}'}), 500
-
-
-@app.route('/')
-def index():
-    return send_from_directory('static', 'index.html')
-
 
 @app.route('/health')
 def health():
