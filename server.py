@@ -9,8 +9,8 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-TRADE_API  = 'https://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev'
-RENT_API   = 'https://apis.data.go.kr/1613000/RTMSDataSvcAptRent/getRTMSDataSvcAptRent'
+TRADE_API = 'https://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev'
+RENT_API  = 'https://apis.data.go.kr/1613000/RTMSDataSvcAptRent/getRTMSDataSvcAptRent'
 
 API_KEY_TRADE = os.environ.get('API_KEY', '')
 API_KEY_RENT  = os.environ.get('API_KEY_RENT', '')
@@ -28,7 +28,7 @@ def parse_xml_items(xml_text, mode='trade'):
 
     items = []
     for item in root.findall('.//item'):
-        def g(tag):
+        def g(tag, item=item):
             v = item.findtext(tag)
             return v.strip() if v else ''
         if mode == 'trade':
@@ -44,29 +44,31 @@ def parse_xml_items(xml_text, mode='trade'):
                 'roadNm':     g('roadNm'),
                 'umdNm':      g('umdNm'),
             })
-        else:  # rent
+        else:
             items.append({
-                'aptNm':       g('aptNm'),
-                'excluUseAr':  g('excluUseAr'),
-                'floor':       g('floor'),
-                'deposit':     g('deposit'),      # 보증금
-                'monthlyRent': g('monthlyRent'),  # 월세금액
-                'contractTerm': g('contractTerm'), # 계약기간
-                'contractType': g('contractType'), # 계약구분(신규/갱신)
-                'dealYear':    g('dealYear'),
-                'dealMonth':   g('dealMonth'),
-                'dealDay':     g('dealDay'),
-                'buildYear':   g('buildYear'),
-                'umdNm':       g('umdNm'),
-                'preDeposit':  g('preDeposit'),   # 종전보증금
-                'preMonthlyRent': g('preMonthlyRent'), # 종전월세
+                'aptNm':          g('aptNm'),
+                'excluUseAr':     g('excluUseAr'),
+                'floor':          g('floor'),
+                'deposit':        g('deposit'),
+                'monthlyRent':    g('monthlyRent'),
+                'contractTerm':   g('contractTerm'),
+                'contractType':   g('contractType'),
+                'dealYear':       g('dealYear'),
+                'dealMonth':      g('dealMonth'),
+                'dealDay':        g('dealDay'),
+                'buildYear':      g('buildYear'),
+                'umdNm':          g('umdNm'),
+                'preDeposit':     g('preDeposit'),
+                'preMonthlyRent': g('preMonthlyRent'),
             })
     return items
 
 
-def fetch_month(lawd_cd, deal_ymd, mode='trade'):
+def fetch_month_with_retry(lawd_cd, deal_ymd, mode='trade', retries=3, timeout=30):
     cache_key = f"{mode}_{lawd_cd}_{deal_ymd}"
     now = time.time()
+
+    # 캐시 히트
     if cache_key in _cache:
         ts, items = _cache[cache_key]
         if now - ts < CACHE_TTL:
@@ -82,16 +84,27 @@ def fetch_month(lawd_cd, deal_ymd, mode='trade'):
         'pageNo':     1,
         'numOfRows':  999,
     }
-    resp = requests.get(api_url, params=params, timeout=15)
-    resp.raise_for_status()
-    items = parse_xml_items(resp.text, mode)
-    _cache[cache_key] = (now, items)
-    return deal_ymd, items, False
+
+    last_err = None
+    for attempt in range(retries):
+        try:
+            resp = requests.get(api_url, params=params, timeout=timeout)
+            resp.raise_for_status()
+            items = parse_xml_items(resp.text, mode)
+            _cache[cache_key] = (time.time(), items)
+            return deal_ymd, items, False
+        except requests.exceptions.Timeout:
+            last_err = f'타임아웃 (시도 {attempt+1}/{retries})'
+            time.sleep(1)  # 재시도 전 1초 대기
+        except Exception as e:
+            raise e  # 타임아웃 외 오류는 즉시 raise
+
+    raise requests.exceptions.Timeout(last_err)
 
 
 @app.route('/api/trade/bulk')
 def api_bulk():
-    mode    = request.args.get('mode', 'trade')  # 'trade' or 'rent'
+    mode    = request.args.get('mode', 'trade')
     lawd_cd = request.args.get('LAWD_CD', '')
     months  = request.args.get('months', '')
 
@@ -106,25 +119,38 @@ def api_bulk():
         return jsonify({'error': '최대 24개월'}), 400
 
     all_items, errors = [], []
-    with ThreadPoolExecutor(max_workers=8) as executor:
-        futures = {executor.submit(fetch_month, lawd_cd, ym, mode): ym for ym in month_list}
+
+    # 병렬 처리 (타임아웃 고려해 max_workers 줄임)
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        futures = {
+            executor.submit(fetch_month_with_retry, lawd_cd, ym, mode): ym
+            for ym in month_list
+        }
         for future in as_completed(futures):
+            ym = futures[future]
             try:
-                _, items, _ = future.result()
+                _, items, cached = future.result()
                 all_items.extend(items)
             except Exception as e:
-                errors.append(f"{futures[future]}: {str(e)}")
+                errors.append(f"{ym}: {str(e)}")
 
-    return jsonify({'ok': True, 'items': all_items, 'count': len(all_items), 'errors': errors})
+    return jsonify({
+        'ok': True,
+        'items': all_items,
+        'count': len(all_items),
+        'errors': errors
+    })
 
 
 @app.route('/')
 def index():
     return open('index.html', encoding='utf-8').read()
 
+
 @app.route('/health')
 def health():
     return jsonify({'status': 'ok', 'trade_key': bool(API_KEY_TRADE), 'rent_key': bool(API_KEY_RENT)})
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
