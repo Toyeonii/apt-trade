@@ -82,13 +82,30 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
 .pg-info{font-size:12px;color:#888;margin-left:4px}
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:11px 20px;border-radius:12px;font-size:13px;z-index:9999;opacity:0;pointer-events:none;transition:opacity 0.25s;white-space:nowrap}
 .toast.show{opacity:1}
+
+/* 카드형 (모바일) */
+.card-list{padding:8px;background:#f5f6f8}
+.card{background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,0.08)}
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+.card-name{font-size:14px;font-weight:600;color:#1a1a1a;flex:1;margin-right:8px}
+.card-price{font-size:15px;font-weight:700;color:#0C447C;white-space:nowrap}
+.card-price.hi{color:#A32D2D}
+.card-price.lo{color:#0F6E56}
+.card-price.deposit{color:#0F6E56}
+.card-mid{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+.card-tag{font-size:11px;background:#F1EFE8;border:0.5px solid #D3D1C7;border-radius:4px;padding:2px 7px;color:#5F5E5A}
+.card-tag.rent-tag{background:#FAEEDA;border-color:#FAC775;color:#633806}
+.card-tag.jeonse-tag{background:#E1F5EE;border-color:#9FE1CB;color:#085041}
+.card-bot{display:flex;justify-content:space-between;font-size:11px;color:#999}
+.card-renew{font-size:10px;background:#EEEDFE;border:0.5px solid #AFA9EC;border-radius:4px;padding:1px 5px;color:#26215C;margin-left:4px}
 .app-footer{text-align:center;font-size:11px;color:#888;padding:16px;background:#2C2C2A}
+@media(min-width:481px){.card-list{display:none}}
 @media(max-width:480px){
+  .table-wrap{display:none}
   .summary-strip{grid-template-columns:repeat(2,1fr)}
   .sum-item:nth-child(2){border-right:none}
   .sum-item:nth-child(3){border-right:0.5px solid rgba(0,0,0,0.08);border-top:0.5px solid rgba(0,0,0,0.08)}
   .sum-item:nth-child(4){border-top:0.5px solid rgba(0,0,0,0.08)}
-  table{font-size:12px}td,thead th{padding:7px 8px}
 }
 </style>
 </head>
@@ -394,7 +411,34 @@ function renderTradeTable(){
     const dt=d.dealYear&&d.dealMonth?`${d.dealYear}.${String(d.dealMonth).padStart(2,'0')}.${String(d.dealDay||'').padStart(2,'0')}`:'-';
     html+=`<tr><td style="font-weight:500">${d.aptNm||'-'}</td><td style="color:#555;font-size:12px">${fmtArea(d.excluUseAr)}</td><td><span class="badge">${d.floor||'-'}층</span></td><td class="${isH?'hi':isL?'lo':'price'}">${fmtPrice(p)}</td><td style="color:#666;font-size:12px">${dt}</td><td style="color:#888;font-size:12px">${d.buildYear||'-'}</td><td style="color:#888;font-size:12px">${d.umdNm||'-'}</td></tr>`;
   });
-  html+='</tbody></table></div>'+buildPagination(tp,total);
+  html+='</tbody></table></div>';
+
+  // 모바일 카드
+  let cards='<div class="card-list">';
+  pg.forEach(d=>{
+    const p=parsePrice(d.dealAmount);
+    const isH=p===maxP&&p>0&&prices.length>1,isL=p===minP&&p>0&&prices.length>1;
+    const pc=isH?'hi':isL?'lo':'';
+    const dt=d.dealYear&&d.dealMonth?`${d.dealYear}.${String(d.dealMonth).padStart(2,'0')}.${String(d.dealDay||'').padStart(2,'0')}`:'-';
+    cards+=`<div class="card">
+      <div class="card-top">
+        <span class="card-name">${d.aptNm||'-'}</span>
+        <span class="card-price ${pc}">${fmtPrice(p)}</span>
+      </div>
+      <div class="card-mid">
+        <span class="card-tag">${fmtArea(d.excluUseAr)}</span>
+        <span class="card-tag">${d.floor||'-'}층</span>
+        <span class="card-tag">${d.buildYear||'-'}년</span>
+      </div>
+      <div class="card-bot">
+        <span>${d.umdNm||'-'}</span>
+        <span>${dt}</span>
+      </div>
+    </div>`;
+  });
+  cards+='</div>';
+
+  html+=cards+buildPagination(tp,total);
   document.getElementById('main').innerHTML=html;
 }
 
@@ -421,7 +465,34 @@ function renderRentTable(){
     const dt=d.dealYear&&d.dealMonth?`${d.dealYear}.${String(d.dealMonth).padStart(2,'0')}.${String(d.dealDay||'').padStart(2,'0')}`:'-';
     html+=`<tr><td style="font-weight:500">${d.aptNm||'-'}${isRenew?'<span class="badge-renew">갱신</span>':''}</td><td style="color:#555;font-size:12px">${fmtArea(d.excluUseAr)}</td><td><span class="badge">${d.floor||'-'}층</span></td><td class="deposit">${fmtPrice(dep)}</td><td style="text-align:right;font-size:12px">${!mon?'<span class="badge-jeonse">전세</span>':`<span class="badge-monthly">${fmtPrice(mon)}</span>`}</td><td style="color:#666;font-size:12px">${dt}</td><td style="color:#888;font-size:12px">${d.contractTerm||'-'}</td><td style="color:#888;font-size:12px">${d.umdNm||'-'}</td></tr>`;
   });
-  html+='</tbody></table></div>'+buildPagination(tp,total);
+  html+='</tbody></table></div>';
+
+  // 모바일 카드
+  let cards='<div class="card-list">';
+  pg.forEach(d=>{
+    const dep=parsePrice(d.deposit),mon=parsePrice(d.monthlyRent);
+    const isJeonse=!mon;
+    const isRenew=(d.contractType||'').includes('갱신');
+    const dt=d.dealYear&&d.dealMonth?`${d.dealYear}.${String(d.dealMonth).padStart(2,'0')}.${String(d.dealDay||'').padStart(2,'0')}`:'-';
+    cards+=`<div class="card">
+      <div class="card-top">
+        <span class="card-name">${d.aptNm||'-'}${isRenew?'<span class="card-renew">갱신</span>':''}</span>
+        <span class="card-price deposit">${fmtPrice(dep)}</span>
+      </div>
+      <div class="card-mid">
+        <span class="card-tag ${isJeonse?'jeonse-tag':'rent-tag'}">${isJeonse?'전세':`월세 ${fmtPrice(mon)}`}</span>
+        <span class="card-tag">${fmtArea(d.excluUseAr)}</span>
+        <span class="card-tag">${d.floor||'-'}층</span>
+      </div>
+      <div class="card-bot">
+        <span>${d.umdNm||'-'} · ${d.contractTerm||'-'}</span>
+        <span>${dt}</span>
+      </div>
+    </div>`;
+  });
+  cards+='</div>';
+
+  html+=cards+buildPagination(tp,total);
   document.getElementById('main').innerHTML=html;
 }
 
