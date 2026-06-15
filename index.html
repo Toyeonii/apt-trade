@@ -145,10 +145,32 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
     <option value="85~135">85~135㎡</option>
     <option value="135~">135㎡~</option>
   </select>
+  <select id="priceFilter" onchange="applyFilter()">
+    <option value="">금액 전체</option>
+    <option value="~3">~3억</option>
+    <option value="3~6">3~6억</option>
+    <option value="6~10">6~10억</option>
+    <option value="10~20">10~20억</option>
+    <option value="20~">20억~</option>
+  </select>
+  <select id="floorFilter" onchange="applyFilter()">
+    <option value="">층 전체</option>
+    <option value="low">저층(1~5)</option>
+    <option value="mid">중층(6~15)</option>
+    <option value="high">고층(16~)</option>
+  </select>
+  <select id="buildFilter" onchange="applyFilter()">
+    <option value="">건축 전체</option>
+    <option value="new5">5년 이내</option>
+    <option value="new10">10년 이내</option>
+    <option value="old20">20년 이상</option>
+    <option value="old30">30년 이상</option>
+  </select>
   <button class="sort-btn" id="sort-date"       onclick="setSort('date')">최신순</button>
   <button class="sort-btn" id="sort-price-desc" onclick="setSort('price-desc')">고가순</button>
   <button class="sort-btn" id="sort-price-asc"  onclick="setSort('price-asc')">저가순</button>
   <button class="sort-btn" id="sort-area"       onclick="setSort('area')">면적순</button>
+  <button class="sort-btn" id="btn-excel" onclick="downloadExcel()" style="background:#E1F5EE;border-color:#9FE1CB;color:#085041">📥 엑셀</button>
 </div>
 
 <div id="summaryStrip" class="summary-strip trade" style="display:none">
@@ -331,17 +353,42 @@ function applyFilter(){
   const q=(document.getElementById('aptFilter')?.value||'').trim().toLowerCase();
   const dong=document.getElementById('dong')?.value||'';
   const area=document.getElementById('areaFilter')?.value||'';
+  const price=document.getElementById('priceFilter')?.value||'';
+  const floor=document.getElementById('floorFilter')?.value||'';
+  const build=document.getElementById('buildFilter')?.value||'';
+  const curYear=new Date().getFullYear();
+
   filteredData=allData.filter(d=>{
     const nameOk=!q||(d.aptNm||'').toLowerCase().includes(q);
     const dongOk=!dong||(d.umdNm||'')===dong;
+
     const ar=parseFloat(d.excluUseAr||0);
     const areaOk=!area||(
-      area==='~60'?ar<60:
-      area==='60~85'?ar>=60&&ar<85:
-      area==='85~135'?ar>=85&&ar<135:
-      area==='135~'?ar>=135:true
+      area==='~60'?ar<60:area==='60~85'?ar>=60&&ar<85:
+      area==='85~135'?ar>=85&&ar<135:area==='135~'?ar>=135:true
     );
-    return nameOk&&dongOk&&areaOk;
+
+    const p=currentMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
+    const pm=p/10000; // 억 단위
+    const priceOk=!price||(
+      price==='~3'?pm<3:price==='3~6'?pm>=3&&pm<6:
+      price==='6~10'?pm>=6&&pm<10:price==='10~20'?pm>=10&&pm<20:
+      price==='20~'?pm>=20:true
+    );
+
+    const fl=parseInt(d.floor||0);
+    const floorOk=!floor||(
+      floor==='low'?fl>=1&&fl<=5:floor==='mid'?fl>=6&&fl<=15:
+      floor==='high'?fl>=16:true
+    );
+
+    const by=parseInt(d.buildYear||0);
+    const buildOk=!build||!by||(
+      build==='new5'?curYear-by<=5:build==='new10'?curYear-by<=10:
+      build==='old20'?curYear-by>=20:build==='old30'?curYear-by>=30:true
+    );
+
+    return nameOk&&dongOk&&areaOk&&priceOk&&floorOk&&buildOk;
   });
   sortData();
 }
@@ -496,6 +543,42 @@ function showError(title,detail){
     <div class="state-title">${title}</div>
     <div class="state-sub" style="font-size:12px;max-width:320px">${(detail||'').replace(/\n/g,'<br>')}</div>
   </div>`;
+}
+
+function downloadExcel(){
+  if(!filteredData.length){showToast('다운로드할 데이터가 없습니다');return;}
+
+  const isTrade=currentMode==='trade';
+  const headers=isTrade
+    ?['아파트명','전용면적(㎡)','평','층','거래금액(만원)','계약일','건축년도','법정동','도로명']
+    :['아파트명','전용면적(㎡)','평','층','보증금(만원)','월세(만원)','계약일','계약기간','건축년도','법정동'];
+
+  const rows=filteredData.map(d=>{
+    const ar=parseFloat(d.excluUseAr||0);
+    const py=ar?(ar/3.3058).toFixed(1):'';
+    const dt=d.dealYear&&d.dealMonth?`${d.dealYear}-${String(d.dealMonth).padStart(2,'0')}-${String(d.dealDay||'').padStart(2,'0')}`:''
+    if(isTrade){
+      return [d.aptNm||'',ar||'',py,d.floor||'',parsePrice(d.dealAmount)||'',dt,d.buildYear||'',d.umdNm||'',d.roadNm||''];
+    } else {
+      return [d.aptNm||'',ar||'',py,d.floor||'',parsePrice(d.deposit)||'',parsePrice(d.monthlyRent)||'',dt,d.contractTerm||'',d.buildYear||'',d.umdNm||''];
+    }
+  });
+
+  const csvRows=[headers,...rows].map(r=>r.map(v=>{
+    const s=String(v??'');
+    return s.includes(',')||s.includes('"')||s.includes('\n')?`"${s.replace(/"/g,'""')}"`  :s;
+  }).join(','));
+
+  const BOM='\uFEFF';
+  const blob=new Blob([BOM+csvRows.join('\n')],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const sggName=document.getElementById('sigungu').options[document.getElementById('sigungu').selectedIndex]?.text||'';
+  a.href=url;
+  a.download=`실거래가_${sggName}_${currentMode==='trade'?'매매':'전월세'}_${filteredData.length}건.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(`${filteredData.length.toLocaleString()}건 다운로드 완료`);
 }
 
 function showToast(msg){
