@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>아파트 실거래가 조회</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,'Pretendard','Apple SD Gothic Neo',sans-serif;background:#f5f6f8;color:#1a1a1a;min-height:100vh}
+
+.app-header{background:#0C447C;color:#fff;padding:1rem 1.25rem 0.875rem;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.18)}
+.app-header h1{font-size:17px;font-weight:600;letter-spacing:-0.3px;display:flex;align-items:center;gap:8px}
+.dot{width:8px;height:8px;background:#60D4A4;border-radius:50%;display:inline-block;flex-shrink:0;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.header-sub{font-size:11px;color:rgba(255,255,255,0.6);margin-top:2px}
+
+.search-panel{background:#fff;border-bottom:0.5px solid #e0e0e0;padding:1rem}
+.api-key-row{display:flex;gap:8px;margin-bottom:10px;align-items:center}
+.api-key-row input{flex:1;height:36px;border:0.5px solid #ccc;border-radius:8px;padding:0 10px;font-size:13px;background:#F1EFE8;font-family:monospace;color:#444}
+.api-key-row input:focus{outline:none;border-color:#185FA5;background:#fff}
+.btn-sm{height:36px;padding:0 12px;font-size:12px;border:0.5px solid #ccc;border-radius:8px;background:#fff;cursor:pointer;color:#5F5E5A;white-space:nowrap}
+.btn-sm:hover{background:#F1EFE8}
+
+.search-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.search-grid select{height:38px;border:0.5px solid #ccc;border-radius:8px;padding:0 8px;font-size:14px;background:#fff;width:100%;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
+.search-grid select:focus{outline:none;border-color:#185FA5}
+
+.month-label{font-size:11px;color:#5F5E5A;margin-bottom:4px}
+.month-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.month-row input[type=month]{height:38px;border:0.5px solid #ccc;border-radius:8px;padding:0 8px;font-size:14px;background:#fff;width:100%}
+.month-row input:focus{outline:none;border-color:#185FA5}
+
+.btn-search{width:100%;height:44px;background:#0C447C;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background 0.15s;letter-spacing:-0.2px}
+.btn-search:hover{background:#042C53}
+.btn-search:active{transform:scale(0.98)}
+.btn-search:disabled{background:#B4B2A9;cursor:not-allowed}
+
+.search-tip{font-size:11px;color:#999;margin-top:7px;text-align:center;line-height:1.5}
+
+.filter-bar{background:#fff;padding:8px 12px;border-bottom:0.5px solid #e8e8e8;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.filter-bar input{flex:1;min-width:120px;height:32px;border:0.5px solid #ccc;border-radius:8px;padding:0 10px;font-size:13px}
+.filter-bar input:focus{outline:none;border-color:#185FA5}
+.sort-btn{height:30px;padding:0 10px;font-size:12px;border:0.5px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;white-space:nowrap;color:#555;transition:all 0.1s}
+.sort-btn:hover{border-color:#999}
+.sort-btn.active{background:#E6F1FB;border-color:#185FA5;color:#0C447C;font-weight:600}
+
+.summary-strip{display:grid;grid-template-columns:repeat(4,1fr);background:#E6F1FB;border-bottom:0.5px solid #c8d8f0}
+.sum-item{padding:8px 4px;text-align:center;border-right:0.5px solid #c8d8f0}
+.sum-item:last-child{border-right:none}
+.sum-label{font-size:10px;color:#185FA5;margin-bottom:2px;font-weight:500}
+.sum-value{font-size:12px;font-weight:600;color:#042C53}
+
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;background:#fff}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:560px}
+thead th{background:#2C2C2A;color:#fff;padding:9px 10px;text-align:left;font-weight:500;font-size:11.5px;white-space:nowrap;letter-spacing:0.2px}
+thead th.r{text-align:right}
+tbody tr{border-bottom:0.5px solid #f0f0f0;transition:background 0.1s}
+tbody tr:hover{background:#EDF5FF}
+tbody tr:nth-child(even){background:#FAFAFA}
+tbody tr:nth-child(even):hover{background:#EDF5FF}
+td{padding:8px 10px;white-space:nowrap;font-size:13px}
+td.price{font-weight:600;color:#0C447C;text-align:right}
+td.hi{color:#A32D2D;font-weight:700;text-align:right}
+td.lo{color:#0F6E56;font-weight:700;text-align:right}
+.badge{display:inline-block;background:#F1EFE8;border:0.5px solid #D3D1C7;border-radius:4px;padding:1px 6px;font-size:11px;color:#5F5E5A}
+.badge-new{background:#E1F5EE;border-color:#9FE1CB;color:#085041}
+
+.state-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3.5rem 2rem;text-align:center;color:#5F5E5A}
+.state-icon{font-size:44px;margin-bottom:14px}
+.state-title{font-size:15px;font-weight:600;color:#333;margin-bottom:8px}
+.state-sub{font-size:13px;line-height:1.8;color:#888}
+
+.spinner{width:36px;height:36px;border:3px solid #dde5f4;border-top-color:#185FA5;border-radius:50%;animation:spin 0.7s linear infinite;margin-bottom:14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.prog-wrap{width:220px;height:5px;background:#dde5f4;border-radius:3px;overflow:hidden;margin-bottom:10px}
+.prog-bar{height:100%;background:linear-gradient(90deg,#185FA5,#1D9E75);border-radius:3px;transition:width 0.4s ease}
+.prog-text{font-size:13px;font-weight:500;color:#333;margin-bottom:4px}
+.prog-sub{font-size:12px;color:#888}
+
+.pagination{display:flex;justify-content:center;align-items:center;gap:5px;padding:14px 12px;background:#fff;border-top:0.5px solid #eee;flex-wrap:wrap}
+.pg-btn{min-width:34px;height:34px;padding:0 7px;border:0.5px solid #ccc;border-radius:8px;background:#fff;cursor:pointer;font-size:13px;color:#444;transition:all 0.1s}
+.pg-btn:hover:not(:disabled){background:#f0f0f0}
+.pg-btn.active{background:#0C447C;color:#fff;border-color:#0C447C;font-weight:600}
+.pg-btn:disabled{opacity:0.35;cursor:not-allowed}
+.pg-info{font-size:12px;color:#888;margin-left:4px}
+
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:11px 20px;border-radius:12px;font-size:13px;z-index:9999;opacity:0;pointer-events:none;transition:opacity 0.25s;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,0.2)}
+.toast.show{opacity:1}
+
+.app-footer{text-align:center;font-size:11px;color:#888;padding:16px;background:#2C2C2A;color:#888}
+
+@media(max-width:480px){
+  .summary-strip{grid-template-columns:repeat(2,1fr)}
+  .sum-item:nth-child(2){border-right:none}
+  .sum-item:nth-child(3){border-right:0.5px solid #c8d8f0;border-top:0.5px solid #c8d8f0}
+  .sum-item:nth-child(4){border-top:0.5px solid #c8d8f0}
+  table{font-size:12px}
+  td,thead th{padding:7px 8px}
+}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <h1><span class="dot"></span>아파트 실거래가 조회</h1>
+  <div class="header-sub">국토교통부 실거래가 공개시스템 · 로컬 서버 연동</div>
+</header>
+
+<section class="search-panel">
+  <div class="api-key-row">
+    <input type="password" id="apiKey" placeholder="공공데이터포털 디코딩 인증키" autocomplete="off"/>
+    <button class="btn-sm" onclick="toggleKey()" id="btnToggle">보기</button>
+  </div>
+
+  <div class="search-grid">
+    <select id="sido" onchange="loadSgg()">
+      <option value="">시/도 선택</option>
+    </select>
+    <select id="sigungu">
+      <option value="">시/군/구 선택</option>
+    </select>
+  </div>
+
+  <div class="month-label">조회 기간</div>
+  <div class="month-row">
+    <input type="month" id="startM"/>
+    <input type="month" id="endM"/>
+  </div>
+
+  <button class="btn-search" id="btnSearch" onclick="doSearch()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    조회하기
+  </button>
+  <div class="search-tip" id="tip">최대 24개월 · 월별 병렬 조회 · 로컬 서버 경유</div>
+</section>
+
+<div id="filterBar" class="filter-bar" style="display:none">
+  <input type="text" id="aptFilter" placeholder="아파트명 검색..." oninput="applyFilter()"/>
+  <button class="sort-btn active" id="sort-date"       onclick="setSort('date')">최신순</button>
+  <button class="sort-btn"        id="sort-price-desc" onclick="setSort('price-desc')">고가순</button>
+  <button class="sort-btn"        id="sort-price-asc"  onclick="setSort('price-asc')">저가순</button>
+  <button class="sort-btn"        id="sort-area"       onclick="setSort('area')">면적순</button>
+</div>
+
+<div id="summaryStrip" class="summary-strip" style="display:none">
+  <div class="sum-item"><div class="sum-label">총 거래</div><div class="sum-value" id="s-total">-</div></div>
+  <div class="sum-item"><div class="sum-label">평균가</div><div class="sum-value" id="s-avg">-</div></div>
+  <div class="sum-item"><div class="sum-label">최고가</div><div class="sum-value" id="s-max">-</div></div>
+  <div class="sum-item"><div class="sum-label">최저가</div><div class="sum-value" id="s-min">-</div></div>
+</div>
+
+<main id="main">
+  <div class="state-screen">
+    <div class="state-icon">🏢</div>
+    <div class="state-title">지역과 기간을 선택하세요</div>
+    <div class="state-sub">시/도 → 시/군/구 → 기간 선택 후<br>조회하기를 누르세요</div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<footer class="app-footer">
+  데이터 출처: 국토교통부 아파트 매매 실거래가 상세자료 · 공공데이터포털 Open API
+</footer>
+
+<script>
+const RD={
+  "서울특별시":{"11110":"종로구","11140":"중구","11170":"용산구","11200":"성동구","11215":"광진구","11230":"동대문구","11260":"중랑구","11290":"성북구","11305":"강북구","11320":"도봉구","11350":"노원구","11380":"은평구","11410":"서대문구","11440":"마포구","11470":"양천구","11500":"강서구","11530":"구로구","11545":"금천구","11560":"영등포구","11590":"동작구","11620":"관악구","11650":"서초구","11680":"강남구","11710":"송파구","11740":"강동구"},
+  "부산광역시":{"26110":"중구","26140":"서구","26170":"동구","26200":"영도구","26230":"부산진구","26260":"동래구","26290":"남구","26320":"북구","26350":"해운대구","26380":"사하구","26410":"금정구","26440":"강서구","26470":"연제구","26500":"수영구","26530":"사상구","26710":"기장군"},
+  "대구광역시":{"27110":"중구","27140":"동구","27170":"서구","27200":"남구","27230":"북구","27260":"수성구","27290":"달서구","27710":"달성군"},
+  "인천광역시":{"28110":"중구","28140":"동구","28177":"미추홀구","28185":"연수구","28200":"남동구","28237":"부평구","28245":"계양구","28260":"서구","28710":"강화군","28720":"옹진군"},
+  "광주광역시":{"29110":"동구","29140":"서구","29155":"남구","29170":"북구","29200":"광산구"},
+  "대전광역시":{"30110":"동구","30140":"중구","30170":"서구","30200":"유성구","30230":"대덕구"},
+  "울산광역시":{"31110":"중구","31140":"남구","31170":"동구","31200":"북구","31710":"울주군"},
+  "세종특별자치시":{"36110":"세종시"},
+  "경기도":{"41111":"수원시 장안구","41113":"수원시 권선구","41115":"수원시 팔달구","41117":"수원시 영통구","41131":"성남시 수정구","41133":"성남시 중원구","41135":"성남시 분당구","41150":"의정부시","41171":"안양시 만안구","41173":"안양시 동안구","41190":"부천시","41210":"광명시","41220":"평택시","41250":"동두천시","41271":"안산시 상록구","41273":"안산시 단원구","41281":"고양시 덕양구","41285":"고양시 일산동구","41287":"고양시 일산서구","41290":"과천시","41310":"구리시","41360":"남양주시","41370":"오산시","41390":"시흥시","41410":"군포시","41430":"의왕시","41450":"하남시","41461":"용인시 처인구","41463":"용인시 기흥구","41465":"용인시 수지구","41480":"파주시","41500":"이천시","41550":"안성시","41570":"김포시","41590":"화성시","41610":"광주시","41630":"양주시","41650":"포천시","41670":"여주시","41800":"연천군","41820":"가평군","41830":"양평군"},
+  "강원특별자치도":{"51110":"춘천시","51130":"원주시","51150":"강릉시","51170":"동해시","51190":"태백시","51210":"속초시","51230":"삼척시","51720":"홍천군","51730":"횡성군","51750":"영월군","51760":"평창군","51770":"정선군","51780":"철원군","51790":"화천군","51800":"양구군","51810":"인제군","51820":"고성군","51830":"양양군"},
+  "충청북도":{"43111":"청주시 상당구","43112":"청주시 서원구","43113":"청주시 흥덕구","43114":"청주시 청원구","43130":"충주시","43150":"제천시","43720":"보은군","43730":"옥천군","43740":"영동군","43745":"증평군","43750":"진천군","43760":"괴산군","43770":"음성군","43800":"단양군"},
+  "충청남도":{"44131":"천안시 동남구","44133":"천안시 서북구","44150":"공주시","44180":"보령시","44200":"아산시","44210":"서산시","44230":"논산시","44250":"계룡시","44270":"당진시","44710":"금산군","44760":"부여군","44770":"서천군","44790":"청양군","44800":"홍성군","44810":"예산군","44825":"태안군"},
+  "전북특별자치도":{"52111":"전주시 완산구","52113":"전주시 덕진구","52130":"군산시","52140":"익산시","52180":"정읍시","52190":"남원시","52210":"김제시","52710":"완주군","52720":"진안군","52730":"무주군","52740":"장수군","52750":"임실군","52770":"순창군","52790":"고창군","52800":"부안군"},
+  "전라남도":{"46110":"목포시","46130":"여수시","46150":"순천시","46170":"나주시","46230":"광양시","46710":"담양군","46720":"곡성군","46730":"구례군","46770":"고흥군","46780":"보성군","46790":"화순군","46800":"장흥군","46810":"강진군","46820":"해남군","46830":"영암군","46840":"무안군","46860":"함평군","46870":"영광군","46880":"장성군","46890":"완도군","46900":"진도군","46910":"신안군"},
+  "경상북도":{"47111":"포항시 남구","47113":"포항시 북구","47130":"경주시","47150":"김천시","47170":"안동시","47190":"구미시","47210":"영주시","47230":"영천시","47250":"상주시","47280":"문경시","47290":"경산시","47730":"의성군","47750":"청송군","47760":"영양군","47770":"영덕군","47820":"청도군","47830":"고령군","47840":"성주군","47850":"칠곡군","47900":"예천군","47920":"봉화군","47930":"울진군","47940":"울릉군"},
+  "경상남도":{"48121":"창원시 의창구","48123":"창원시 성산구","48125":"창원시 마산합포구","48127":"창원시 마산회원구","48129":"창원시 진해구","48170":"진주시","48220":"통영시","48240":"사천시","48250":"김해시","48270":"밀양시","48310":"거제시","48330":"양산시","48720":"의령군","48730":"함안군","48740":"창녕군","48820":"고성군","48840":"남해군","48850":"하동군","48860":"산청군","48870":"함양군","48880":"거창군","48890":"합천군"},
+  "제주특별자치도":{"50110":"제주시","50130":"서귀포시"}
+};
+
+let allData=[],filteredData=[],currentSort='date',currentPage=1;
+const PAGE_SIZE=50;
+let keyVis=false;
+
+function init(){
+  const s=document.getElementById('sido');
+  Object.keys(RD).forEach(n=>{
+    const o=document.createElement('option');o.value=n;o.textContent=n;s.appendChild(o);
+  });
+  const now=new Date();
+  const ym=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  document.getElementById('startM').value=ym(new Date(now.getFullYear(),now.getMonth()-2,1));
+  document.getElementById('endM').value=ym(now);
+  const saved=sessionStorage.getItem('apt_key');
+  if(saved)document.getElementById('apiKey').value=saved;
+}
+
+function loadSgg(){
+  const sido=document.getElementById('sido').value;
+  const sg=document.getElementById('sigungu');
+  sg.innerHTML='<option value="">시/군/구 선택</option>';
+  if(!sido||!RD[sido])return;
+  Object.entries(RD[sido]).forEach(([code,name])=>{
+    const o=document.createElement('option');o.value=code;o.textContent=name;sg.appendChild(o);
+  });
+}
+
+function toggleKey(){
+  const inp=document.getElementById('apiKey');
+  keyVis=!keyVis;
+  inp.type=keyVis?'text':'password';
+  document.getElementById('btnToggle').textContent=keyVis?'숨기기':'보기';
+}
+
+function getMonths(s,e){
+  const ms=[];
+  let cur=new Date(s+'-01');
+  const end=new Date(e+'-01');
+  while(cur<=end){
+    ms.push(`${cur.getFullYear()}${String(cur.getMonth()+1).padStart(2,'0')}`);
+    cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);
+  }
+  return ms;
+}
+
+function parsePrice(s){
+  if(!s)return 0;
+  return parseInt(String(s).replace(/,/g,'').trim())||0;
+}
+
+function fmtPrice(v){
+  if(!v)return '-';
+  if(v>=10000){
+    const e=Math.floor(v/10000),r=v%10000;
+    return r>0?`${e}억 ${r.toLocaleString()}만`:`${e}억`;
+  }
+  return `${v.toLocaleString()}만`;
+}
+
+function fmtArea(a){
+  const n=parseFloat(a);
+  if(!n)return '-';
+  return `${n.toFixed(1)}㎡ (${(n/3.3058).toFixed(1)}평)`;
+}
+
+async function fetchMonth(apiKey,lawdCd,dealYmd){
+  const params=new URLSearchParams({serviceKey:apiKey,LAWD_CD:lawdCd,DEAL_YMD:dealYmd});
+  const resp=await fetch(`/api/trade?${params}`,{signal:AbortSignal.timeout(20000)});
+  const json=await resp.json();
+  if(!resp.ok) throw new Error(json.error||`HTTP ${resp.status}`);
+  return json.items||[];
+}
+
+async function doSearch(){
+  const apiKey=document.getElementById('apiKey').value.trim();
+  const sido=document.getElementById('sido').value;
+  const lawdCd=document.getElementById('sigungu').value;
+  const startM=document.getElementById('startM').value;
+  const endM=document.getElementById('endM').value;
+
+  if(!apiKey){showToast('인증키를 입력해 주세요');return;}
+  if(!lawdCd){showToast('시/군/구를 선택해 주세요');return;}
+  if(!startM||!endM){showToast('조회 기간을 선택해 주세요');return;}
+  if(startM>endM){showToast('시작 월이 종료 월보다 늦습니다');return;}
+
+  sessionStorage.setItem('apt_key',apiKey);
+
+  const months=getMonths(startM,endM);
+  if(months.length>24){showToast('최대 24개월까지 조회 가능합니다');return;}
+
+  const btn=document.getElementById('btnSearch');
+  btn.disabled=true;
+  allData=[];filteredData=[];
+  document.getElementById('filterBar').style.display='none';
+  document.getElementById('summaryStrip').style.display='none';
+  showLoading(months.length);
+
+  const BATCH=4;
+  let done=0;
+  const errors=[];
+
+  try{
+    for(let i=0;i<months.length;i+=BATCH){
+      const batch=months.slice(i,i+BATCH);
+      const results=await Promise.allSettled(
+        batch.map(ym=>fetchMonth(apiKey,lawdCd,ym))
+      );
+      results.forEach((r,idx)=>{
+        if(r.status==='fulfilled'){
+          allData.push(...r.value.map(item=>({...item,_ym:batch[idx]})));
+        } else {
+          errors.push(`${batch[idx]}: ${r.reason?.message||'실패'}`);
+        }
+      });
+      done+=batch.length;
+      updateProgress(done,months.length);
+    }
+
+    if(allData.length===0){
+      errors.length>0?showError('조회 오류',errors.slice(0,3).join('\n')):showEmpty();
+    } else {
+      const sggEl=document.getElementById('sigungu');
+      const sggName=sggEl.options[sggEl.selectedIndex]?.text||'';
+      document.getElementById('tip').textContent=
+        `${sido} ${sggName} · ${startM}~${endM} · ${allData.length.toLocaleString()}건 완료`;
+      applyFilter();
+      document.getElementById('filterBar').style.display='flex';
+      document.getElementById('summaryStrip').style.display='grid';
+    }
+  } catch(e){
+    showError('조회 오류',e.message);
+  } finally{
+    btn.disabled=false;
+  }
+}
+
+function applyFilter(){
+  const q=(document.getElementById('aptFilter')?.value||'').trim().toLowerCase();
+  filteredData=q?allData.filter(d=>(d.aptNm||'').toLowerCase().includes(q)):[...allData];
+  sortData();
+}
+
+function setSort(type){
+  currentSort=type;
+  document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sort-'+type)?.classList.add('active');
+  sortData();
+}
+
+function sortData(){
+  const gP=d=>parsePrice(d.dealAmount);
+  const gD=d=>`${d.dealYear||''}${String(d.dealMonth||'').padStart(2,'0')}${String(d.dealDay||'').padStart(2,'0')}`;
+  const gA=d=>parseFloat(d.excluUseAr||0);
+  if(currentSort==='date')           filteredData.sort((a,b)=>gD(b).localeCompare(gD(a)));
+  else if(currentSort==='price-desc') filteredData.sort((a,b)=>gP(b)-gP(a));
+  else if(currentSort==='price-asc')  filteredData.sort((a,b)=>gP(a)-gP(b));
+  else if(currentSort==='area')       filteredData.sort((a,b)=>gA(b)-gA(a));
+  currentPage=1;
+  renderTable();
+}
+
+function renderTable(){
+  const prices=filteredData.map(d=>parsePrice(d.dealAmount)).filter(p=>p>0);
+  const maxP=prices.length?Math.max(...prices):0;
+  const minP=prices.length?Math.min(...prices):0;
+  const avgP=prices.length?Math.round(prices.reduce((a,b)=>a+b,0)/prices.length):0;
+
+  document.getElementById('s-total').textContent=filteredData.length.toLocaleString()+'건';
+  document.getElementById('s-avg').textContent=fmtPrice(avgP);
+  document.getElementById('s-max').textContent=fmtPrice(maxP);
+  document.getElementById('s-min').textContent=fmtPrice(minP);
+
+  const total=filteredData.length;
+  const tp=Math.ceil(total/PAGE_SIZE)||1;
+  if(currentPage>tp)currentPage=1;
+  const st=(currentPage-1)*PAGE_SIZE;
+  const pg=filteredData.slice(st,st+PAGE_SIZE);
+
+  let html=`<div class="table-wrap"><table>
+    <thead><tr>
+      <th>아파트명</th><th>전용면적</th><th>층</th>
+      <th class="r">거래금액</th><th>계약일</th><th>건축년도</th><th>법정동</th>
+    </tr></thead><tbody>`;
+
+  pg.forEach(d=>{
+    const p=parsePrice(d.dealAmount);
+    const isH=p===maxP&&p>0&&prices.length>1;
+    const isL=p===minP&&p>0&&prices.length>1;
+    const pc=isH?'hi':isL?'lo':'price';
+    const dt=d.dealYear&&d.dealMonth
+      ?`${d.dealYear}.${String(d.dealMonth).padStart(2,'0')}.${String(d.dealDay||'').padStart(2,'0')}`
+      :'-';
+    const isNew=(new Date()-new Date(d.dealYear,d.dealMonth-1,d.dealDay||1))<30*86400000;
+    html+=`<tr>
+      <td style="font-weight:500">${d.aptNm||'-'}</td>
+      <td style="color:#555;font-size:12px">${fmtArea(d.excluUseAr)}</td>
+      <td><span class="badge">${d.floor||'-'}층</span></td>
+      <td class="${pc}">${fmtPrice(p)}</td>
+      <td style="color:#666;font-size:12px">${dt}${isNew?'<span class="badge-new" style="margin-left:4px;font-size:10px">NEW</span>':''}</td>
+      <td style="color:#888;font-size:12px">${d.buildYear||'-'}</td>
+      <td style="color:#888;font-size:12px">${d.umdNm||'-'}</td>
+    </tr>`;
+  });
+  html+='</tbody></table></div>';
+
+  if(tp>1){
+    html+='<div class="pagination">';
+    html+=`<button class="pg-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
+    let ps=Math.max(1,currentPage-3),pe=Math.min(tp,currentPage+3);
+    if(ps>1) html+=`<button class="pg-btn" onclick="goPage(1)">1</button>${ps>2?'<span class="pg-info">…</span>':''}`;
+    for(let p=ps;p<=pe;p++)
+      html+=`<button class="pg-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
+    if(pe<tp) html+=`${pe<tp-1?'<span class="pg-info">…</span>':''}<button class="pg-btn" onclick="goPage(${tp})">${tp}</button>`;
+    html+=`<span class="pg-info">${currentPage}/${tp}페이지 · 총 ${total.toLocaleString()}건</span></div>`;
+  }
+
+  document.getElementById('main').innerHTML=html;
+}
+
+function goPage(p){
+  const tp=Math.ceil(filteredData.length/PAGE_SIZE)||1;
+  if(p<1||p>tp)return;
+  currentPage=p;
+  renderTable();
+  window.scrollTo({top:document.getElementById('main').offsetTop-60,behavior:'smooth'});
+}
+
+function showLoading(total){
+  document.getElementById('main').innerHTML=`<div class="state-screen">
+    <div class="spinner"></div>
+    <div class="prog-wrap"><div class="prog-bar" id="prog" style="width:0%"></div></div>
+    <div class="prog-text" id="lmsg">데이터 불러오는 중...</div>
+    <div class="prog-sub">총 ${total}개월 · 4개월씩 병렬 조회</div>
+  </div>`;
+}
+
+function updateProgress(done,total){
+  const pct=Math.round(done/total*100);
+  const b=document.getElementById('prog'),m=document.getElementById('lmsg');
+  if(b)b.style.width=pct+'%';
+  if(m)m.textContent=done>=total?`${total}개월 완료!`:`${done}/${total}개월 조회 중... (${pct}%)`;
+}
+
+function showEmpty(){
+  document.getElementById('main').innerHTML=`<div class="state-screen">
+    <div class="state-icon">📭</div>
+    <div class="state-title">조회된 거래 내역이 없습니다</div>
+    <div class="state-sub">해당 지역/기간에 신고된 거래가 없거나<br>인증키를 다시 확인해 주세요</div>
+  </div>`;
+}
+
+function showError(title,detail){
+  document.getElementById('main').innerHTML=`<div class="state-screen">
+    <div class="state-icon">⚠️</div>
+    <div class="state-title">${title}</div>
+    <div class="state-sub" style="font-size:12px;max-width:320px">${(detail||'').replace(/\n/g,'<br>')}</div>
+  </div>`;
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+init();
+</script>
+</body>
+</html>
