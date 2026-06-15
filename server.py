@@ -2,7 +2,6 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import requests
 import xml.etree.ElementTree as ET
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 import os
 
@@ -64,18 +63,13 @@ def parse_xml_items(xml_text, mode='trade'):
     return items
 
 
-def fetch_month_with_retry(lawd_cd, deal_ymd, mode='trade', retries=3, timeout=30):
+def fetch_month(lawd_cd, deal_ymd, mode, api_key, api_url):
     cache_key = f"{mode}_{lawd_cd}_{deal_ymd}"
     now = time.time()
-
-    # 캐시 히트
     if cache_key in _cache:
         ts, items = _cache[cache_key]
         if now - ts < CACHE_TTL:
-            return deal_ymd, items, True
-
-    api_url = TRADE_API if mode == 'trade' else RENT_API
-    api_key = API_KEY_TRADE if mode == 'trade' else API_KEY_RENT
+            return items
 
     params = {
         'serviceKey': api_key,
@@ -85,21 +79,19 @@ def fetch_month_with_retry(lawd_cd, deal_ymd, mode='trade', retries=3, timeout=3
         'numOfRows':  999,
     }
 
-    last_err = None
-    for attempt in range(retries):
+    for attempt in range(2):  # 최대 2회 시도
         try:
-            resp = requests.get(api_url, params=params, timeout=timeout)
+            resp = requests.get(api_url, params=params, timeout=30)
             resp.raise_for_status()
             items = parse_xml_items(resp.text, mode)
             _cache[cache_key] = (time.time(), items)
-            return deal_ymd, items, False
+            return items
         except requests.exceptions.Timeout:
-            last_err = f'타임아웃 (시도 {attempt+1}/{retries})'
-            time.sleep(1)  # 재시도 전 1초 대기
-        except Exception as e:
-            raise e  # 타임아웃 외 오류는 즉시 raise
-
-    raise requests.exceptions.Timeout(last_err)
+            if attempt == 0:
+                time.sleep(2)
+            else:
+                raise
+    return []
 
 
 @app.route('/api/trade/bulk')
@@ -109,8 +101,10 @@ def api_bulk():
     months  = request.args.get('months', '')
 
     api_key = API_KEY_TRADE if mode == 'trade' else API_KEY_RENT
+    api_url = TRADE_API if mode == 'trade' else RENT_API
+
     if not api_key:
-        return jsonify({'error': f'서버에 API 키가 설정되지 않았습니다 (mode={mode})'}), 500
+        return jsonify({'error': f'API 키 미설정 (mode={mode})'}), 500
     if not all([lawd_cd, months]):
         return jsonify({'error': '필수 파라미터 누락'}), 400
 
@@ -118,21 +112,14 @@ def api_bulk():
     if len(month_list) > 24:
         return jsonify({'error': '최대 24개월'}), 400
 
+    # 메모리 절약을 위해 순차 처리 (병렬 제거)
     all_items, errors = [], []
-
-    # 병렬 처리 (타임아웃 고려해 max_workers 줄임)
-    with ThreadPoolExecutor(max_workers=4) as executor:
-        futures = {
-            executor.submit(fetch_month_with_retry, lawd_cd, ym, mode): ym
-            for ym in month_list
-        }
-        for future in as_completed(futures):
-            ym = futures[future]
-            try:
-                _, items, cached = future.result()
-                all_items.extend(items)
-            except Exception as e:
-                errors.append(f"{ym}: {str(e)}")
+    for ym in month_list:
+        try:
+            items = fetch_month(lawd_cd, ym, mode, api_key, api_url)
+            all_items.extend(items)
+        except Exception as e:
+            errors.append(f"{ym}: {str(e)}")
 
     return jsonify({
         'ok': True,
