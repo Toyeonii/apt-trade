@@ -118,6 +118,14 @@ def api_bulk():
     return jsonify({'ok': True, 'items': all_items, 'count': len(all_items), 'errors': errors})
 
 
+
+@app.route('/api/kakao-key')
+def kakao_key():
+    key = os.environ.get('KAKAO_MAP_KEY', '')
+    if not key:
+        return jsonify({'error': 'KAKAO_MAP_KEY 미설정'}), 500
+    return jsonify({'key': key})
+
 @app.route('/')
 def index():
     return open('index.html', encoding='utf-8').read()

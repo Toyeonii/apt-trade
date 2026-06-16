@@ -158,6 +158,10 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
 .modal-item-detail{font-size:11px;color:#999}
 .modal-item-price{font-size:15px;font-weight:700;color:#0C447C;white-space:nowrap}
 .modal-item-pyung{font-size:11px;color:#888;text-align:right;margin-top:2px}
+.modal-map-wrap{height:280px;background:#f0f0f0;position:relative;flex-shrink:0}
+.modal-map-wrap #kakaoMap{width:100%;height:100%}
+.map-loading{display:flex;align-items:center;justify-content:center;height:100%;font-size:13px;color:#888}
+
 .modal-tabs{display:flex;gap:0;border-bottom:0.5px solid #eee;overflow-x:auto;flex-shrink:0}
 .modal-tab{height:36px;padding:0 14px;border:none;background:transparent;font-size:13px;color:#888;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;flex-shrink:0}
 .modal-tab.active{color:#0C447C;border-bottom-color:#0C447C;font-weight:600}
@@ -292,6 +296,7 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
     <div class="modal-chart" id="modalChartWrap">
       <div class="modal-chart-wrap"><canvas id="modalChart"></canvas></div>
     </div>
+    <div class="modal-map-wrap" id="modalMapWrap" style="display:none"><div id="kakaoMap"></div></div>
     <div class="modal-body" id="modalBody"></div>
   </div>
 </div>
@@ -794,9 +799,10 @@ function showAptModal(aptNm){
 
   // 탭 생성
   const tabsEl=document.getElementById('modalTabs');
+  const aptAddr=deals[0]?.roadNm||'';
   tabsEl.innerHTML=modalAreaKeys.map((k,i)=>
     `<button class="modal-tab ${i===0?'active':''}" onclick="selectModalTab('${k}',this)">${k} (${modalAreaGroups[k].length}건)</button>`
-  ).join('');
+  ).join('') + `<button class="modal-tab" onclick="selectMapTab(this,'${aptNm.replace(/'/g,"\'")}')">🗺️ 지도</button>`;
 
   document.getElementById('aptModal').classList.add('open');
   document.body.style.overflow='hidden';
@@ -809,12 +815,19 @@ function selectModalTab(arKey, btn){
   document.querySelectorAll('.modal-tab').forEach(t=>t.classList.remove('active'));
   if(btn) btn.classList.add('active');
   else document.querySelector('.modal-tab')?.classList.add('active');
+  // 지도 숨기고 차트/목록 표시
+  document.getElementById('modalMapWrap').style.display='none';
+  document.getElementById('modalChartWrap').style.display='block';
+  document.getElementById('modalBody').style.display='block';
 
   const deals=modalAreaGroups[arKey]||[];
   const ar=parseFloat(arKey)||0;
 
   // 차트
   if(modalChartInstance){modalChartInstance.destroy();modalChartInstance=null;}
+  kakaoMapInstance=null;
+  document.getElementById('modalMapWrap').style.display='none';
+  document.getElementById('modalBody').style.display='block';
   const pts=deals.map(d=>{
     const p=currentMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
     const dateStr=`${d.dealYear}-${String(d.dealMonth).padStart(2,'0')}-${String(d.dealDay||'01').padStart(2,'0')}`;
@@ -938,11 +951,109 @@ async function shareModal(){
   }
 }
 
+
+// ── 카카오 지도 ──
+let kakaoMapInstance=null, kakaoKeyLoaded=false, kakaoScriptLoaded=false;
+
+async function getKakaoKey(){
+  if(kakaoKeyLoaded)return kakaoKeyLoaded;
+  const resp=await fetch('/api/kakao-key');
+  const json=await resp.json();
+  kakaoKeyLoaded=json.key||'';
+  return kakaoKeyLoaded;
+}
+
+async function loadKakaoScript(key){
+  if(kakaoScriptLoaded)return;
+  return new Promise((resolve,reject)=>{
+    const s=document.createElement('script');
+    s.src=`https://dapi.kakao.com/v2/maps/sdk.js?appkey=${key}&libraries=services&autoload=false`;
+    s.onload=()=>{
+      kakao.maps.load(()=>{kakaoScriptLoaded=true;resolve();});
+    };
+    s.onerror=reject;
+    document.head.appendChild(s);
+  });
+}
+
+async function selectMapTab(btn, aptNm){
+  document.querySelectorAll('.modal-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+
+  // 차트 숨기고 목록 숨기고 지도 표시
+  document.getElementById('modalChartWrap').style.display='none';
+  document.getElementById('modalBody').style.display='none';
+  const mapWrap=document.getElementById('modalMapWrap');
+  mapWrap.style.display='block';
+  mapWrap.innerHTML='<div class="map-loading">지도 불러오는 중...</div>';
+
+  try{
+    const key=await getKakaoKey();
+    if(!key)throw new Error('키 없음');
+    await loadKakaoScript(key);
+
+    mapWrap.innerHTML='<div id="kakaoMap" style="width:100%;height:100%"></div>';
+
+    const mapContainer=document.getElementById('kakaoMap');
+    const mapOption={center:new kakao.maps.LatLng(37.5665,126.9780),level:4};
+    kakaoMapInstance=new kakao.maps.Map(mapContainer,mapOption);
+
+    // 주소 검색
+    const geocoder=new kakao.maps.services.Geocoder();
+    // 조회 데이터에서 도로명 주소 추출
+    const deals=allData.filter(d=>d.aptNm===aptNm);
+    const roadNm=deals[0]?.roadNm||'';
+    const umdNm=deals[0]?.umdNm||'';
+    const sggEl=document.getElementById('sigungu');
+    const sggName=sggEl.options[sggEl.selectedIndex]?.text||'';
+    const sidoEl=document.getElementById('sido');
+    const sido=sidoEl.value||'';
+
+    const searchAddr=roadNm?`${sido} ${sggName} ${roadNm}`:`${sido} ${sggName} ${umdNm} ${aptNm}`;
+
+    geocoder.addressSearch(searchAddr, (result,status)=>{
+      if(status===kakao.maps.services.Status.OK){
+        const coords=new kakao.maps.LatLng(result[0].y,result[0].x);
+        kakaoMapInstance.setCenter(coords);
+        kakaoMapInstance.setLevel(3);
+
+        const marker=new kakao.maps.Marker({position:coords,map:kakaoMapInstance});
+        const infowindow=new kakao.maps.InfoWindow({
+          content:`<div style="padding:6px 10px;font-size:13px;font-weight:600;white-space:nowrap">${aptNm}</div>`
+        });
+        infowindow.open(kakaoMapInstance,marker);
+      } else {
+        // 키워드로 재검색
+        const ps=new kakao.maps.services.Places();
+        ps.keywordSearch(`${aptNm} ${sggName}`, (data,status)=>{
+          if(status===kakao.maps.services.Status.OK){
+            const coords=new kakao.maps.LatLng(data[0].y,data[0].x);
+            kakaoMapInstance.setCenter(coords);
+            kakaoMapInstance.setLevel(3);
+            const marker=new kakao.maps.Marker({position:coords,map:kakaoMapInstance});
+            const iw=new kakao.maps.InfoWindow({
+              content:`<div style="padding:6px 10px;font-size:13px;font-weight:600;white-space:nowrap">${aptNm}</div>`
+            });
+            iw.open(kakaoMapInstance,marker);
+          } else {
+            mapWrap.innerHTML='<div class="map-loading">위치를 찾을 수 없습니다</div>';
+          }
+        });
+      }
+    });
+  } catch(e){
+    mapWrap.innerHTML=`<div class="map-loading">지도 로드 실패: ${e.message}</div>`;
+  }
+}
+
 function closeModal(e){
   if(e&&e.target!==document.getElementById('aptModal')&&e.type==='click')return;
   document.getElementById('aptModal').classList.remove('open');
   document.body.style.overflow='';
   if(modalChartInstance){modalChartInstance.destroy();modalChartInstance=null;}
+  kakaoMapInstance=null;
+  document.getElementById('modalMapWrap').style.display='none';
+  document.getElementById('modalBody').style.display='block';
 }
 
 
