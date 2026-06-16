@@ -47,7 +47,7 @@ html{overflow-x:hidden;overscroll-behavior:none}
 .sort-btn{height:30px;padding:0 10px;font-size:12px;border:0.5px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;white-space:nowrap;color:#555}
 .sort-btn.active-trade{background:#E6F1FB;border-color:#185FA5;color:#0C447C;font-weight:600}
 .sort-btn.active-rent{background:#E1F5EE;border-color:#0F6E56;color:#0F6E56;font-weight:600}
-.summary-strip{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:0.5px solid #c8d8f0}
+.summary-strip{display:grid;grid-template-columns:repeat(6,1fr);border-bottom:0.5px solid #c8d8f0}
 .summary-strip.trade{background:#E6F1FB;border-color:#c8d8f0}
 .summary-strip.rent{background:#E1F5EE;border-color:#9FE1CB}
 .sum-item{padding:8px 4px;text-align:center;border-right:0.5px solid rgba(0,0,0,0.08)}
@@ -70,6 +70,9 @@ td.hi{color:#A32D2D;font-weight:700;text-align:right}
 td.lo{color:#0F6E56;font-weight:700;text-align:right}
 td.deposit{font-weight:600;color:#0F6E56;text-align:right}
 .badge{display:inline-block;background:#F1EFE8;border:0.5px solid #D3D1C7;border-radius:4px;padding:1px 6px;font-size:11px;color:#5F5E5A}
+
+.badge-record-high{display:inline-block;background:#FDECEA;border:0.5px solid #F5A8A8;border-radius:4px;padding:1px 5px;font-size:10px;color:#A32D2D;margin-left:4px;white-space:nowrap}
+.badge-record-low{display:inline-block;background:#E8F5E9;border:0.5px solid #A5D6A7;border-radius:4px;padding:1px 5px;font-size:10px;color:#1B5E20;margin-left:4px;white-space:nowrap}
 .badge-jeonse{background:#E1F5EE;border:0.5px solid #9FE1CB;color:#085041;display:inline-block;border-radius:4px;padding:1px 6px;font-size:11px}
 .badge-monthly{background:#FAEEDA;border:0.5px solid #FAC775;color:#633806;display:inline-block;border-radius:4px;padding:1px 6px;font-size:11px}
 .badge-renew{background:#EEEDFE;border:0.5px solid #AFA9EC;color:#26215C;font-size:10px;margin-left:3px;display:inline-block;border-radius:4px;padding:1px 5px}
@@ -135,10 +138,11 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
 @media(min-width:481px){.card-list{display:none}}
 @media(max-width:480px){
   .table-wrap{display:none}
-  .summary-strip{grid-template-columns:repeat(2,1fr)}
-  .sum-item:nth-child(2){border-right:none}
-  .sum-item:nth-child(3){border-right:0.5px solid rgba(0,0,0,0.08);border-top:0.5px solid rgba(0,0,0,0.08)}
+  .summary-strip{grid-template-columns:repeat(3,1fr)}
+  .sum-item:nth-child(3){border-right:none}
   .sum-item:nth-child(4){border-top:0.5px solid rgba(0,0,0,0.08)}
+  .sum-item:nth-child(5){border-top:0.5px solid rgba(0,0,0,0.08)}
+  .sum-item:nth-child(6){border-top:0.5px solid rgba(0,0,0,0.08);border-right:none}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -221,8 +225,10 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
 <div id="summaryStrip" class="summary-strip trade" style="display:none">
   <div class="sum-item"><div class="sum-label">총 거래</div><div class="sum-value" id="s-total">-</div></div>
   <div class="sum-item"><div class="sum-label" id="s-label-avg">평균가</div><div class="sum-value" id="s-avg">-</div></div>
+  <div class="sum-item"><div class="sum-label">평균 평당가</div><div class="sum-value" id="s-pyung">-</div></div>
   <div class="sum-item"><div class="sum-label" id="s-label-max">최고가</div><div class="sum-value" id="s-max">-</div></div>
   <div class="sum-item"><div class="sum-label" id="s-label-min">최저가</div><div class="sum-value" id="s-min">-</div></div>
+  <div class="sum-item"><div class="sum-label" id="s-label-jsr">전세가율</div><div class="sum-value" id="s-jsr">-</div></div>
 </div>
 <div id="chartPanel" class="chart-panel" style="display:none">
   <div class="chart-header">
@@ -404,6 +410,7 @@ async function doSearch(){
       const sggEl=document.getElementById('sigungu');
       const sggName=sggEl.options[sggEl.selectedIndex]?.text||'';
       document.getElementById('tip').textContent=`${sido} ${sggName} · ${currentMode==='trade'?'매매':'전월세'} · ${startM}~${endM} · ${allData.length.toLocaleString()}건`;
+      saveLastSearch();
       applyFilter();
       document.getElementById('filterBar').style.display='flex';
       document.getElementById('summaryStrip').style.display='grid';
@@ -470,22 +477,65 @@ function renderTradeTable(){
   const maxP=prices.length?Math.max(...prices):0;
   const minP=prices.length?Math.min(...prices):0;
   const avgP=prices.length?Math.round(prices.reduce((a,b)=>a+b,0)/prices.length):0;
-  document.getElementById('s-total').textContent=filteredData.length.toLocaleString()+'건';
+
+  // 전체 데이터 기준 신고가/역대최저 (allData 기준)
+  const allPrices=allData.map(d=>parsePrice(d.dealAmount)).filter(p=>p>0);
+  const allMaxP=allPrices.length?Math.max(...allPrices):0;
+  const allMinP=allPrices.length?Math.min(...allPrices):0;
+
+  // 평균 평당가
+  const pyungList=filteredData.map(d=>{
+    const p=parsePrice(d.dealAmount);
+    const ar=parseFloat(d.excluUseAr||0);
+    return p>0&&ar>0?Math.round(p/(ar/3.3058)):0;
+  }).filter(v=>v>0);
+  const avgPyung=pyungList.length?Math.round(pyungList.reduce((a,b)=>a+b,0)/pyungList.length):0;
+
+  // 월별 거래량
+  const byMonth={};
+  filteredData.forEach(d=>{
+    const key=`${d.dealYear}-${String(d.dealMonth).padStart(2,'0')}`;
+    byMonth[key]=(byMonth[key]||0)+1;
+  });
+  const monthCount=Object.keys(byMonth).length;
+  const avgMonthly=monthCount?Math.round(filteredData.length/monthCount):0;
+
+  // 전세가율 (매매 모드에서 같은 지역 전월세 데이터가 있으면 계산)
+  document.getElementById('s-total').textContent=`${filteredData.length.toLocaleString()}건 (월평균 ${avgMonthly}건)`;
   document.getElementById('s-avg').textContent=fmtPrice(avgP);
+  document.getElementById('s-pyung').textContent=avgPyung?`${fmtPrice(avgPyung)}/평`:'-';
   document.getElementById('s-max').textContent=fmtPrice(maxP);
   document.getElementById('s-min').textContent=fmtPrice(minP);
+  document.getElementById('s-jsr').textContent='-';
+  document.getElementById('s-label-jsr').textContent='전세가율';
+
   const total=filteredData.length,tp=Math.ceil(total/PAGE_SIZE)||1;
   if(currentPage>tp)currentPage=1;
   const pg=filteredData.slice((currentPage-1)*PAGE_SIZE,currentPage*PAGE_SIZE);
   let html=`<div class="table-wrap"><table><thead><tr>
     <th>아파트명</th><th>전용면적</th><th>층</th>
-    <th class="r">거래금액</th><th>계약일</th><th>건축</th><th>법정동</th>
+    <th class="r">거래금액</th><th class="r">평당가</th><th>계약일</th><th>건축</th><th>법정동</th>
   </tr></thead><tbody>`;
   pg.forEach(d=>{
     const p=parsePrice(d.dealAmount);
-    const isH=p===maxP&&p>0&&prices.length>1,isL=p===minP&&p>0&&prices.length>1;
+    const ar=parseFloat(d.excluUseAr||0);
+    const pyung=p>0&&ar>0?Math.round(p/(ar/3.3058)):0;
+    const isH=p===maxP&&p>0&&prices.length>1;
+    const isL=p===minP&&p>0&&prices.length>1;
+    const isRecordH=p===allMaxP&&p>0&&allPrices.length>1;
+    const isRecordL=p===allMinP&&p>0&&allPrices.length>1;
     const dt=d.dealYear&&d.dealMonth?`${d.dealYear}.${String(d.dealMonth).padStart(2,'0')}.${String(d.dealDay||'').padStart(2,'0')}`:'-';
-    html+=`<tr><td style="font-weight:500">${d.aptNm||'-'}</td><td style="color:#555;font-size:12px">${fmtArea(d.excluUseAr)}</td><td><span class="badge">${d.floor||'-'}층</span></td><td class="${isH?'hi':isL?'lo':'price'}">${fmtPrice(p)}</td><td style="color:#666;font-size:12px">${dt}</td><td style="color:#888;font-size:12px">${d.buildYear||'-'}</td><td style="color:#888;font-size:12px">${d.umdNm||'-'}</td></tr>`;
+    const recordBadge=isRecordH?'<span class="badge-record-high">신고가</span>':isRecordL?'<span class="badge-record-low">역대최저</span>':'';
+    html+=`<tr style="cursor:pointer" onclick="filterByApt('${(d.aptNm||'').replace(/'/g,"\\'")}')" title="${d.aptNm||''} 클릭 시 필터링">
+      <td style="font-weight:500">${d.aptNm||'-'}${recordBadge}</td>
+      <td style="color:#555;font-size:12px">${fmtArea(d.excluUseAr)}</td>
+      <td><span class="badge">${d.floor||'-'}층</span></td>
+      <td class="${isH?'hi':isL?'lo':'price'}">${fmtPrice(p)}</td>
+      <td style="text-align:right;color:#888;font-size:12px">${pyung?fmtPrice(pyung)+'/평':'-'}</td>
+      <td style="color:#666;font-size:12px">${dt}</td>
+      <td style="color:#888;font-size:12px">${d.buildYear||'-'}</td>
+      <td style="color:#888;font-size:12px">${d.umdNm||'-'}</td>
+    </tr>`;
   });
   html+='</tbody></table></div>';
 
@@ -493,18 +543,24 @@ function renderTradeTable(){
   let cards='<div class="card-list">';
   pg.forEach(d=>{
     const p=parsePrice(d.dealAmount);
+    const ar=parseFloat(d.excluUseAr||0);
+    const pyung=p>0&&ar>0?Math.round(p/(ar/3.3058)):0;
     const isH=p===maxP&&p>0&&prices.length>1,isL=p===minP&&p>0&&prices.length>1;
+    const isRecordH=p===allMaxP&&p>0&&allPrices.length>1;
+    const isRecordL=p===allMinP&&p>0&&allPrices.length>1;
     const pc=isH?'hi':isL?'lo':'';
     const dt=d.dealYear&&d.dealMonth?`${d.dealYear}.${String(d.dealMonth).padStart(2,'0')}.${String(d.dealDay||'').padStart(2,'0')}`:'-';
-    cards+=`<div class="card">
+    const recordBadge=isRecordH?'<span class="badge-record-high">신고가</span>':isRecordL?'<span class="badge-record-low">역대최저</span>':'';
+    cards+=`<div class="card" onclick="filterByApt('${(d.aptNm||'').replace(/'/g,"\'")}')">
       <div class="card-top">
-        <span class="card-name">${d.aptNm||'-'}</span>
+        <span class="card-name">${d.aptNm||'-'}${recordBadge}</span>
         <span class="card-price ${pc}">${fmtPrice(p)}</span>
       </div>
       <div class="card-mid">
         <span class="card-tag">${fmtArea(d.excluUseAr)}</span>
         <span class="card-tag">${d.floor||'-'}층</span>
         <span class="card-tag">${d.buildYear||'-'}년</span>
+        ${pyung?`<span class="card-tag">${fmtPrice(pyung)}/평</span>`:''}
       </div>
       <div class="card-bot">
         <span>${d.umdNm||'-'}</span>
@@ -524,10 +580,24 @@ function renderRentTable(){
   const maxD=deposits.length?Math.max(...deposits):0;
   const minD=deposits.length?Math.min(...deposits):0;
   const avgD=deposits.length?Math.round(deposits.reduce((a,b)=>a+b,0)/deposits.length):0;
-  document.getElementById('s-total').textContent=filteredData.length.toLocaleString()+'건';
+  // 월평균 거래량
+  const byMonthR={};
+  filteredData.forEach(d=>{const k=`${d.dealYear}-${String(d.dealMonth).padStart(2,'0')}`;byMonthR[k]=(byMonthR[k]||0)+1;});
+  const monthCountR=Object.keys(byMonthR).length;
+  const avgMonthlyR=monthCountR?Math.round(filteredData.length/monthCountR):0;
+
+  // 전세 평균 보증금
+  const jeonseList=filteredData.filter(d=>!parsePrice(d.monthlyRent));
+  const jeonseAvg=jeonseList.length?Math.round(jeonseList.map(d=>parsePrice(d.deposit)).reduce((a,b)=>a+b,0)/jeonseList.length):0;
+
+  document.getElementById('s-total').textContent=`${filteredData.length.toLocaleString()}건 (월평균 ${avgMonthlyR}건)`;
   document.getElementById('s-avg').textContent=fmtPrice(avgD);
+  document.getElementById('s-pyung').textContent=jeonseList.length?`전세 ${jeonseList.length}건`:'-';
   document.getElementById('s-max').textContent=fmtPrice(maxD);
   document.getElementById('s-min').textContent=fmtPrice(minD);
+  document.getElementById('s-label-jsr').textContent='월세건수';
+  const monthlyCount=filteredData.filter(d=>parsePrice(d.monthlyRent)).length;
+  document.getElementById('s-jsr').textContent=monthlyCount?`${monthlyCount}건`:'-';
   const total=filteredData.length,tp=Math.ceil(total/PAGE_SIZE)||1;
   if(currentPage>tp)currentPage=1;
   const pg=filteredData.slice((currentPage-1)*PAGE_SIZE,currentPage*PAGE_SIZE);
@@ -639,6 +709,51 @@ function showToast(msg){
   setTimeout(()=>t.classList.remove('show'),2500);
 }
 
+
+
+// ── 아파트 클릭 필터링 ──
+function filterByApt(aptNm){
+  const input=document.getElementById('aptFilter');
+  if(!input)return;
+  if(input.value===aptNm){
+    input.value='';
+    showToast('필터 해제');
+  } else {
+    input.value=aptNm;
+    showToast(`"${aptNm}" 필터 적용`);
+  }
+  applyFilter();
+}
+
+// ── 최근 조회 기록 ──
+function saveLastSearch(){
+  const sido=document.getElementById('sido').value;
+  const sggCd=document.getElementById('sigungu').value;
+  const sggEl=document.getElementById('sigungu');
+  const sggName=sggEl.options[sggEl.selectedIndex]?.text||'';
+  const startM=document.getElementById('startM').value;
+  const endM=document.getElementById('endM').value;
+  const mode=currentMode;
+  if(!sggCd)return;
+  const sidoShort=sido.replace('특별시','').replace('광역시','').replace('특별자치시','').replace('특별자치도','').replace('도','');
+  localStorage.setItem('apt_last_search',JSON.stringify({sido,sggCd,sggName,sidoShort,startM,endM,mode}));
+}
+
+function restoreLastSearch(){
+  try{
+    const s=JSON.parse(localStorage.getItem('apt_last_search')||'null');
+    if(!s||!s.sggCd)return;
+    document.getElementById('sido').value=s.sido;
+    loadSgg();
+    setTimeout(()=>{
+      document.getElementById('sigungu').value=s.sggCd;
+      if(s.startM)document.getElementById('startM').value=s.startM;
+      if(s.endM)document.getElementById('endM').value=s.endM;
+      if(s.mode&&s.mode!=='trade')switchMode(s.mode);
+      showToast(`마지막 조회: ${s.sidoShort} ${s.sggName}`);
+    },100);
+  }catch(e){}
+}
 
 // ── 차트 ──
 let chartInstance=null, chartVisible=true;
@@ -841,7 +956,7 @@ function copyShareUrl(){
 
 function loadFromUrl(){
   const p=new URLSearchParams(location.search);
-  if(!p.get('sggCd'))return;
+  if(!p.get('sggCd')){restoreLastSearch();return;}
   const sido=p.get('sido')||'';
   const sggCd=p.get('sggCd')||'';
   const startM=p.get('startM')||'';
