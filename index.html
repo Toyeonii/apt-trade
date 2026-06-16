@@ -1007,6 +1007,9 @@ async function selectMapTab(btn, aptNm){
     const sidoEl=document.getElementById('sido');
     const sido=sidoEl.value||'';
 
+    // 아파트명 정제 (괄호 제거)
+    const cleanAptNm=aptNm.replace(/\([^)]*\)/g,'').trim();
+
     const ps=new kakao.maps.services.Places();
 
     function placeMarker(x, y){
@@ -1020,11 +1023,12 @@ async function selectMapTab(btn, aptNm){
       iw.open(kakaoMapInstance, marker);
     }
 
-    // 검색 순서: 1) 시도+시군구+법정동+아파트명 2) 시도+시군구+아파트명 3) 아파트명만
+    // 검색 순서: 1) 시도+시군구+법정동+정제명 2) 시도+시군구+정제명 3) 법정동+정제명 4) 정제명만
     const queries=[
-      `${sido} ${sggName} ${umdNm} ${aptNm}`,
-      `${sido} ${sggName} ${aptNm}`,
-      `${aptNm}`
+      `${sido} ${sggName} ${umdNm} ${cleanAptNm}`,
+      `${sido} ${sggName} ${cleanAptNm}`,
+      `${umdNm} ${cleanAptNm}`,
+      cleanAptNm
     ];
 
     function searchNext(idx){
