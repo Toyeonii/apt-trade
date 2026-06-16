@@ -998,9 +998,7 @@ async function selectMapTab(btn, aptNm){
     const mapOption={center:new kakao.maps.LatLng(37.5665,126.9780),level:4};
     kakaoMapInstance=new kakao.maps.Map(mapContainer,mapOption);
 
-    // 주소 검색
-    const geocoder=new kakao.maps.services.Geocoder();
-    // 조회 데이터에서 도로명 주소 추출
+    // 주소 검색 - 단계별 폴백
     const deals=allData.filter(d=>d.aptNm===aptNm);
     const roadNm=deals[0]?.roadNm||'';
     const umdNm=deals[0]?.umdNm||'';
@@ -1009,38 +1007,41 @@ async function selectMapTab(btn, aptNm){
     const sidoEl=document.getElementById('sido');
     const sido=sidoEl.value||'';
 
-    const searchAddr=roadNm?`${sido} ${sggName} ${roadNm}`:`${sido} ${sggName} ${umdNm} ${aptNm}`;
+    const ps=new kakao.maps.services.Places();
 
-    geocoder.addressSearch(searchAddr, (result,status)=>{
-      if(status===kakao.maps.services.Status.OK){
-        const coords=new kakao.maps.LatLng(result[0].y,result[0].x);
-        kakaoMapInstance.setCenter(coords);
-        kakaoMapInstance.setLevel(3);
+    function placeMarker(x, y){
+      const coords=new kakao.maps.LatLng(y, x);
+      kakaoMapInstance.setCenter(coords);
+      kakaoMapInstance.setLevel(3);
+      const marker=new kakao.maps.Marker({position:coords, map:kakaoMapInstance});
+      const iw=new kakao.maps.InfoWindow({
+        content:`<div style="padding:6px 10px;font-size:13px;font-weight:600;white-space:nowrap">${aptNm}</div>`
+      });
+      iw.open(kakaoMapInstance, marker);
+    }
 
-        const marker=new kakao.maps.Marker({position:coords,map:kakaoMapInstance});
-        const infowindow=new kakao.maps.InfoWindow({
-          content:`<div style="padding:6px 10px;font-size:13px;font-weight:600;white-space:nowrap">${aptNm}</div>`
-        });
-        infowindow.open(kakaoMapInstance,marker);
-      } else {
-        // 키워드로 재검색
-        const ps=new kakao.maps.services.Places();
-        ps.keywordSearch(`${aptNm} ${sggName}`, (data,status)=>{
-          if(status===kakao.maps.services.Status.OK){
-            const coords=new kakao.maps.LatLng(data[0].y,data[0].x);
-            kakaoMapInstance.setCenter(coords);
-            kakaoMapInstance.setLevel(3);
-            const marker=new kakao.maps.Marker({position:coords,map:kakaoMapInstance});
-            const iw=new kakao.maps.InfoWindow({
-              content:`<div style="padding:6px 10px;font-size:13px;font-weight:600;white-space:nowrap">${aptNm}</div>`
-            });
-            iw.open(kakaoMapInstance,marker);
-          } else {
-            mapWrap.innerHTML='<div class="map-loading">위치를 찾을 수 없습니다</div>';
-          }
-        });
+    // 검색 순서: 1) 시도+시군구+법정동+아파트명 2) 시도+시군구+아파트명 3) 아파트명만
+    const queries=[
+      `${sido} ${sggName} ${umdNm} ${aptNm}`,
+      `${sido} ${sggName} ${aptNm}`,
+      `${aptNm}`
+    ];
+
+    function searchNext(idx){
+      if(idx>=queries.length){
+        mapWrap.innerHTML='<div class="map-loading">위치를 찾을 수 없습니다</div>';
+        return;
       }
-    });
+      ps.keywordSearch(queries[idx], (data, status)=>{
+        if(status===kakao.maps.services.Status.OK){
+          placeMarker(data[0].x, data[0].y);
+        } else {
+          searchNext(idx+1);
+        }
+      });
+    }
+
+    searchNext(0);
   } catch(e){
     mapWrap.innerHTML=`<div class="map-loading">지도 로드 실패: ${e.message}</div>`;
   }
