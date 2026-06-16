@@ -580,7 +580,7 @@ function renderTradeTable(){
     const isRecordL=p===allMinP&&p>0&&allPrices.length>1;
     const dt=d.dealYear&&d.dealMonth?`${d.dealYear}.${String(d.dealMonth).padStart(2,'0')}.${String(d.dealDay||'').padStart(2,'0')}`:'-';
     const recordBadge=isRecordH?'<span class="badge-record-high">신고가</span>':isRecordL?'<span class="badge-record-low">역대최저</span>':'';
-    html+=`<tr style="cursor:pointer" data-road="${(d.roadNm||'')" data-apt="${(d.aptNm||'').replace(/"/g,'&quot;')}" title="${d.aptNm||''} · 클릭:이력보기">
+    html+=`<tr style="cursor:pointer" data-road="${(d.roadNm||'')}" data-apt="${(d.aptNm||'').replace(/"/g,'&quot;')}" title="${d.aptNm||''} · 클릭:이력보기">
       <td style="font-weight:500">${d.aptNm||'-'}${recordBadge}<div style="font-size:11px;color:#aaa;font-weight:400">${d.roadNm||d.umdNm||''}</div></td>
       <td style="color:#555;font-size:12px">${fmtArea(d.excluUseAr)}</td>
       <td><span class="badge">${d.floor||'-'}층</span></td>
@@ -605,7 +605,7 @@ function renderTradeTable(){
     const pc=isH?'hi':isL?'lo':'';
     const dt=d.dealYear&&d.dealMonth?`${d.dealYear}.${String(d.dealMonth).padStart(2,'0')}.${String(d.dealDay||'').padStart(2,'0')}`:'-';
     const recordBadge=isRecordH?'<span class="badge-record-high">신고가</span>':isRecordL?'<span class="badge-record-low">역대최저</span>':'';
-    cards+=`<div class="card" onclick="filterByApt('${(d.aptNm||'').replace(/'/g,"\'")}')">
+    cards+=`<div class="card" data-road="${(d.roadNm||'')}" data-apt="${(d.aptNm||'').replace(/"/g,'&quot;')}">
       <div class="card-top">
         <span class="card-name">${d.aptNm||'-'}${recordBadge}</span>
         <span class="card-price ${pc}">${fmtPrice(p)}</span>
