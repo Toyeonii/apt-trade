@@ -883,32 +883,50 @@ function selectModalTab(arKey, btn){
 // ── 팝업 공유 ──
 async function shareModal(){
   const sheet=document.querySelector('.modal-sheet');
-  if(!sheet){showToast('공유할 내용이 없습니다');return;}
+  const body=document.getElementById('modalBody');
+  if(!sheet||!body){showToast('공유할 내용이 없습니다');return;}
 
   showToast('이미지 생성 중...');
   try{
+    // 스크롤 영역 풀어서 전체 높이 캡처
+    const origMaxH=sheet.style.maxHeight;
+    const origOverflow=body.style.overflowY;
+    const origHeight=body.style.height;
+    sheet.style.maxHeight='none';
+    body.style.overflowY='visible';
+    body.style.height='auto';
+
+    await new Promise(r=>setTimeout(r,100)); // 레이아웃 반영 대기
+
     const canvas=await html2canvas(sheet,{
       scale:2,
       useCORS:true,
       backgroundColor:'#ffffff',
+      scrollY:0,
+      windowHeight:sheet.scrollHeight+200,
       ignoreElements:el=>el.classList.contains('modal-share')||el.classList.contains('modal-close')
     });
 
+    // 원래대로 복원
+    sheet.style.maxHeight=origMaxH;
+    body.style.overflowY=origOverflow;
+    body.style.height=origHeight;
+
     canvas.toBlob(async blob=>{
       if(!blob)return;
-      const file=new File([blob],'apt-trade.png',{type:'image/png'});
+      const aptNm=document.getElementById('modalTitle')?.textContent||'아파트실거래가';
+      const file=new File([blob],`${aptNm}.png`,{type:'image/png'});
 
       if(navigator.share&&navigator.canShare({files:[file]})){
         await navigator.share({
-          title:document.getElementById('modalTitle')?.textContent||'아파트 실거래가',
+          title:aptNm,
           files:[file]
         });
       } else {
-        // 공유 API 미지원 시 다운로드
         const url=URL.createObjectURL(blob);
         const a=document.createElement('a');
         a.href=url;
-        a.download='apt-trade.png';
+        a.download=`${aptNm}.png`;
         a.click();
         URL.revokeObjectURL(url);
         showToast('이미지 다운로드 완료');
