@@ -61,7 +61,7 @@ html{overflow-x:hidden}
 table{width:100%;border-collapse:collapse;font-size:13px;min-width:560px}
 thead th{background:#2C2C2A;color:#fff;padding:9px 10px;text-align:left;font-weight:500;font-size:11.5px;white-space:nowrap}
 thead th.r{text-align:right}
-tbody tr{border-bottom:0.5px solid #f0f0f0}
+tbody tr{border-bottom:0.5px solid #f0f0f0;-webkit-user-select:none;user-select:none}
 tbody tr:hover{background:#f0f7ff}
 tbody tr:nth-child(even){background:#FAFAFA}
 tbody tr:nth-child(even):hover{background:#f0f7ff}
@@ -99,7 +99,7 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
 
 /* 카드형 (모바일) */
 .card-list{padding:8px;background:#f5f6f8}
-.card{background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,0.08)}
+.card{background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,0.08);-webkit-user-select:none;user-select:none}
 .card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
 .card-name{font-size:14px;font-weight:600;color:#1a1a1a;flex:1;margin-right:8px}
 .card-price{font-size:15px;font-weight:700;color:#0C447C;white-space:nowrap}
@@ -846,12 +846,12 @@ function closeModal(e){
 
 
 // ── 롱프레스 ──
-let lpTimer=null, lpTarget=null;
+let lpTimer=null, lpFired=false;
 
 function lpStart(aptNm, e){
-  lpTarget=aptNm;
+  lpFired=false;
   lpTimer=setTimeout(()=>{
-    lpTarget=null;
+    lpFired=true;
     const input=document.getElementById('aptFilter');
     if(!input)return;
     if(input.value===aptNm){
@@ -865,16 +865,12 @@ function lpStart(aptNm, e){
   }, 600);
 }
 
-function lpEnd(){
+function lpEnd(e){
   if(lpTimer){clearTimeout(lpTimer);lpTimer=null;}
 }
 
 function lpClick(aptNm){
-  if(lpTarget!==null){
-    // 롱프레스 진행 중이었으면 클릭 무시
-    lpTarget=null;
-    return;
-  }
+  if(lpFired){lpFired=false;return;}
   showAptModal(aptNm);
 }
 
