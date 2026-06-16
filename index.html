@@ -275,6 +275,7 @@ function switchMode(mode){
   document.getElementById('main').innerHTML=`<div class="state-screen"><div class="state-icon">${mode==='trade'?'🏠':'📋'}</div><div class="state-title">지역과 기간을 선택하세요</div><div class="state-sub">조회하기를 눌러주세요</div></div>`;
   document.getElementById('tab-trade').classList.toggle('active',mode==='trade');
   document.getElementById('tab-rent').classList.toggle('active',mode==='rent');
+  resetChart();
   const btn=document.getElementById('btnSearch');
   btn.className=`btn-search ${mode}`;
   const strip=document.getElementById('summaryStrip');
@@ -297,13 +298,14 @@ function loadSgg(){
   resetDong();
   resetFilters();
   resetResult();
+  resetChart();
   if(!sido||!RD[sido])return;
   Object.entries(RD[sido]).forEach(([code,name])=>{
     const o=document.createElement('option');o.value=code;o.textContent=name;sg.appendChild(o);
   });
 }
 
-function onSggChange(){resetDong();resetFilters();resetResult();}
+function onSggChange(){resetDong();resetFilters();resetResult();resetChart();}
 
 function resetResult(){
   allData=[];filteredData=[];
@@ -632,64 +634,120 @@ function showToast(msg){
 // ── 차트 ──
 let chartInstance=null, chartVisible=true;
 
+function resetChart(){
+  const panel=document.getElementById('chartPanel');
+  panel.style.display='none';
+  if(chartInstance){chartInstance.destroy();chartInstance=null;}
+}
+
 function renderChart(){
   const panel=document.getElementById('chartPanel');
-  if(!filteredData.length){panel.style.display='none';return;}
+  if(!filteredData.length){resetChart();return;}
 
-  const byMonth={};
-  filteredData.forEach(d=>{
-    const key=`${d.dealYear}-${String(d.dealMonth).padStart(2,'0')}`;
-    if(!byMonth[key])byMonth[key]=[];
-    const p=currentMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
-    if(p>0)byMonth[key].push(p);
-  });
-
-  const labels=Object.keys(byMonth).sort();
-  if(labels.length<2){panel.style.display='none';return;}
-
-  const values=labels.map(k=>{
-    const arr=byMonth[k];
-    return arr.length?Math.round(arr.reduce((a,b)=>a+b,0)/arr.length):0;
-  });
-
-  panel.style.display='block';
-  const modeLabel=currentMode==='trade'?'평균 거래가':'평균 보증금';
-  document.getElementById('chartTitle').textContent=`월별 ${modeLabel} 추이`;
-
+  const aptQ=(document.getElementById('aptFilter')?.value||'').trim();
   const color=currentMode==='trade'?'#185FA5':'#0F6E56';
-  const bgColor=currentMode==='trade'?'rgba(24,95,165,0.08)':'rgba(15,110,86,0.08)';
-
+  const bgColor=currentMode==='trade'?'rgba(24,95,165,0.15)':'rgba(15,110,86,0.15)';
+  const modeLabel=currentMode==='trade'?'거래가':'보증금';
   const ctx=document.getElementById('priceChart').getContext('2d');
-  if(chartInstance)chartInstance.destroy();
-  chartInstance=new Chart(ctx,{
-    type:'line',
-    data:{
-      labels,
-      datasets:[{
-        label:modeLabel,
-        data:values,
-        borderColor:color,
-        backgroundColor:bgColor,
-        borderWidth:2,
-        pointRadius:4,
-        pointBackgroundColor:color,
-        fill:true,
-        tension:0.3
-      }]
-    },
-    options:{
-      responsive:true,
-      maintainAspectRatio:false,
-      plugins:{
-        legend:{display:false},
-        tooltip:{callbacks:{label:ctx=>`${fmtPrice(ctx.raw)}`}}
+  if(chartInstance){chartInstance.destroy();chartInstance=null;}
+
+  if(aptQ){
+    // ── 스캐터 차트: 아파트명 검색 시 개별 거래 점 ──
+    const points=filteredData.map(d=>{
+      const p=currentMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
+      const dateStr=`${d.dealYear}-${String(d.dealMonth).padStart(2,'0')}-${String(d.dealDay||'01').padStart(2,'0')}`;
+      return p>0?{x:dateStr,y:p,floor:d.floor,area:d.excluUseAr}:null;
+    }).filter(Boolean).sort((a,b)=>a.x.localeCompare(b.x));
+
+    if(points.length<1){resetChart();return;}
+
+    panel.style.display='block';
+    document.getElementById('chartTitle').textContent=`"${aptQ}" 개별 거래가`;
+
+    chartInstance=new Chart(ctx,{
+      type:'scatter',
+      data:{
+        datasets:[{
+          label:modeLabel,
+          data:points.map(p=>({x:p.x,y:p.y,floor:p.floor,area:p.area})),
+          backgroundColor:bgColor,
+          borderColor:color,
+          borderWidth:1.5,
+          pointRadius:5,
+          pointHoverRadius:7,
+        }]
       },
-      scales:{
-        y:{ticks:{callback:v=>fmtPrice(v),font:{size:10},maxTicksLimit:5},grid:{color:'rgba(0,0,0,0.05)'}},
-        x:{ticks:{font:{size:10}},grid:{display:false}}
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        plugins:{
+          legend:{display:false},
+          tooltip:{callbacks:{
+            label:ctx=>{
+              const d=ctx.raw;
+              return [`${fmtPrice(d.y)}`,`${d.floor}층 · ${parseFloat(d.area||0).toFixed(1)}㎡`];
+            },
+            title:ctx=>ctx[0]?.raw?.x||''
+          }}
+        },
+        scales:{
+          x:{type:'category',ticks:{font:{size:10},maxRotation:45},grid:{display:false}},
+          y:{ticks:{callback:v=>fmtPrice(v),font:{size:10},maxTicksLimit:5},grid:{color:'rgba(0,0,0,0.05)'}}
+        }
       }
-    }
-  });
+    });
+
+  } else {
+    // ── 라인 차트: 월별 평균가 ──
+    const byMonth={};
+    filteredData.forEach(d=>{
+      const key=`${d.dealYear}-${String(d.dealMonth).padStart(2,'0')}`;
+      if(!byMonth[key])byMonth[key]=[];
+      const p=currentMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
+      if(p>0)byMonth[key].push(p);
+    });
+
+    const labels=Object.keys(byMonth).sort();
+    if(labels.length<2){resetChart();return;}
+
+    const values=labels.map(k=>{
+      const arr=byMonth[k];
+      return arr.length?Math.round(arr.reduce((a,b)=>a+b,0)/arr.length):0;
+    });
+
+    panel.style.display='block';
+    document.getElementById('chartTitle').textContent=`월별 평균 ${modeLabel} 추이`;
+
+    chartInstance=new Chart(ctx,{
+      type:'line',
+      data:{
+        labels,
+        datasets:[{
+          label:`평균 ${modeLabel}`,
+          data:values,
+          borderColor:color,
+          backgroundColor:bgColor,
+          borderWidth:2,
+          pointRadius:4,
+          pointBackgroundColor:color,
+          fill:true,
+          tension:0.3
+        }]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        plugins:{
+          legend:{display:false},
+          tooltip:{callbacks:{label:ctx=>`${fmtPrice(ctx.raw)}`}}
+        },
+        scales:{
+          y:{ticks:{callback:v=>fmtPrice(v),font:{size:10},maxTicksLimit:5},grid:{color:'rgba(0,0,0,0.05)'}},
+          x:{ticks:{font:{size:10}},grid:{display:false}}
+        }
+      }
+    });
+  }
 }
 
 function toggleChart(){
