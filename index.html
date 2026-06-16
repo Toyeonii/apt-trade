@@ -1004,13 +1004,20 @@ async function selectMapTab(btn, aptNm, roadNm=''){
     const sidoEl=document.getElementById('sido');
     const sido=sidoEl.value||'';
 
-    const deals=allData.filter(d=>d.aptNm===aptNm&&(!roadNm||d.roadNm===roadNm));
-    const umdNm=deals[0]?.umdNm||'';
+    const aptDeals=allData.filter(d=>d.aptNm===aptNm&&(!roadNm||d.roadNm===roadNm));
+    const umdNm=aptDeals[0]?.umdNm||'';
+    const aptRoadNm=aptDeals[0]?.roadNm||'';
+    const aptRoadBonbun=aptDeals[0]?.roadNmBonbun||'';
 
     // 아파트명 정제 (괄호 제거, '아파트' 단어 제거)
     const cleanAptNm=aptNm.replace(/\([^)]*\)/g,'').replace(/아파트$/,'').trim();
 
+    // 도로명+번지 (앞의 0 제거)
+    const bonbunNum=aptRoadBonbun?String(parseInt(aptRoadBonbun,10)):'';
+    const roadAddr=aptRoadNm&&bonbunNum?`${sido} ${sggName} ${aptRoadNm} ${bonbunNum}`:'';
+
     const ps=new kakao.maps.services.Places();
+    const geocoder=new kakao.maps.services.Geocoder();
 
     function placeMarker(x, y){
       const coords=new kakao.maps.LatLng(y, x);
@@ -1023,7 +1030,7 @@ async function selectMapTab(btn, aptNm, roadNm=''){
       iw.open(kakaoMapInstance, marker);
     }
 
-    // 검색 순서: 1) 시도+시군구+법정동+정제명 2) 시도+시군구+정제명 3) 법정동+정제명 4) 정제명만
+    // 키워드 검색 폴백
     const queries=[
       `${sido} ${sggName} ${umdNm} ${cleanAptNm}`,
       `${sido} ${sggName} ${cleanAptNm}`,
@@ -1038,7 +1045,19 @@ async function selectMapTab(btn, aptNm, roadNm=''){
         else{searchByKeyword(idx+1);}
       });
     }
-    searchByKeyword(0);
+
+    // 도로명 주소로 먼저 검색 → 실패 시 키워드 검색
+    if(roadAddr){
+      geocoder.addressSearch(roadAddr,(result,status)=>{
+        if(status===kakao.maps.services.Status.OK){
+          placeMarker(result[0].x, result[0].y);
+        } else {
+          searchByKeyword(0);
+        }
+      });
+    } else {
+      searchByKeyword(0);
+    }
   } catch(e){
     mapWrap.innerHTML=`<div class="map-loading">지도 로드 실패: ${e.message}</div>`;
   }
