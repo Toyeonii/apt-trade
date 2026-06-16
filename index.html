@@ -99,6 +99,29 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
 .card-tag.jeonse-tag{background:#E1F5EE;border-color:#9FE1CB;color:#085041}
 .card-bot{display:flex;justify-content:space-between;font-size:11px;color:#999}
 .card-renew{font-size:10px;background:#EEEDFE;border:0.5px solid #AFA9EC;border-radius:4px;padding:1px 5px;color:#26215C;margin-left:4px}
+
+/* 헤더 버튼 */
+.header-btns{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.hdr-btn{height:26px;padding:0 10px;font-size:11px;border:0.5px solid rgba(255,255,255,0.35);border-radius:20px;background:rgba(255,255,255,0.1);color:#fff;cursor:pointer;white-space:nowrap}
+.hdr-btn:hover{background:rgba(255,255,255,0.22)}
+
+/* 즐겨찾기 패널 */
+.fav-panel{background:#fff;border-bottom:0.5px solid #eee;padding:10px 12px}
+.fav-title{font-size:12px;font-weight:600;color:#555;margin-bottom:8px}
+.fav-list{display:flex;gap:6px;flex-wrap:wrap}
+.fav-chip{display:inline-flex;align-items:center;gap:4px;background:#E6F1FB;border:0.5px solid #B5D4F4;border-radius:20px;padding:4px 10px;font-size:12px;color:#0C447C;cursor:pointer;white-space:nowrap}
+.fav-chip:hover{background:#B5D4F4}
+.fav-del{color:#999;font-size:14px;line-height:1;margin-left:2px}
+.fav-del:hover{color:#A32D2D}
+.fav-empty{font-size:12px;color:#aaa}
+
+/* 차트 패널 */
+.chart-panel{background:#fff;border-bottom:0.5px solid #eee;padding:12px}
+.chart-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.chart-title{font-size:13px;font-weight:600;color:#333}
+.chart-fold{font-size:12px;color:#185FA5;background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:6px}
+.chart-fold:hover{background:#E6F1FB}
+.chart-canvas-wrap{position:relative;height:150px}
 .app-footer{text-align:center;font-size:11px;color:#888;padding:16px;background:#2C2C2A}
 @media(min-width:481px){.card-list{display:none}}
 @media(max-width:480px){
@@ -109,15 +132,25 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
   .sum-item:nth-child(4){border-top:0.5px solid rgba(0,0,0,0.08)}
 }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
 <header class="app-header">
   <h1><span class="dot"></span>아파트 실거래가 조회</h1>
   <div class="header-sub">국토교통부 실거래가 공개시스템</div>
+  <div class="header-btns">
+    <button class="hdr-btn" onclick="toggleFavPanel()">⭐ 즐겨찾기</button>
+    <button class="hdr-btn" onclick="addFav()">+ 지역 저장</button>
+    <button class="hdr-btn" onclick="copyShareUrl()">🔗 공유</button>
+  </div>
 </header>
 <div class="tab-bar">
   <button class="tab-btn active" id="tab-trade" onclick="switchMode('trade')">🏠 매매</button>
   <button class="tab-btn" id="tab-rent" onclick="switchMode('rent')">📋 전월세</button>
+</div>
+<div id="favPanel" class="fav-panel" style="display:none">
+  <div class="fav-title">⭐ 즐겨찾기</div>
+  <div class="fav-list" id="favList"><span class="fav-empty">저장된 지역이 없습니다</span></div>
 </div>
 <section class="search-panel">
   <div class="search-grid">
@@ -181,6 +214,15 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
   <div class="sum-item"><div class="sum-label" id="s-label-avg">평균가</div><div class="sum-value" id="s-avg">-</div></div>
   <div class="sum-item"><div class="sum-label" id="s-label-max">최고가</div><div class="sum-value" id="s-max">-</div></div>
   <div class="sum-item"><div class="sum-label" id="s-label-min">최저가</div><div class="sum-value" id="s-min">-</div></div>
+</div>
+<div id="chartPanel" class="chart-panel" style="display:none">
+  <div class="chart-header">
+    <span class="chart-title" id="chartTitle">월별 평균가 추이</span>
+    <button class="chart-fold" onclick="toggleChart()">▲ 접기</button>
+  </div>
+  <div class="chart-canvas-wrap" id="chartWrap">
+    <canvas id="priceChart"></canvas>
+  </div>
 </div>
 <main id="main">
   <div class="state-screen">
@@ -584,7 +626,169 @@ function showToast(msg){
   setTimeout(()=>t.classList.remove('show'),2500);
 }
 
-document.addEventListener('DOMContentLoaded',init);
+
+// ── 차트 ──
+let chartInstance=null, chartVisible=true;
+
+function renderChart(){
+  const panel=document.getElementById('chartPanel');
+  if(!filteredData.length){panel.style.display='none';return;}
+
+  const byMonth={};
+  filteredData.forEach(d=>{
+    const key=`${d.dealYear}-${String(d.dealMonth).padStart(2,'0')}`;
+    if(!byMonth[key])byMonth[key]=[];
+    const p=currentMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
+    if(p>0)byMonth[key].push(p);
+  });
+
+  const labels=Object.keys(byMonth).sort();
+  if(labels.length<2){panel.style.display='none';return;}
+
+  const values=labels.map(k=>{
+    const arr=byMonth[k];
+    return arr.length?Math.round(arr.reduce((a,b)=>a+b,0)/arr.length):0;
+  });
+
+  panel.style.display='block';
+  const modeLabel=currentMode==='trade'?'평균 거래가':'평균 보증금';
+  document.getElementById('chartTitle').textContent=`월별 ${modeLabel} 추이`;
+
+  const color=currentMode==='trade'?'#185FA5':'#0F6E56';
+  const bgColor=currentMode==='trade'?'rgba(24,95,165,0.08)':'rgba(15,110,86,0.08)';
+
+  const ctx=document.getElementById('priceChart').getContext('2d');
+  if(chartInstance)chartInstance.destroy();
+  chartInstance=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels,
+      datasets:[{
+        label:modeLabel,
+        data:values,
+        borderColor:color,
+        backgroundColor:bgColor,
+        borderWidth:2,
+        pointRadius:4,
+        pointBackgroundColor:color,
+        fill:true,
+        tension:0.3
+      }]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>`${fmtPrice(ctx.raw)}`}}
+      },
+      scales:{
+        y:{ticks:{callback:v=>fmtPrice(v),font:{size:10},maxTicksLimit:5},grid:{color:'rgba(0,0,0,0.05)'}},
+        x:{ticks:{font:{size:10}},grid:{display:false}}
+      }
+    }
+  });
+}
+
+function toggleChart(){
+  const wrap=document.getElementById('chartWrap');
+  const btn=document.querySelector('.chart-fold');
+  chartVisible=!chartVisible;
+  wrap.style.display=chartVisible?'block':'none';
+  btn.textContent=chartVisible?'▲ 접기':'▼ 펼치기';
+}
+
+// ── 즐겨찾기 ──
+function getFavs(){try{return JSON.parse(localStorage.getItem('apt_favs')||'[]');}catch{return [];}}
+function saveFavs(f){localStorage.setItem('apt_favs',JSON.stringify(f));}
+
+function renderFavList(){
+  const list=document.getElementById('favList');
+  const favs=getFavs();
+  if(!favs.length){list.innerHTML='<span class="fav-empty">저장된 지역이 없습니다</span>';return;}
+  list.innerHTML=favs.map((f,i)=>`
+    <span class="fav-chip" onclick="loadFav(${i})">
+      ${f.sidoShort} ${f.sggName}
+      <span class="fav-del" onclick="event.stopPropagation();deleteFav(${i})">×</span>
+    </span>`).join('');
+}
+
+function toggleFavPanel(){
+  const p=document.getElementById('favPanel');
+  p.style.display=p.style.display==='none'?'block':'none';
+  if(p.style.display==='block')renderFavList();
+}
+
+function addFav(){
+  const sidoEl=document.getElementById('sido');
+  const sggEl=document.getElementById('sigungu');
+  const sido=sidoEl.value;
+  const sggCd=sggEl.value;
+  const sggName=sggEl.options[sggEl.selectedIndex]?.text||'';
+  if(!sggCd){showToast('시/군/구를 먼저 선택해 주세요');return;}
+  const sidoShort=sido.replace('특별시','').replace('광역시','').replace('특별자치시','').replace('특별자치도','').replace('도','');
+  const favs=getFavs();
+  if(favs.some(f=>f.sggCd===sggCd)){showToast('이미 저장된 지역입니다');return;}
+  if(favs.length>=10){showToast('즐겨찾기는 최대 10개입니다');return;}
+  favs.push({sido,sggCd,sggName,sidoShort});
+  saveFavs(favs);
+  renderFavList();
+  document.getElementById('favPanel').style.display='block';
+  showToast(`${sggName} 저장완료`);
+}
+
+function loadFav(i){
+  const fav=getFavs()[i];
+  if(!fav)return;
+  document.getElementById('sido').value=fav.sido;
+  loadSgg();
+  setTimeout(()=>{
+    document.getElementById('sigungu').value=fav.sggCd;
+    document.getElementById('favPanel').style.display='none';
+    showToast(`${fav.sggName} 선택됨`);
+  },50);
+}
+
+function deleteFav(i){
+  const favs=getFavs();favs.splice(i,1);saveFavs(favs);renderFavList();
+}
+
+// ── 공유링크 ──
+function copyShareUrl(){
+  const sggCd=document.getElementById('sigungu').value;
+  const sido=document.getElementById('sido').value;
+  const startM=document.getElementById('startM').value;
+  const endM=document.getElementById('endM').value;
+  if(!sggCd){showToast('시/군/구를 먼저 선택해 주세요');return;}
+  const params=new URLSearchParams({sido,sggCd,startM,endM,mode:currentMode});
+  const url=`${location.origin}${location.pathname}?${params}`;
+  navigator.clipboard.writeText(url).then(()=>showToast('링크 복사됨!')).catch(()=>{
+    const ta=document.createElement('textarea');
+    ta.value=url;document.body.appendChild(ta);ta.select();
+    document.execCommand('copy');document.body.removeChild(ta);
+    showToast('링크 복사됨!');
+  });
+}
+
+function loadFromUrl(){
+  const p=new URLSearchParams(location.search);
+  if(!p.get('sggCd'))return;
+  const sido=p.get('sido')||'';
+  const sggCd=p.get('sggCd')||'';
+  const startM=p.get('startM')||'';
+  const endM=p.get('endM')||'';
+  const mode=p.get('mode')||'trade';
+  if(sido){document.getElementById('sido').value=sido;loadSgg();}
+  setTimeout(()=>{
+    if(sggCd)document.getElementById('sigungu').value=sggCd;
+    if(startM)document.getElementById('startM').value=startM;
+    if(endM)document.getElementById('endM').value=endM;
+    if(mode!=='trade')switchMode(mode);
+    if(sggCd&&startM&&endM)doSearch();
+  },100);
+}
+
+document.addEventListener('DOMContentLoaded',()=>{init();loadFromUrl();});
 </script>
 </body>
 </html>
