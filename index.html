@@ -853,23 +853,32 @@ function closeModal(e){
 let lpTimer=null, lpFired=false;
 
 function bindLongPress(el, aptNm){
+  let touchMoved=false;
+
   // 터치
   el.addEventListener('touchstart', e=>{
     lpFired=false;
-    e.preventDefault();
+    touchMoved=false;
     lpTimer=setTimeout(()=>{
       lpFired=true;
       doFilter(aptNm);
     }, 600);
-  },{passive:false});
+  },{passive:true});
+
+  el.addEventListener('touchmove', e=>{
+    touchMoved=true;
+    if(lpTimer){clearTimeout(lpTimer);lpTimer=null;}
+  },{passive:true});
+
   el.addEventListener('touchend', e=>{
     if(lpTimer){clearTimeout(lpTimer);lpTimer=null;}
-    if(!lpFired) showAptModal(aptNm);
+    if(!lpFired && !touchMoved){
+      // 짧게 탭 → 팝업
+      setTimeout(()=>showAptModal(aptNm), 10);
+    }
     lpFired=false;
-  });
-  el.addEventListener('touchmove', e=>{
-    if(lpTimer){clearTimeout(lpTimer);lpTimer=null;}
-  });
+  },{passive:true});
+
   // 마우스
   el.addEventListener('mousedown', e=>{
     lpFired=false;
@@ -884,9 +893,8 @@ function bindLongPress(el, aptNm){
   el.addEventListener('mouseleave', ()=>{
     if(lpTimer){clearTimeout(lpTimer);lpTimer=null;}
   });
-  el.addEventListener('click', ()=>{
+  el.addEventListener('click', e=>{
     if(lpFired){lpFired=false;return;}
-    showAptModal(aptNm);
   });
 }
 
