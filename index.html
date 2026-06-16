@@ -70,9 +70,9 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
 .state-sub{font-size:13px;line-height:1.8;color:#888}
 .spinner{width:36px;height:36px;border:3px solid #dde5f4;border-top-color:#185FA5;border-radius:50%;animation:spin 0.7s linear infinite;margin-bottom:14px}
 @keyframes spin{to{transform:rotate(360deg)}}
-.prog-wrap{width:220px;height:6px;background:#dde5f4;border-radius:3px;overflow:hidden;margin-bottom:10px;position:relative}
-.prog-bar{height:100%;width:40%;background:#185FA5;border-radius:3px;position:absolute;animation:slide 1.4s ease-in-out infinite}
-@keyframes slide{0%{left:-40%}50%{left:100%}50.001%{left:-40%}100%{left:100%}}
+.prog-wrap{width:220px;height:4px;background:#dde5f4;border-radius:3px;overflow:hidden;margin-bottom:10px;position:relative}
+.prog-bar{height:100%;width:20%;background:#185FA5;border-radius:3px;position:absolute;animation:bounce 2.5s ease-in-out infinite}
+@keyframes bounce{0%{left:0%}50%{left:80%}100%{left:0%}}
 .prog-text{font-size:13px;font-weight:500;color:#333;margin-bottom:4px}
 .prog-sub{font-size:12px;color:#888}
 .pagination{display:flex;justify-content:center;align-items:center;gap:5px;padding:14px 12px;background:#fff;border-top:0.5px solid #eee;flex-wrap:wrap}
