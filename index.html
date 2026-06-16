@@ -231,7 +231,6 @@ function switchMode(mode){
   document.getElementById('filterBar').style.display='none';
   document.getElementById('summaryStrip').style.display='none';
   document.getElementById('main').innerHTML=`<div class="state-screen"><div class="state-icon">${mode==='trade'?'🏠':'📋'}</div><div class="state-title">지역과 기간을 선택하세요</div><div class="state-sub">조회하기를 눌러주세요</div></div>`;
-  resetFilters();
   document.getElementById('tab-trade').classList.toggle('active',mode==='trade');
   document.getElementById('tab-rent').classList.toggle('active',mode==='rent');
   const btn=document.getElementById('btnSearch');
@@ -255,13 +254,21 @@ function loadSgg(){
   sg.innerHTML='<option value="">시/군/구 선택</option>';
   resetDong();
   resetFilters();
+  resetResult();
   if(!sido||!RD[sido])return;
   Object.entries(RD[sido]).forEach(([code,name])=>{
     const o=document.createElement('option');o.value=code;o.textContent=name;sg.appendChild(o);
   });
 }
 
-function onSggChange(){resetDong();resetFilters();}
+function onSggChange(){resetDong();resetFilters();resetResult();}
+
+function resetResult(){
+  allData=[];filteredData=[];
+  document.getElementById('filterBar').style.display='none';
+  document.getElementById('summaryStrip').style.display='none';
+  document.getElementById('main').innerHTML=`<div class="state-screen"><div class="state-icon">🏢</div><div class="state-title">지역과 기간을 선택하세요</div><div class="state-sub">시/도 → 시/군/구 → 동(선택) → 기간<br>순서로 선택 후 조회하기를 누르세요</div></div>`;
+}
 
 function resetFilters(){
   const aptFilter = document.getElementById('aptFilter');
