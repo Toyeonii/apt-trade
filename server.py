@@ -122,6 +122,15 @@ def api_bulk():
 def index():
     return open('index.html', encoding='utf-8').read()
 
+@app.route('/manifest.json')
+def manifest():
+    return app.send_static_file('manifest.json') if False else \
+        (__import__('flask').Response(open('manifest.json').read(), mimetype='application/json'))
+
+@app.route('/icon.png')
+def icon():
+    return __import__('flask').send_file('icon.png', mimetype='image/png')
+
 @app.route('/health')
 def health():
     return jsonify({'status': 'ok', 'trade_key': bool(API_KEY_TRADE), 'rent_key': bool(API_KEY_RENT)})
