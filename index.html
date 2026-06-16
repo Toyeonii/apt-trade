@@ -505,6 +505,7 @@ function renderTradeTable(){
 
   html+=cards+buildPagination(tp,total);
   document.getElementById('main').innerHTML=html;
+  renderChart();
 }
 
 function renderRentTable(){
@@ -559,6 +560,7 @@ function renderRentTable(){
 
   html+=cards+buildPagination(tp,total);
   document.getElementById('main').innerHTML=html;
+  renderChart();
 }
 
 function buildPagination(tp,total){
