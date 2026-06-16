@@ -580,7 +580,7 @@ function renderTradeTable(){
     const isRecordL=p===allMinP&&p>0&&allPrices.length>1;
     const dt=d.dealYear&&d.dealMonth?`${d.dealYear}.${String(d.dealMonth).padStart(2,'0')}.${String(d.dealDay||'').padStart(2,'0')}`:'-';
     const recordBadge=isRecordH?'<span class="badge-record-high">신고가</span>':isRecordL?'<span class="badge-record-low">역대최저</span>':'';
-    html+=`<tr style="cursor:pointer" data-apt="${(d.aptNm||'').replace(/"/g,'&quot;')}" title="${d.aptNm||''} · 클릭:이력보기">
+    html+=`<tr style="cursor:pointer" data-road="${(d.roadNm||'')" data-apt="${(d.aptNm||'').replace(/"/g,'&quot;')}" title="${d.aptNm||''} · 클릭:이력보기">
       <td style="font-weight:500">${d.aptNm||'-'}${recordBadge}<div style="font-size:11px;color:#aaa;font-weight:400">${d.roadNm||d.umdNm||''}</div></td>
       <td style="color:#555;font-size:12px">${fmtArea(d.excluUseAr)}</td>
       <td><span class="badge">${d.floor||'-'}층</span></td>
@@ -628,7 +628,7 @@ function renderTradeTable(){
   document.getElementById('main').innerHTML=html;
   // 롱프레스 바인딩
   document.querySelectorAll('[data-apt]').forEach(el=>{
-    bindLongPress(el, el.dataset.apt);
+    bindLongPress(el, el.dataset.apt, el.dataset.road||'');
   });
   renderChart();
 }
@@ -775,8 +775,8 @@ let modalChartInstance=null;
 
 let modalAptNm='', modalAreaGroups={}, modalAreaKeys=[];
 
-function showAptModal(aptNm){
-  const deals=allData.filter(d=>d.aptNm===aptNm)
+function showAptModal(aptNm, roadNm){
+  const deals=allData.filter(d=>d.aptNm===aptNm&&(!roadNm||d.roadNm===roadNm))
     .sort((a,b)=>{
       const da=`${a.dealYear}${String(a.dealMonth).padStart(2,'0')}${String(a.dealDay||'').padStart(2,'0')}`;
       const db=`${b.dealYear}${String(b.dealMonth).padStart(2,'0')}${String(b.dealDay||'').padStart(2,'0')}`;
@@ -1088,8 +1088,8 @@ function closeModal(e){
 
 
 // ── 클릭 바인딩 ──
-function bindLongPress(el, aptNm){
-  el.addEventListener('click', ()=>showAptModal(aptNm));
+function bindLongPress(el, aptNm, roadNm){
+  el.addEventListener('click', ()=>showAptModal(aptNm, roadNm));
 }
 
 // ── 아파트 클릭 필터링 ──
