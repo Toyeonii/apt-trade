@@ -563,7 +563,7 @@ function renderTradeTable(){
     const isRecordL=p===allMinP&&p>0&&allPrices.length>1;
     const dt=d.dealYear&&d.dealMonth?`${d.dealYear}.${String(d.dealMonth).padStart(2,'0')}.${String(d.dealDay||'').padStart(2,'0')}`:'-';
     const recordBadge=isRecordH?'<span class="badge-record-high">신고가</span>':isRecordL?'<span class="badge-record-low">역대최저</span>':'';
-    html+=`<tr style="cursor:pointer" onclick="filterByApt('${(d.aptNm||'').replace(/'/g,"\\'")}')" title="${d.aptNm||''} 클릭 시 필터링">
+    html+=`<tr style="cursor:pointer" onclick="lpClick('${(d.aptNm||'').replace(/'/g,"\\'")}') " onmousedown="lpStart('${(d.aptNm||'').replace(/'/g,"\\'")}',event)" onmouseup="lpEnd()" onmouseleave="lpEnd()" ontouchstart="lpStart('${(d.aptNm||'').replace(/'/g,"\\'")}',event)" ontouchend="lpEnd()" title="${d.aptNm||''} · 클릭:이력보기 / 길게누르기:필터링">
       <td style="font-weight:500">${d.aptNm||'-'}${recordBadge}</td>
       <td style="color:#555;font-size:12px">${fmtArea(d.excluUseAr)}</td>
       <td><span class="badge">${d.floor||'-'}층</span></td>
@@ -842,6 +842,40 @@ function closeModal(e){
   document.getElementById('aptModal').classList.remove('open');
   document.body.style.overflow='';
   if(modalChartInstance){modalChartInstance.destroy();modalChartInstance=null;}
+}
+
+
+// ── 롱프레스 ──
+let lpTimer=null, lpTarget=null;
+
+function lpStart(aptNm, e){
+  lpTarget=aptNm;
+  lpTimer=setTimeout(()=>{
+    lpTarget=null;
+    const input=document.getElementById('aptFilter');
+    if(!input)return;
+    if(input.value===aptNm){
+      input.value='';
+      showToast('필터 해제');
+    } else {
+      input.value=aptNm;
+      showToast(`"${aptNm}" 필터 적용`);
+    }
+    applyFilter();
+  }, 600);
+}
+
+function lpEnd(){
+  if(lpTimer){clearTimeout(lpTimer);lpTimer=null;}
+}
+
+function lpClick(aptNm){
+  if(lpTarget!==null){
+    // 롱프레스 진행 중이었으면 클릭 무시
+    lpTarget=null;
+    return;
+  }
+  showAptModal(aptNm);
 }
 
 // ── 아파트 클릭 필터링 ──
