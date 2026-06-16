@@ -156,6 +156,11 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
 .modal-item-detail{font-size:11px;color:#999}
 .modal-item-price{font-size:15px;font-weight:700;color:#0C447C;white-space:nowrap}
 .modal-item-pyung{font-size:11px;color:#888;text-align:right;margin-top:2px}
+.modal-tabs{display:flex;gap:0;border-bottom:0.5px solid #eee;overflow-x:auto;flex-shrink:0}
+.modal-tab{height:36px;padding:0 14px;border:none;background:transparent;font-size:13px;color:#888;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;flex-shrink:0}
+.modal-tab.active{color:#0C447C;border-bottom-color:#0C447C;font-weight:600}
+.modal-tab:hover{background:#f5f5f5}
+
 .app-footer{text-align:center;font-size:11px;color:#888;padding:16px;background:#2C2C2A}
 @media(min-width:481px){.card-list{display:none}}
 @media(max-width:480px){
@@ -277,6 +282,7 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
       </div>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
+    <div class="modal-tabs" id="modalTabs"></div>
     <div class="modal-chart" id="modalChartWrap">
       <div class="modal-chart-wrap"><canvas id="modalChart"></canvas></div>
     </div>
@@ -756,6 +762,8 @@ function showToast(msg){
 // ── 아파트 이력 팝업 ──
 let modalChartInstance=null;
 
+let modalAptNm='', modalAreaGroups={}, modalAreaKeys=[];
+
 function showAptModal(aptNm){
   const deals=allData.filter(d=>d.aptNm===aptNm)
     .sort((a,b)=>{
@@ -765,64 +773,72 @@ function showAptModal(aptNm){
     });
   if(!deals.length)return;
 
-  const modal=document.getElementById('aptModal');
-  document.getElementById('modalTitle').textContent=aptNm;
-  document.getElementById('modalSub').textContent=`총 ${deals.length}건 거래 이력`;
-
-  // 면적별 색상 차트
-  const COLORS=['#185FA5','#0F6E56','#E65100','#6A1B9A','#AD1457','#00838F','#558B2F','#4527A0'];
-  const areaGroups={};
+  modalAptNm=aptNm;
+  modalAreaGroups={};
   deals.forEach(d=>{
     const ar=parseFloat(d.excluUseAr||0);
     const arKey=ar>0?`${ar.toFixed(1)}㎡`:'기타';
-    if(!areaGroups[arKey])areaGroups[arKey]=[];
+    if(!modalAreaGroups[arKey])modalAreaGroups[arKey]=[];
+    modalAreaGroups[arKey].push(d);
+  });
+  modalAreaKeys=Object.keys(modalAreaGroups).sort((a,b)=>parseFloat(a)-parseFloat(b));
+
+  document.getElementById('modalTitle').textContent=aptNm;
+  document.getElementById('modalSub').textContent=`총 ${deals.length}건 거래 이력`;
+
+  // 탭 생성
+  const tabsEl=document.getElementById('modalTabs');
+  tabsEl.innerHTML=modalAreaKeys.map((k,i)=>
+    `<button class="modal-tab ${i===0?'active':''}" onclick="selectModalTab('${k}',this)">${k} (${modalAreaGroups[k].length}건)</button>`
+  ).join('');
+
+  document.getElementById('aptModal').classList.add('open');
+  document.body.style.overflow='hidden';
+
+  selectModalTab(modalAreaKeys[0]);
+}
+
+function selectModalTab(arKey, btn){
+  // 탭 활성화
+  document.querySelectorAll('.modal-tab').forEach(t=>t.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  else document.querySelector('.modal-tab')?.classList.add('active');
+
+  const deals=modalAreaGroups[arKey]||[];
+  const ar=parseFloat(arKey)||0;
+
+  // 차트
+  if(modalChartInstance){modalChartInstance.destroy();modalChartInstance=null;}
+  const pts=deals.map(d=>{
     const p=currentMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
     const dateStr=`${d.dealYear}-${String(d.dealMonth).padStart(2,'0')}-${String(d.dealDay||'01').padStart(2,'0')}`;
-    if(p>0)areaGroups[arKey].push({x:dateStr,y:p});
-  });
+    return p>0?{x:dateStr,y:p,floor:d.floor}:null;
+  }).filter(Boolean).sort((a,b)=>a.x.localeCompare(b.x));
 
-  // 날짜 전체 목록
-  const allDates=[...new Set(deals.map(d=>`${d.dealYear}-${String(d.dealMonth).padStart(2,'0')}-${String(d.dealDay||'01').padStart(2,'0')}`))].sort();
-
-  if(modalChartInstance){modalChartInstance.destroy();modalChartInstance=null;}
-
-  const areaKeys=Object.keys(areaGroups).sort((a,b)=>parseFloat(a)-parseFloat(b));
-  const hasData=areaKeys.some(k=>areaGroups[k].length>=1);
-
-  if(hasData){
-    document.getElementById('modalChartWrap').style.display='block';
+  const chartWrap=document.getElementById('modalChartWrap');
+  if(pts.length>=2){
+    chartWrap.style.display='block';
     const ctx=document.getElementById('modalChart').getContext('2d');
-    const datasets=areaKeys.map((arKey,i)=>{
-      const color=COLORS[i%COLORS.length];
-      const pts=areaGroups[arKey].sort((a,b)=>a.x.localeCompare(b.x));
-      return {
-        label:arKey,
+    modalChartInstance=new Chart(ctx,{
+      type:'line',
+      data:{datasets:[{
         data:pts,
-        borderColor:color,
-        backgroundColor:color+'33',
+        borderColor:'#185FA5',
+        backgroundColor:'rgba(24,95,165,0.08)',
         borderWidth:2,
         pointRadius:4,
         pointHoverRadius:6,
-        tension:0.3,
-        fill:false
-      };
-    });
-
-    modalChartInstance=new Chart(ctx,{
-      type:'line',
-      data:{datasets},
+        fill:true,
+        tension:0.3
+      }]},
       options:{
         responsive:true,
         maintainAspectRatio:false,
         parsing:{xAxisKey:'x',yAxisKey:'y'},
         plugins:{
-          legend:{
-            display:areaKeys.length>1,
-            position:'top',
-            labels:{font:{size:10},boxWidth:12,padding:8}
-          },
+          legend:{display:false},
           tooltip:{callbacks:{
-            label:ctx=>`${ctx.dataset.label}: ${fmtPrice(ctx.raw.y)}`
+            label:ctx=>`${fmtPrice(ctx.raw.y)} · ${ctx.raw.floor||'-'}층`
           }}
         },
         scales:{
@@ -832,7 +848,7 @@ function showAptModal(aptNm){
       }
     });
   } else {
-    document.getElementById('modalChartWrap').style.display='none';
+    chartWrap.style.display='none';
   }
 
   // 거래 목록
@@ -840,14 +856,13 @@ function showAptModal(aptNm){
   deals.forEach(d=>{
     const p=currentMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
     const mon=parsePrice(d.monthlyRent||0);
-    const ar=parseFloat(d.excluUseAr||0);
     const pyung=p>0&&ar>0?Math.round(p/(ar/3.3058)):0;
     const dt=d.dealYear&&d.dealMonth?`${d.dealYear}.${String(d.dealMonth).padStart(2,'0')}.${String(d.dealDay||'').padStart(2,'0')}`:'-';
     const priceStr=currentMode==='trade'?fmtPrice(p):`보증금 ${fmtPrice(p)}${mon?` / 월세 ${fmtPrice(mon)}`:''}`;
     html+=`<div class="modal-list-item">
       <div class="modal-item-left">
         <span class="modal-item-date">${dt}</span>
-        <span class="modal-item-detail">${ar.toFixed(1)}㎡(${(ar/3.3058).toFixed(1)}평) · ${d.floor||'-'}층 · ${d.buildYear||'-'}년</span>
+        <span class="modal-item-detail">${d.floor||'-'}층 · ${d.buildYear||'-'}년</span>
       </div>
       <div style="text-align:right">
         <div class="modal-item-price">${priceStr}</div>
@@ -856,9 +871,6 @@ function showAptModal(aptNm){
     </div>`;
   });
   document.getElementById('modalBody').innerHTML=html;
-
-  modal.classList.add('open');
-  document.body.style.overflow='hidden';
 }
 
 function closeModal(e){
