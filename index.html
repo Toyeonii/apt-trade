@@ -134,6 +134,26 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
 .chart-fold{font-size:12px;color:#185FA5;background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:6px}
 .chart-fold:hover{background:#E6F1FB}
 .chart-canvas-wrap{position:relative;height:150px}
+
+/* 아파트 이력 팝업 */
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:flex-end;justify-content:center}
+.modal-sheet{background:#fff;width:100%;max-width:600px;max-height:85vh;border-radius:20px 20px 0 0;overflow:hidden;display:flex;flex-direction:column}
+.modal-header{padding:16px;border-bottom:0.5px solid #eee;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.modal-title{font-size:15px;font-weight:600;color:#1a1a1a}
+.modal-sub{font-size:12px;color:#888;margin-top:2px}
+.modal-close{width:32px;height:32px;border:none;background:#f0f0f0;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#666;flex-shrink:0}
+.modal-close:hover{background:#e0e0e0}
+.modal-chart{padding:12px;border-bottom:0.5px solid #eee;flex-shrink:0}
+.modal-chart-wrap{position:relative;height:120px}
+.modal-body{overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1}
+.modal-list-item{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-bottom:0.5px solid #f5f5f5}
+.modal-list-item:last-child{border-bottom:none}
+.modal-list-item:hover{background:#f8f9ff}
+.modal-item-left{display:flex;flex-direction:column;gap:3px}
+.modal-item-date{font-size:13px;color:#333;font-weight:500}
+.modal-item-detail{font-size:11px;color:#999}
+.modal-item-price{font-size:15px;font-weight:700;color:#0C447C;white-space:nowrap}
+.modal-item-pyung{font-size:11px;color:#888;text-align:right;margin-top:2px}
 .app-footer{text-align:center;font-size:11px;color:#888;padding:16px;background:#2C2C2A}
 @media(min-width:481px){.card-list{display:none}}
 @media(max-width:480px){
@@ -246,6 +266,21 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
     <div class="state-sub">시/도 → 시/군/구 → 동(선택) → 기간<br>순서로 선택 후 조회하기를 누르세요</div>
   </div>
 </main>
+<div id="aptModal" class="modal-overlay" style="display:none" onclick="closeModal(event)">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modalTitle">아파트명</div>
+        <div class="modal-sub" id="modalSub"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-chart" id="modalChartWrap">
+      <div class="modal-chart-wrap"><canvas id="modalChart"></canvas></div>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 <footer class="app-footer">데이터 출처: 국토교통부 아파트 실거래가 공개시스템 · 공공데이터포털 Open API</footer>
 <script>
@@ -711,18 +746,105 @@ function showToast(msg){
 
 
 
+
+// ── 아파트 이력 팝업 ──
+let modalChartInstance=null;
+
+function showAptModal(aptNm){
+  const deals=allData.filter(d=>d.aptNm===aptNm)
+    .sort((a,b)=>{
+      const da=`${a.dealYear}${String(a.dealMonth).padStart(2,'0')}${String(a.dealDay||'').padStart(2,'0')}`;
+      const db=`${b.dealYear}${String(b.dealMonth).padStart(2,'0')}${String(b.dealDay||'').padStart(2,'0')}`;
+      return db.localeCompare(da);
+    });
+  if(!deals.length)return;
+
+  const modal=document.getElementById('aptModal');
+  document.getElementById('modalTitle').textContent=aptNm;
+  document.getElementById('modalSub').textContent=`총 ${deals.length}건 거래 이력`;
+
+  // 미니 차트
+  const byDate={};
+  deals.forEach(d=>{
+    const key=`${d.dealYear}-${String(d.dealMonth).padStart(2,'0')}-${String(d.dealDay||'01').padStart(2,'0')}`;
+    const p=currentMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
+    if(p>0)byDate[key]=p;
+  });
+  const dateKeys=Object.keys(byDate).sort();
+  const color=currentMode==='trade'?'#185FA5':'#0F6E56';
+
+  if(modalChartInstance){modalChartInstance.destroy();modalChartInstance=null;}
+
+  if(dateKeys.length>=2){
+    document.getElementById('modalChartWrap').style.display='block';
+    const ctx=document.getElementById('modalChart').getContext('2d');
+    modalChartInstance=new Chart(ctx,{
+      type:'line',
+      data:{
+        labels:dateKeys,
+        datasets:[{
+          data:dateKeys.map(k=>byDate[k]),
+          borderColor:color,
+          backgroundColor:color+'22',
+          borderWidth:2,
+          pointRadius:3,
+          fill:true,
+          tension:0.3
+        }]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        plugins:{
+          legend:{display:false},
+          tooltip:{callbacks:{label:ctx=>`${fmtPrice(ctx.raw)}`}}
+        },
+        scales:{
+          y:{ticks:{callback:v=>fmtPrice(v),font:{size:9},maxTicksLimit:4},grid:{color:'rgba(0,0,0,0.04)'}},
+          x:{ticks:{font:{size:9},maxTicksLimit:6},grid:{display:false}}
+        }
+      }
+    });
+  } else {
+    document.getElementById('modalChartWrap').style.display='none';
+  }
+
+  // 거래 목록
+  let html='';
+  deals.forEach(d=>{
+    const p=currentMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
+    const mon=parsePrice(d.monthlyRent||0);
+    const ar=parseFloat(d.excluUseAr||0);
+    const pyung=p>0&&ar>0?Math.round(p/(ar/3.3058)):0;
+    const dt=d.dealYear&&d.dealMonth?`${d.dealYear}.${String(d.dealMonth).padStart(2,'0')}.${String(d.dealDay||'').padStart(2,'0')}`:'-';
+    const priceStr=currentMode==='trade'?fmtPrice(p):`보증금 ${fmtPrice(p)}${mon?` / 월세 ${fmtPrice(mon)}`:''}`;
+    html+=`<div class="modal-list-item">
+      <div class="modal-item-left">
+        <span class="modal-item-date">${dt}</span>
+        <span class="modal-item-detail">${ar.toFixed(1)}㎡(${(ar/3.3058).toFixed(1)}평) · ${d.floor||'-'}층 · ${d.buildYear||'-'}년</span>
+      </div>
+      <div style="text-align:right">
+        <div class="modal-item-price">${priceStr}</div>
+        ${pyung&&currentMode==='trade'?`<div class="modal-item-pyung">${fmtPrice(pyung)}/평</div>`:''}
+      </div>
+    </div>`;
+  });
+  document.getElementById('modalBody').innerHTML=html;
+
+  modal.style.display='flex';
+  document.body.style.overflow='hidden';
+}
+
+function closeModal(e){
+  if(e&&e.target!==document.getElementById('aptModal')&&e.type==='click')return;
+  document.getElementById('aptModal').style.display='none';
+  document.body.style.overflow='';
+  if(modalChartInstance){modalChartInstance.destroy();modalChartInstance=null;}
+}
+
 // ── 아파트 클릭 필터링 ──
 function filterByApt(aptNm){
-  const input=document.getElementById('aptFilter');
-  if(!input)return;
-  if(input.value===aptNm){
-    input.value='';
-    showToast('필터 해제');
-  } else {
-    input.value=aptNm;
-    showToast(`"${aptNm}" 필터 적용`);
-  }
-  applyFilter();
+  showAptModal(aptNm);
 }
 
 // ── 최근 조회 기록 ──
