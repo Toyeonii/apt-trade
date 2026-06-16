@@ -976,7 +976,7 @@ async function loadKakaoScript(key){
   });
 }
 
-async function selectMapTab(btn, aptNm){
+async function selectMapTab(btn, aptNm, roadNm=''){
   document.querySelectorAll('.modal-tab').forEach(t=>t.classList.remove('active'));
   btn.classList.add('active');
 
