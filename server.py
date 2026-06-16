@@ -33,16 +33,18 @@ def parse_xml_items(xml_text, mode='trade'):
             return v.strip() if v else ''
         if mode == 'trade':
             items.append({
-                'aptNm':      g('aptNm'),
-                'excluUseAr': g('excluUseAr'),
-                'floor':      g('floor'),
-                'dealAmount': g('dealAmount'),
-                'dealYear':   g('dealYear'),
-                'dealMonth':  g('dealMonth'),
-                'dealDay':    g('dealDay'),
-                'buildYear':  g('buildYear'),
-                'roadNm':     g('roadNm'),
-                'umdNm':      g('umdNm'),
+                'aptNm':        g('aptNm'),
+                'excluUseAr':   g('excluUseAr'),
+                'floor':        g('floor'),
+                'dealAmount':   g('dealAmount'),
+                'dealYear':     g('dealYear'),
+                'dealMonth':    g('dealMonth'),
+                'dealDay':      g('dealDay'),
+                'buildYear':    g('buildYear'),
+                'roadNm':       g('roadNm'),
+                'roadNmBonbun': g('roadNmBonbun'),
+                'umdNm':        g('umdNm'),
+                'jibun':        g('jibun'),
             })
         else:
             items.append({

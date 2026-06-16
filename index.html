@@ -580,8 +580,8 @@ function renderTradeTable(){
     const isRecordL=p===allMinP&&p>0&&allPrices.length>1;
     const dt=d.dealYear&&d.dealMonth?`${d.dealYear}.${String(d.dealMonth).padStart(2,'0')}.${String(d.dealDay||'').padStart(2,'0')}`:'-';
     const recordBadge=isRecordH?'<span class="badge-record-high">신고가</span>':isRecordL?'<span class="badge-record-low">역대최저</span>':'';
-    html+=`<tr style="cursor:pointer" data-apt="${(d.aptNm||'').replace(/"/g,'&quot;')}" title="${d.aptNm||''} · 클릭:이력보기 / 길게누르기:필터링">
-      <td style="font-weight:500">${d.aptNm||'-'}${recordBadge}</td>
+    html+=`<tr style="cursor:pointer" data-apt="${(d.aptNm||'').replace(/"/g,'&quot;')}" title="${d.aptNm||''} · 클릭:이력보기">
+      <td style="font-weight:500">${d.aptNm||'-'}${recordBadge}<div style="font-size:11px;color:#aaa;font-weight:400">${d.roadNm||d.umdNm||''}</div></td>
       <td style="color:#555;font-size:12px">${fmtArea(d.excluUseAr)}</td>
       <td><span class="badge">${d.floor||'-'}층</span></td>
       <td class="${isH?'hi':isL?'lo':'price'}">${fmtPrice(p)}</td>
@@ -999,18 +999,26 @@ async function selectMapTab(btn, aptNm){
     kakaoMapInstance=new kakao.maps.Map(mapContainer,mapOption);
 
     // 주소 검색 - 단계별 폴백
-    const deals=allData.filter(d=>d.aptNm===aptNm);
-    const roadNm=deals[0]?.roadNm||'';
-    const umdNm=deals[0]?.umdNm||'';
     const sggEl=document.getElementById('sigungu');
     const sggName=sggEl.options[sggEl.selectedIndex]?.text||'';
     const sidoEl=document.getElementById('sido');
     const sido=sidoEl.value||'';
 
-    // 아파트명 정제 (괄호 제거)
-    const cleanAptNm=aptNm.replace(/\([^)]*\)/g,'').trim();
+    const deals=allData.filter(d=>d.aptNm===aptNm);
+    const roadNm=deals[0]?.roadNm||'';
+    const roadNmBonbun=deals[0]?.roadNmBonbun||'';
+    const umdNm=deals[0]?.umdNm||'';
+    const jibun=deals[0]?.jibun||'';
+
+    // 아파트명 정제 (괄호 제거, '아파트' 단어 제거)
+    const cleanAptNm=aptNm.replace(/\([^)]*\)/g,'').replace(/아파트$/,'').trim();
+
+    // 도로명+번지 조합
+    const bonbunNum=roadNmBonbun?parseInt(roadNmBonbun,10)||'':'';
+    const roadAddr=roadNm&&bonbunNum?`${sido} ${sggName} ${roadNm} ${bonbunNum}`:'';
 
     const ps=new kakao.maps.services.Places();
+    const geocoder=new kakao.maps.services.Geocoder();
 
     function placeMarker(x, y){
       const coords=new kakao.maps.LatLng(y, x);
@@ -1023,13 +1031,24 @@ async function selectMapTab(btn, aptNm){
       iw.open(kakaoMapInstance, marker);
     }
 
-    // 검색 순서: 1) 시도+시군구+법정동+정제명 2) 시도+시군구+정제명 3) 법정동+정제명 4) 정제명만
+    // 검색 순서: 1) 도로명주소 2) 시도+시군구+법정동+정제명 3) 시도+시군구+정제명 4) 정제명만
     const queries=[
       `${sido} ${sggName} ${umdNm} ${cleanAptNm}`,
       `${sido} ${sggName} ${cleanAptNm}`,
       `${umdNm} ${cleanAptNm}`,
       cleanAptNm
     ];
+
+    function searchByAddress(){
+      if(!roadAddr){searchByKeyword(0);return;}
+      geocoder.addressSearch(roadAddr,(result,status)=>{
+        if(status===kakao.maps.services.Status.OK){
+          placeMarker(result[0].x, result[0].y);
+        } else {
+          searchByKeyword(0);
+        }
+      });
+    }
 
     function searchNext(idx){
       if(idx>=queries.length){
@@ -1045,7 +1064,13 @@ async function selectMapTab(btn, aptNm){
       });
     }
 
-    searchNext(0);
+    function searchByKeyword(idx){
+      if(idx>=queries.length){mapWrap.innerHTML='<div class="map-loading">위치를 찾을 수 없습니다</div>';return;}
+      ps.keywordSearch(queries[idx],(data,status)=>{
+        if(status===kakao.maps.services.Status.OK){placeMarker(data[0].x,data[0].y);}else{searchByKeyword(idx+1);}
+      });
+    }
+    searchByAddress();
   } catch(e){
     mapWrap.innerHTML=`<div class="map-loading">지도 로드 실패: ${e.message}</div>`;
   }
