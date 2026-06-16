@@ -563,7 +563,7 @@ function renderTradeTable(){
     const isRecordL=p===allMinP&&p>0&&allPrices.length>1;
     const dt=d.dealYear&&d.dealMonth?`${d.dealYear}.${String(d.dealMonth).padStart(2,'0')}.${String(d.dealDay||'').padStart(2,'0')}`:'-';
     const recordBadge=isRecordH?'<span class="badge-record-high">신고가</span>':isRecordL?'<span class="badge-record-low">역대최저</span>':'';
-    html+=`<tr style="cursor:pointer" onclick="lpClick('${(d.aptNm||'').replace(/'/g,"\\'")}') " onmousedown="lpStart('${(d.aptNm||'').replace(/'/g,"\\'")}',event)" onmouseup="lpEnd()" onmouseleave="lpEnd()" ontouchstart="lpStart('${(d.aptNm||'').replace(/'/g,"\\'")}',event)" ontouchend="lpEnd()" title="${d.aptNm||''} · 클릭:이력보기 / 길게누르기:필터링">
+    html+=`<tr style="cursor:pointer" data-apt="${(d.aptNm||'').replace(/"/g,'&quot;')}" title="${d.aptNm||''} · 클릭:이력보기 / 길게누르기:필터링">
       <td style="font-weight:500">${d.aptNm||'-'}${recordBadge}</td>
       <td style="color:#555;font-size:12px">${fmtArea(d.excluUseAr)}</td>
       <td><span class="badge">${d.floor||'-'}층</span></td>
@@ -609,6 +609,10 @@ function renderTradeTable(){
 
   html+=cards+buildPagination(tp,total);
   document.getElementById('main').innerHTML=html;
+  // 롱프레스 바인딩
+  document.querySelectorAll('[data-apt]').forEach(el=>{
+    bindLongPress(el, el.dataset.apt);
+  });
   renderChart();
 }
 
@@ -848,31 +852,60 @@ function closeModal(e){
 // ── 롱프레스 ──
 let lpTimer=null, lpFired=false;
 
-function lpStart(aptNm, e){
-  lpFired=false;
-  lpTimer=setTimeout(()=>{
-    lpFired=true;
-    const input=document.getElementById('aptFilter');
-    if(!input)return;
-    if(input.value===aptNm){
-      input.value='';
-      showToast('필터 해제');
-    } else {
-      input.value=aptNm;
-      showToast(`"${aptNm}" 필터 적용`);
-    }
-    applyFilter();
-  }, 600);
+function bindLongPress(el, aptNm){
+  // 터치
+  el.addEventListener('touchstart', e=>{
+    lpFired=false;
+    e.preventDefault();
+    lpTimer=setTimeout(()=>{
+      lpFired=true;
+      doFilter(aptNm);
+    }, 600);
+  },{passive:false});
+  el.addEventListener('touchend', e=>{
+    if(lpTimer){clearTimeout(lpTimer);lpTimer=null;}
+    if(!lpFired) showAptModal(aptNm);
+    lpFired=false;
+  });
+  el.addEventListener('touchmove', e=>{
+    if(lpTimer){clearTimeout(lpTimer);lpTimer=null;}
+  });
+  // 마우스
+  el.addEventListener('mousedown', e=>{
+    lpFired=false;
+    lpTimer=setTimeout(()=>{
+      lpFired=true;
+      doFilter(aptNm);
+    }, 600);
+  });
+  el.addEventListener('mouseup', ()=>{
+    if(lpTimer){clearTimeout(lpTimer);lpTimer=null;}
+  });
+  el.addEventListener('mouseleave', ()=>{
+    if(lpTimer){clearTimeout(lpTimer);lpTimer=null;}
+  });
+  el.addEventListener('click', ()=>{
+    if(lpFired){lpFired=false;return;}
+    showAptModal(aptNm);
+  });
 }
 
-function lpEnd(e){
-  if(lpTimer){clearTimeout(lpTimer);lpTimer=null;}
+function doFilter(aptNm){
+  const input=document.getElementById('aptFilter');
+  if(!input)return;
+  if(input.value===aptNm){
+    input.value='';
+    showToast('필터 해제');
+  } else {
+    input.value=aptNm;
+    showToast(`"${aptNm}" 필터 적용`);
+  }
+  applyFilter();
 }
 
-function lpClick(aptNm){
-  if(lpFired){lpFired=false;return;}
-  showAptModal(aptNm);
-}
+function lpStart(){}
+function lpEnd(){}
+function lpClick(){}
 
 // ── 아파트 클릭 필터링 ──
 function filterByApt(aptNm){
