@@ -769,45 +769,65 @@ function showAptModal(aptNm){
   document.getElementById('modalTitle').textContent=aptNm;
   document.getElementById('modalSub').textContent=`총 ${deals.length}건 거래 이력`;
 
-  // 미니 차트
-  const byDate={};
+  // 면적별 색상 차트
+  const COLORS=['#185FA5','#0F6E56','#E65100','#6A1B9A','#AD1457','#00838F','#558B2F','#4527A0'];
+  const areaGroups={};
   deals.forEach(d=>{
-    const key=`${d.dealYear}-${String(d.dealMonth).padStart(2,'0')}-${String(d.dealDay||'01').padStart(2,'0')}`;
+    const ar=parseFloat(d.excluUseAr||0);
+    const arKey=ar>0?`${ar.toFixed(1)}㎡`:'기타';
+    if(!areaGroups[arKey])areaGroups[arKey]=[];
     const p=currentMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
-    if(p>0)byDate[key]=p;
+    const dateStr=`${d.dealYear}-${String(d.dealMonth).padStart(2,'0')}-${String(d.dealDay||'01').padStart(2,'0')}`;
+    if(p>0)areaGroups[arKey].push({x:dateStr,y:p});
   });
-  const dateKeys=Object.keys(byDate).sort();
-  const color=currentMode==='trade'?'#185FA5':'#0F6E56';
+
+  // 날짜 전체 목록
+  const allDates=[...new Set(deals.map(d=>`${d.dealYear}-${String(d.dealMonth).padStart(2,'0')}-${String(d.dealDay||'01').padStart(2,'0')}`))].sort();
 
   if(modalChartInstance){modalChartInstance.destroy();modalChartInstance=null;}
 
-  if(dateKeys.length>=2){
+  const areaKeys=Object.keys(areaGroups).sort((a,b)=>parseFloat(a)-parseFloat(b));
+  const hasData=areaKeys.some(k=>areaGroups[k].length>=1);
+
+  if(hasData){
     document.getElementById('modalChartWrap').style.display='block';
     const ctx=document.getElementById('modalChart').getContext('2d');
+    const datasets=areaKeys.map((arKey,i)=>{
+      const color=COLORS[i%COLORS.length];
+      const pts=areaGroups[arKey].sort((a,b)=>a.x.localeCompare(b.x));
+      return {
+        label:arKey,
+        data:pts,
+        borderColor:color,
+        backgroundColor:color+'33',
+        borderWidth:2,
+        pointRadius:4,
+        pointHoverRadius:6,
+        tension:0.3,
+        fill:false
+      };
+    });
+
     modalChartInstance=new Chart(ctx,{
       type:'line',
-      data:{
-        labels:dateKeys,
-        datasets:[{
-          data:dateKeys.map(k=>byDate[k]),
-          borderColor:color,
-          backgroundColor:color+'22',
-          borderWidth:2,
-          pointRadius:3,
-          fill:true,
-          tension:0.3
-        }]
-      },
+      data:{datasets},
       options:{
         responsive:true,
         maintainAspectRatio:false,
+        parsing:{xAxisKey:'x',yAxisKey:'y'},
         plugins:{
-          legend:{display:false},
-          tooltip:{callbacks:{label:ctx=>`${fmtPrice(ctx.raw)}`}}
+          legend:{
+            display:areaKeys.length>1,
+            position:'top',
+            labels:{font:{size:10},boxWidth:12,padding:8}
+          },
+          tooltip:{callbacks:{
+            label:ctx=>`${ctx.dataset.label}: ${fmtPrice(ctx.raw.y)}`
+          }}
         },
         scales:{
           y:{ticks:{callback:v=>fmtPrice(v),font:{size:9},maxTicksLimit:4},grid:{color:'rgba(0,0,0,0.04)'}},
-          x:{ticks:{font:{size:9},maxTicksLimit:6},grid:{display:false}}
+          x:{type:'category',ticks:{font:{size:9},maxTicksLimit:6},grid:{display:false}}
         }
       }
     });
@@ -849,71 +869,10 @@ function closeModal(e){
 }
 
 
-// ── 롱프레스 ──
-let lpTimer=null, lpFired=false;
-
+// ── 클릭 바인딩 ──
 function bindLongPress(el, aptNm){
-  let touchMoved=false;
-
-  // 터치
-  el.addEventListener('touchstart', e=>{
-    lpFired=false;
-    touchMoved=false;
-    lpTimer=setTimeout(()=>{
-      lpFired=true;
-      doFilter(aptNm);
-    }, 600);
-  },{passive:true});
-
-  el.addEventListener('touchmove', e=>{
-    touchMoved=true;
-    if(lpTimer){clearTimeout(lpTimer);lpTimer=null;}
-  },{passive:true});
-
-  el.addEventListener('touchend', e=>{
-    if(lpTimer){clearTimeout(lpTimer);lpTimer=null;}
-    if(!lpFired && !touchMoved){
-      // 짧게 탭 → 팝업
-      setTimeout(()=>showAptModal(aptNm), 10);
-    }
-    lpFired=false;
-  },{passive:true});
-
-  // 마우스
-  el.addEventListener('mousedown', e=>{
-    lpFired=false;
-    lpTimer=setTimeout(()=>{
-      lpFired=true;
-      doFilter(aptNm);
-    }, 600);
-  });
-  el.addEventListener('mouseup', ()=>{
-    if(lpTimer){clearTimeout(lpTimer);lpTimer=null;}
-  });
-  el.addEventListener('mouseleave', ()=>{
-    if(lpTimer){clearTimeout(lpTimer);lpTimer=null;}
-  });
-  el.addEventListener('click', e=>{
-    if(lpFired){lpFired=false;return;}
-  });
+  el.addEventListener('click', ()=>showAptModal(aptNm));
 }
-
-function doFilter(aptNm){
-  const input=document.getElementById('aptFilter');
-  if(!input)return;
-  if(input.value===aptNm){
-    input.value='';
-    showToast('필터 해제');
-  } else {
-    input.value=aptNm;
-    showToast(`"${aptNm}" 필터 적용`);
-  }
-  applyFilter();
-}
-
-function lpStart(){}
-function lpEnd(){}
-function lpClick(){}
 
 // ── 아파트 클릭 필터링 ──
 function filterByApt(aptNm){
