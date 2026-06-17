@@ -181,17 +181,34 @@ def apt_info():
         # 아파트명 정규화 (공백/특수문자 제거 후 비교)
         import re
         def normalize(s):
-            return re.sub(r'[\s\(\)\-_]', '', s).lower()
+            return re.sub(r'[ \t\(\)\-_]', '', s).lower()
+        def simplify(s):
+            # 숫자, 단지, 아파트 등 제거하고 핵심 키워드만
+            s = re.sub(r'[0-9]+단지', '', s)
+            s = re.sub(r'아파트$', '', s)
+            return re.sub(r'[ \t\(\)\-_]', '', s).lower()
+
         norm_nm = normalize(apt_nm)
+        simp_nm = simplify(apt_nm)
         kapt_code = ''
+
+        # 1단계: 완전 일치
         for apt in apt_list:
             if normalize(apt['kaptName']) == norm_nm:
                 kapt_code = apt['kaptCode']
                 break
-        # 부분 매칭 시도
+        # 2단계: 부분 일치
         if not kapt_code:
             for apt in apt_list:
-                if norm_nm in normalize(apt['kaptName']) or normalize(apt['kaptName']) in norm_nm:
+                n = normalize(apt['kaptName'])
+                if norm_nm in n or n in norm_nm:
+                    kapt_code = apt['kaptCode']
+                    break
+        # 3단계: 단순화 후 매칭
+        if not kapt_code:
+            for apt in apt_list:
+                n = simplify(apt['kaptName'])
+                if simp_nm and n and (simp_nm in n or n in simp_nm):
                     kapt_code = apt['kaptCode']
                     break
         if not kapt_code:
