@@ -1083,7 +1083,7 @@ function getDataMode(){ return currentMode==='map' ? mapDataMode : currentMode; 
 function onZoomChanged(){
   if(!mainMapInstance||!allData.length)return;
   const level=mainMapInstance.getLevel();
-  if(level<=4){
+  if(level<=5){
     // 줌인 시 현재 지도 중심 기준 가장 많은 거래 동 찾아서 아파트 마커 표시
     const bounds=mainMapInstance.getBounds();
     const dongStats={};
