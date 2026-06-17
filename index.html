@@ -830,7 +830,7 @@ function showToast(msg){
 // ── 아파트 이력 팝업 ──
 let modalChartInstance=null;
 
-let modalAptNm='', modalAreaGroups={}, modalAreaKeys=[];
+let modalAptNm='', modalAreaGroups={}, modalAreaKeys=[], modalAptSeq='';
 
 function showAptModal(aptNm, roadNm, aptSeq){
   const deals=allData.filter(d=>{
@@ -845,6 +845,7 @@ function showAptModal(aptNm, roadNm, aptSeq){
   if(!deals.length)return;
 
   modalAptNm=aptNm;
+  modalAptSeq=aptSeq||'';
   modalAreaGroups={};
   deals.forEach(d=>{
     const ar=parseFloat(d.excluUseAr||0);
@@ -873,7 +874,7 @@ function showAptModal(aptNm, roadNm, aptSeq){
   const aptAddr=deals[0]?.roadNm||'';
   tabsEl.innerHTML=modalAreaKeys.map((k,i)=>
     `<button class="modal-tab ${i===0?'active':''}" onclick="selectModalTab('${k}',this)">${k} (${modalAreaGroups[k].length}건)</button>`
-  ).join('') + `<button class="modal-tab" onclick="selectMapTab(this,'${aptNm.replace(/'/g,"\'")}')">🗺️ 지도</button>`;
+  ).join('') + `<button class="modal-tab" onclick="selectMapTab(this,'${aptNm.replace(/'/g,"\'")}','${(deals[0]?.roadNm||'').replace(/'/g,"\'")}','${(modalAptSeq||'').replace(/'/g,"\'")}')">🗺️ 지도</button>`;
 
   document.getElementById('aptModal').classList.add('open');
   document.body.style.overflow='hidden';
@@ -1269,7 +1270,7 @@ async function loadKakaoScript(key){
   });
 }
 
-async function selectMapTab(btn, aptNm, roadNm=''){
+async function selectMapTab(btn, aptNm, roadNm='', aptSeq=''){
   document.querySelectorAll('.modal-tab').forEach(t=>t.classList.remove('active'));
   btn.classList.add('active');
 
@@ -1297,7 +1298,7 @@ async function selectMapTab(btn, aptNm, roadNm=''){
     const sidoEl=document.getElementById('sido');
     const sido=sidoEl.value||'';
 
-    const aptDeals=allData.filter(d=>d.aptNm===aptNm&&(!roadNm||(d.roadNm===roadNm||d.jibun===roadNm)));
+    const aptDeals=allData.filter(d=>aptSeq?d.aptSeq===aptSeq:d.aptNm===aptNm&&(!roadNm||(d.roadNm===roadNm||d.jibun===roadNm)));
     const umdNm=aptDeals[0]?.umdNm||'';
     const aptRoadNm=aptDeals[0]?.roadNm||'';
     const aptRoadBonbun=aptDeals[0]?.roadNmBonbun||'';
