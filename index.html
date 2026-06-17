@@ -344,6 +344,7 @@ function init(){
 function switchMode(mode){
   // 지도 탭
   if(mode==='map'){
+    currentMode='map';
     document.getElementById('tab-trade').classList.remove('active');
     document.getElementById('tab-rent').classList.remove('active');
     document.getElementById('tab-map').classList.add('active');
