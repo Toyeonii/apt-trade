@@ -146,7 +146,7 @@ def fetch_apt_list(sgg_cd):
             'https://apis.data.go.kr/1613000/AptListService2/getSigunguAptList3',
             params={
                 'serviceKey': API_KEY_APT_LIST,
-                'sggCode': sgg_cd,
+                'sigunguCode': sgg_cd,
                 'pageNo': page,
                 'numOfRows': 100,
                 '_type': 'json',
