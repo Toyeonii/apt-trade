@@ -354,12 +354,14 @@ function switchMode(mode){
   if(mode==='map'){
     mapDataMode = (prevMode==='trade'||prevMode==='rent') ? prevMode : mapDataMode;
     currentMode='map';
+    resetChart();
+    document.getElementById('chartPanel').style.display='none';
     document.getElementById('mapView').style.display='block';
     document.getElementById('main').style.display='none';
     document.getElementById('filterBar').style.display='none';
     document.getElementById('summaryStrip').style.display='none';
     document.querySelector('.search-panel').style.display='none';
-    initMainMap();
+    setTimeout(()=>initMainMap(), 50);
     return;
   }
 
