@@ -198,28 +198,24 @@ def apt_info():
             return jsonify({'ok': False, 'data': {}, 'msg': '단지 없음'})
 
         # 2단계: 기본정보 조회
-        info_url = f"https://apis.data.go.kr/1613000/AptBasisInfoService1/getAphusBassInfo?serviceKey={API_KEY_APT_INFO}&kaptCode={kapt_code}&pageNo=1&numOfRows=1"
+        info_url = f"https://apis.data.go.kr/1613000/AptBasisInfoServiceV4/getAphusBassInfoV4?serviceKey={API_KEY_APT_INFO}&kaptCode={kapt_code}&_type=json"
         resp = requests.get(info_url, timeout=10)
         resp.raise_for_status()
-        root = ET.fromstring(resp.text)
-        item = root.find('.//item')
-        if item is None:
+        data = resp.json()
+        item = data.get('response', {}).get('body', {}).get('item', {})
+        if not item:
             return jsonify({'ok': False, 'data': {}})
 
-        def g(tag):
-            v = item.findtext(tag)
-            return v.strip() if v else ''
-
-        data = {
-            'kaptName':    g('kaptName'),
-            'kaptDongCnt': g('kaptDongCnt'),
-            'kaptdaCnt':   g('kaptdaCnt'),
-            'kaptUsedate': g('kaptUsedate'),
-            'kaptBcompany':g('kaptBcompany'),
-            'kaptdaFloor': g('kaptdaFloor'),
-            'doroJuso':    g('doroJuso'),
+        result = {
+            'kaptName':    str(item.get('kaptName', '')),
+            'kaptDongCnt': str(item.get('kaptDongCnt', '')),
+            'kaptdaCnt':   str(int(item.get('kaptdaCnt', 0) or 0)),
+            'kaptUsedate': str(item.get('kaptUsedate', '')),
+            'kaptBcompany':str(item.get('kaptBcompany', '')),
+            'kaptTopFloor':str(item.get('kaptTopFloor', '')),
+            'doroJuso':    str(item.get('doroJuso', '')),
         }
-        return jsonify({'ok': True, 'data': data, 'kaptCode': kapt_code})
+        return jsonify({'ok': True, 'data': result, 'kaptCode': kapt_code})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

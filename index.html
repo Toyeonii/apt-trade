@@ -1297,7 +1297,7 @@ function renderAptInfo(d){
   const chips=[];
   if(d.kaptdaCnt) chips.push(`🏢 세대수 <span>${parseInt(d.kaptdaCnt).toLocaleString()}세대</span>`);
   if(d.kaptDongCnt) chips.push(`🏗️ 동수 <span>${d.kaptDongCnt}동</span>`);
-  if(d.kaptdaFloor) chips.push(`📐 최고층 <span>${d.kaptdaFloor}층</span>`);
+  if(d.kaptTopFloor) chips.push(`📐 최고층 <span>${d.kaptTopFloor}층</span>`);
   if(d.kaptUsedate) chips.push(`📅 준공 <span>${d.kaptUsedate.substring(0,4)}년</span>`);
   if(d.kaptBcompany) chips.push(`🏭 건설사 <span>${d.kaptBcompany}</span>`);
   bar.className='apt-info-bar';
