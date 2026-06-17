@@ -888,8 +888,7 @@ function showAptModal(aptNm, roadNm, aptSeq){
   selectModalTab(modalAreaKeys[0]);
 
   // 단지 정보 비동기 로드
-  const d0=deals[0]||{};
-  loadAptInfo(aptSeq||'', d0.roadNm||'', d0.roadNmBonbun||'');
+  loadAptInfo(aptSeq||'', (deals[0]||{}).roadNm||'', (deals[0]||{}).roadNmBonbun||'');
 }
 
 function selectModalTab(arKey, btn){
