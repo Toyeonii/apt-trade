@@ -888,7 +888,8 @@ function showAptModal(aptNm, roadNm, aptSeq){
   selectModalTab(modalAreaKeys[0]);
 
   // 단지 정보 비동기 로드
-  loadAptInfo(aptSeq||'');
+  const d0=deals[0];
+  loadAptInfo(aptSeq||'', d0?.roadNm||'', d0?.roadNmBonbun||'');
 }
 
 function selectModalTab(arKey, btn){
@@ -1259,14 +1260,13 @@ function renderAptMarkers(deals, dong){
 // ── 단지 정보 ──
 const aptInfoCache={};
 
-async function loadAptInfo(aptSeq){
+async function loadAptInfo(aptSeq, roadNm='', roadNmBonbun=''){
   const bar=document.getElementById('aptInfoBar');
   bar.style.display='block';
   bar.className='apt-info-loading';
   bar.textContent='단지 정보 불러오는 중...';
 
   try{
-    // 캐시 확인
     const cacheKey=aptSeq||modalAptNm;
     if(aptInfoCache[cacheKey]){
       renderAptInfo(aptInfoCache[cacheKey]);
@@ -1278,7 +1278,7 @@ async function loadAptInfo(aptSeq){
     const aptNm=modalAptNm||'';
     if(!aptNm||!sggCd){bar.style.display='none';return;}
 
-    const params=new URLSearchParams({aptNm, sggCd});
+    const params=new URLSearchParams({aptNm, sggCd, roadNm, roadNmBonbun});
     const resp=await fetch(`/api/apt-info?${params}`);
     const json=await resp.json();
     if(json.ok&&json.data&&Object.keys(json.data).length>0){

@@ -157,6 +157,7 @@ def fetch_apt_list(sgg_cd):
                 'kaptCode': item.get('kaptCode', ''),
                 'kaptName': item.get('kaptName', ''),
                 'bjdCode':  item.get('bjdCode', ''),
+                'doroJuso': item.get('doroJuso', ''),
             })
         total = int(body.get('totalCount', 0))
         if page * 100 >= total:
@@ -170,6 +171,8 @@ def fetch_apt_list(sgg_cd):
 def apt_info():
     apt_nm  = request.args.get('aptNm', '')
     sgg_cd  = request.args.get('sggCd', '')
+    road_nm = request.args.get('roadNm', '')
+    road_nm_bonbun = request.args.get('roadNmBonbun', '')
     if not apt_nm or not sgg_cd:
         return jsonify({'error': 'aptNm, sggCd 필요'}), 400
     if not API_KEY_APT_LIST or not API_KEY_APT_INFO:
@@ -192,17 +195,30 @@ def apt_info():
         simp_nm = simplify(apt_nm)
         kapt_code = ''
 
-        # 1단계: 완전 일치
-        for apt in apt_list:
-            if normalize(apt['kaptName']) == norm_nm:
-                kapt_code = apt['kaptCode']
-                break
-        # 2단계: 단순화 완전 일치 (괄호/번지 제거 후)
+        # 1단계: 도로명주소 매칭 (가장 정확)
+        if road_nm and road_nm_bonbun:
+            bonbun_num = str(int(road_nm_bonbun)) if road_nm_bonbun else ''
+            road_addr_key = normalize(f"{road_nm}{bonbun_num}")
+            for apt in apt_list:
+                doro = apt.get('doroJuso', '')
+                if doro and road_addr_key and road_addr_key in normalize(doro):
+                    kapt_code = apt['kaptCode']
+                    break
+
+        # 2단계: 아파트명 완전 일치
+        if not kapt_code:
+            for apt in apt_list:
+                if normalize(apt['kaptName']) == norm_nm:
+                    kapt_code = apt['kaptCode']
+                    break
+
+        # 3단계: 단순화 완전 일치 (괄호/번지 제거 후)
         if not kapt_code:
             for apt in apt_list:
                 if simplify(apt['kaptName']) == simp_nm:
                     kapt_code = apt['kaptCode']
                     break
+
         if not kapt_code:
             return jsonify({'ok': False, 'data': {}, 'msg': '단지 없음'})
 
