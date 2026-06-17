@@ -291,6 +291,7 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
       <div>
         <div class="modal-title" id="modalTitle">아파트명</div>
         <div class="modal-sub" id="modalSub"></div>
+        <div style="font-size:11px;color:#aaa;margin-top:2px" id="modalAddr"></div>
       </div>
       <div style="display:flex;align-items:center">
         <button class="modal-share" onclick="shareModal()" title="공유">📤</button>
@@ -853,6 +854,17 @@ function showAptModal(aptNm, roadNm, aptSeq){
 
   document.getElementById('modalTitle').textContent=aptNm;
   document.getElementById('modalSub').textContent=`총 ${deals.length}건 거래 이력`;
+  // 주소 표시 (매매: 도로명, 전월세: 지번)
+  const addrEl=document.getElementById('modalAddr');
+  const d0=deals[0];
+  if(d0){
+    const sggEl=document.getElementById('sigungu');
+    const sggName=sggEl.options[sggEl.selectedIndex]?.text||'';
+    const sido=document.getElementById('sido').value||'';
+    const addr=d0.roadNm?`${sido} ${sggName} ${d0.roadNm}${d0.roadNmBonbun?' '+parseInt(d0.roadNmBonbun,10):''}`:
+                d0.jibun?`${sido} ${sggName} ${d0.umdNm||''} ${d0.jibun}`:`${sido} ${sggName} ${d0.umdNm||''}`;
+    addrEl.textContent=addr.trim();
+  }
 
   // 탭 생성
   const tabsEl=document.getElementById('modalTabs');
@@ -1387,6 +1399,7 @@ function resetChart(){
 
 function renderChart(){
   const panel=document.getElementById('chartPanel');
+  if(currentMode==='map'){resetChart();return;}
   if(!filteredData.length){resetChart();return;}
 
   const aptQ=(document.getElementById('aptFilter')?.value||'').trim();
