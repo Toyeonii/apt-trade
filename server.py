@@ -14,6 +14,7 @@ RENT_API  = 'https://apis.data.go.kr/1613000/RTMSDataSvcAptRent/getRTMSDataSvcAp
 
 API_KEY_TRADE    = os.environ.get('API_KEY', '')
 API_KEY_RENT     = os.environ.get('API_KEY_RENT', '')
+API_KEY_APT_LIST = os.environ.get('API_KEY_APT_LIST', '')
 API_KEY_APT_INFO = os.environ.get('API_KEY_APT_INFO', '')
 
 _cache = {}
@@ -133,15 +134,79 @@ def kakao_key():
         return jsonify({'error': 'KAKAO_MAP_KEY 미설정'}), 500
     return jsonify({'key': key})
 
+_apt_list_cache = {}  # {sgg_cd: [{kaptCode, kaptName, ...}]}
+
+def fetch_apt_list(sgg_cd):
+    if sgg_cd in _apt_list_cache:
+        return _apt_list_cache[sgg_cd]
+    all_items = []
+    page = 1
+    while True:
+        resp = requests.get(
+            'https://apis.data.go.kr/1613000/AptListService2/getAptList2',
+            params={
+                'serviceKey': API_KEY_APT_LIST,
+                'bjdCode': sgg_cd,
+                'pageNo': page,
+                'numOfRows': 100,
+            },
+            timeout=15
+        )
+        resp.raise_for_status()
+        root = ET.fromstring(resp.text)
+        items = root.findall('.//item')
+        if not items:
+            break
+        for item in items:
+            def g(tag, item=item):
+                v = item.findtext(tag)
+                return v.strip() if v else ''
+            all_items.append({
+                'kaptCode': g('kaptCode'),
+                'kaptName': g('kaptName'),
+                'doroJuso': g('doroJuso'),
+                'bjdCode':  g('bjdCode'),
+            })
+        total = int(root.findtext('.//totalCount') or 0)
+        if page * 100 >= total:
+            break
+        page += 1
+    _apt_list_cache[sgg_cd] = all_items
+    return all_items
+
+
 @app.route('/api/apt-info')
 def apt_info():
-    kapt_code = request.args.get('kaptCode', '')
-    if not kapt_code:
-        return jsonify({'error': 'kaptCode 필요'}), 400
-    if not API_KEY_APT_INFO:
-        return jsonify({'error': 'API_KEY_APT_INFO 미설정'}), 500
+    apt_nm  = request.args.get('aptNm', '')
+    sgg_cd  = request.args.get('sggCd', '')
+    if not apt_nm or not sgg_cd:
+        return jsonify({'error': 'aptNm, sggCd 필요'}), 400
+    if not API_KEY_APT_LIST or not API_KEY_APT_INFO:
+        return jsonify({'error': 'API 키 미설정'}), 500
 
     try:
+        # 1단계: 단지 목록에서 kaptCode 찾기
+        apt_list = fetch_apt_list(sgg_cd)
+        # 아파트명 정규화 (공백/특수문자 제거 후 비교)
+        import re
+        def normalize(s):
+            return re.sub(r'[\s\(\)\-_]', '', s).lower()
+        norm_nm = normalize(apt_nm)
+        kapt_code = ''
+        for apt in apt_list:
+            if normalize(apt['kaptName']) == norm_nm:
+                kapt_code = apt['kaptCode']
+                break
+        # 부분 매칭 시도
+        if not kapt_code:
+            for apt in apt_list:
+                if norm_nm in normalize(apt['kaptName']) or normalize(apt['kaptName']) in norm_nm:
+                    kapt_code = apt['kaptCode']
+                    break
+        if not kapt_code:
+            return jsonify({'ok': False, 'data': {}, 'msg': '단지 없음'})
+
+        # 2단계: 기본정보 조회
         resp = requests.get(
             'https://apis.data.go.kr/1613000/AptBasisInfoService1/getAphusBassInfo',
             params={
@@ -163,18 +228,15 @@ def apt_info():
             return v.strip() if v else ''
 
         data = {
-            'kaptName':   g('kaptName'),    # 단지명
-            'kaptAddr':   g('kaptAddr'),    # 주소
-            'kaptDongCnt': g('kaptDongCnt'), # 동수
-            'kaptdaCnt':  g('kaptdaCnt'),   # 세대수
-            'kaptdaYear': g('kaptdaYear'),  # 준공연도
-            'kaptdaBuild': g('kaptdaBuild'), # 건설사
-            'kaptdaPark': g('kaptdaPark'),  # 주차대수
-            'kaptdaFloor': g('kaptdaFloor'), # 최고층수
-            'kaptdaBassR': g('kaptdaBassR'), # 용적률
-            'kaptdaBcraTr': g('kaptdaBcraTr'), # 건폐율
+            'kaptName':    g('kaptName'),
+            'kaptDongCnt': g('kaptDongCnt'),
+            'kaptdaCnt':   g('kaptdaCnt'),
+            'kaptUsedate': g('kaptUsedate'),
+            'kaptBcompany':g('kaptBcompany'),
+            'kaptdaFloor': g('kaptdaFloor'),
+            'doroJuso':    g('doroJuso'),
         }
-        return jsonify({'ok': True, 'data': data})
+        return jsonify({'ok': True, 'data': data, 'kaptCode': kapt_code})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

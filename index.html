@@ -1259,21 +1259,29 @@ function renderAptMarkers(deals, dong){
 // ── 단지 정보 ──
 const aptInfoCache={};
 
-async function loadAptInfo(kaptCode){
+async function loadAptInfo(aptSeq){
   const bar=document.getElementById('aptInfoBar');
-  if(!kaptCode){bar.style.display='none';return;}
   bar.className='apt-info-loading';
   bar.textContent='단지 정보 불러오는 중...';
 
   try{
-    if(aptInfoCache[kaptCode]){
-      renderAptInfo(aptInfoCache[kaptCode]);
+    // 캐시 확인
+    const cacheKey=aptSeq||modalAptNm;
+    if(aptInfoCache[cacheKey]){
+      renderAptInfo(aptInfoCache[cacheKey]);
       return;
     }
-    const resp=await fetch(`/api/apt-info?kaptCode=${kaptCode}`);
+
+    const sggEl=document.getElementById('sigungu');
+    const sggCd=sggEl.value||'';
+    const aptNm=modalAptNm||'';
+    if(!aptNm||!sggCd){bar.style.display='none';return;}
+
+    const params=new URLSearchParams({aptNm, sggCd});
+    const resp=await fetch(`/api/apt-info?${params}`);
     const json=await resp.json();
     if(json.ok&&json.data){
-      aptInfoCache[kaptCode]=json.data;
+      aptInfoCache[cacheKey]=json.data;
       renderAptInfo(json.data);
     } else {
       bar.style.display='none';
@@ -1290,10 +1298,8 @@ function renderAptInfo(d){
   if(d.kaptdaCnt) chips.push(`🏢 세대수 <span>${parseInt(d.kaptdaCnt).toLocaleString()}세대</span>`);
   if(d.kaptDongCnt) chips.push(`🏗️ 동수 <span>${d.kaptDongCnt}동</span>`);
   if(d.kaptdaFloor) chips.push(`📐 최고층 <span>${d.kaptdaFloor}층</span>`);
-  if(d.kaptdaYear) chips.push(`📅 준공 <span>${d.kaptdaYear}년</span>`);
-  if(d.kaptdaBuild) chips.push(`🏭 건설사 <span>${d.kaptdaBuild}</span>`);
-  if(d.kaptdaPark) chips.push(`🅿️ 주차 <span>${parseFloat(d.kaptdaPark).toFixed(1)}대/세대</span>`);
-  if(d.kaptdaBassR) chips.push(`📊 용적률 <span>${d.kaptdaBassR}%</span>`);
+  if(d.kaptUsedate) chips.push(`📅 준공 <span>${d.kaptUsedate.substring(0,4)}년</span>`);
+  if(d.kaptBcompany) chips.push(`🏭 건설사 <span>${d.kaptBcompany}</span>`);
   bar.className='apt-info-bar';
   bar.innerHTML=chips.map(c=>`<div class="apt-info-chip">${c}</div>`).join('');
 }
