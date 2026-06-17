@@ -1169,76 +1169,89 @@ function addAptMarkersForDong(deals, dong, sido, sggName){
 
   const geocoder=new kakao.maps.services.Geocoder();
   const ps=new kakao.maps.services.Places();
+  const entries=Object.entries(aptStats);
 
-  Object.entries(aptStats).forEach(([aptNm,stat])=>{
-    const avg=Math.round(stat.sum/stat.cnt);
-    const cleanNm=aptNm.replace(/\([^)]*\)/g,'').replace(/아파트$/,'').trim();
-    const bonbunNum=stat.roadNmBonbun?String(parseInt(stat.roadNmBonbun,10)):'';
-    const roadAddr=stat.roadNm&&bonbunNum?`${sido} ${sggName} ${stat.roadNm} ${bonbunNum}`:'';
-    const jibunAddr=stat.jibun?`${sido} ${sggName} ${stat.umdNm} ${stat.jibun}`:'';
-
+  // 캐시된 것 먼저 즉시 표시, 미캐시된 것은 순차 처리
+  const uncached=[];
+  entries.forEach(([aptNm,stat])=>{
     const cacheKey=stat.aptSeq||`${aptNm}_${stat.jibun||stat.roadNm}`;
-    function addMarker(x,y){
-      const el=document.createElement('div');
-      el.style.cssText=`background:rgba(15,110,86,0.92);color:#fff;padding:5px 9px;border-radius:8px;font-size:11px;font-weight:600;white-space:nowrap;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.3);border:1.5px solid rgba(96,212,164,0.5);position:relative;`;
-      el.innerHTML=`<div style="font-size:10px;opacity:0.85;margin-bottom:1px">${aptNm}</div><div>${fmtPrice(avg)}</div><div style="font-size:9px;opacity:0.7">${stat.cnt}건</div>`;
-
-      const tooltip=document.createElement('div');
-      tooltip.style.cssText=`display:none;position:absolute;bottom:110%;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:8px 12px;border-radius:10px;font-size:12px;white-space:nowrap;z-index:99999;box-shadow:0 3px 10px rgba(0,0,0,0.3);min-width:160px;pointer-events:none;`;
-
-      const aptDeals=allData.filter(d=>d.aptNm===aptNm).sort((a,b)=>{
-        const da=`${a.dealYear}${String(a.dealMonth).padStart(2,'0')}${String(a.dealDay||'').padStart(2,'0')}`;
-        const db=`${b.dealYear}${String(b.dealMonth).padStart(2,'0')}${String(b.dealDay||'').padStart(2,'0')}`;
-        return db.localeCompare(da);
-      });
-      if(aptDeals.length>0){
-        const latest=aptDeals[0];
-        const p=mapDataMode==='trade'?parsePrice(latest.dealAmount):parsePrice(latest.deposit);
-        const mon=parsePrice(latest.monthlyRent||0);
-        const dt=`${latest.dealYear}.${String(latest.dealMonth).padStart(2,'0')}.${String(latest.dealDay||'').padStart(2,'0')}`;
-        const priceStr=mapDataMode==='trade'?fmtPrice(p):`보증금 ${fmtPrice(p)}${mon?` / ${fmtPrice(mon)}`:''}`;
-        tooltip.innerHTML=`<div style="font-weight:700;margin-bottom:4px">${aptNm}</div><div style="color:#60D4A4;font-size:13px;font-weight:700">${priceStr}</div><div style="opacity:0.7;font-size:11px;margin-top:2px">${parseFloat(latest.excluUseAr||0).toFixed(1)}㎡ · ${latest.floor||'-'}층 · ${dt}</div><div style="opacity:0.5;font-size:10px;margin-top:1px">총 ${aptDeals.length}건 · 클릭 시 전체이력</div>`;
-      }
-      el.appendChild(tooltip);
-
-      const overlay=new kakao.maps.CustomOverlay({position:new kakao.maps.LatLng(y,x),content:el,yAnchor:1.1,zIndex:1});
-      overlay.setMap(mainMapInstance);
-      mainMapOverlays.push(overlay);
-
-      el.addEventListener('mouseover',()=>{tooltip.style.display='block';overlay.setZIndex(999);});
-      el.addEventListener('mouseout',()=>{tooltip.style.display='none';overlay.setZIndex(1);});
-      el.addEventListener('click',()=>showAptModal(aptNm, stat.roadNm||stat.jibun, stat.aptSeq));
-    }
-
-    function searchAddr(addr, fallback){
-      geocoder.addressSearch(addr,(result,status)=>{
-        if(status===kakao.maps.services.Status.OK){
-          aptCoordCache[cacheKey]={x:result[0].x,y:result[0].y};
-          saveCache(APT_CACHE_KEY, aptCoordCache);
-          addMarker(result[0].x,result[0].y);
-        } else fallback();
-      });
-    }
-    function searchKeyword(idx, queries){
-      if(idx>=queries.length)return;
-      ps.keywordSearch(queries[idx],(data,status)=>{
-        if(status===kakao.maps.services.Status.OK){
-          aptCoordCache[cacheKey]={x:data[0].x,y:data[0].y};
-          saveCache(APT_CACHE_KEY, aptCoordCache);
-          addMarker(data[0].x,data[0].y);
-        } else searchKeyword(idx+1,queries);
-      });
-    }
-    const queries=[`${sido} ${sggName} ${dong} ${cleanNm}`,`${sido} ${sggName} ${cleanNm}`,cleanNm];
-    // 캐시 확인
     if(aptCoordCache[cacheKey]){
       const c=aptCoordCache[cacheKey];
-      addMarker(c.x,c.y);
-    } else if(roadAddr) searchAddr(roadAddr,()=>{ if(jibunAddr) searchAddr(jibunAddr,()=>searchKeyword(0,queries)); else searchKeyword(0,queries); });
-    else if(jibunAddr) searchAddr(jibunAddr,()=>searchKeyword(0,queries));
-    else searchKeyword(0,queries);
+      addMarkerEl(aptNm, stat, cacheKey, c.x, c.y);
+    } else {
+      uncached.push([aptNm, stat, cacheKey]);
+    }
+  });
+
+  // 미캐시된 것은 100ms 간격으로 순차 처리
+  uncached.forEach(([aptNm, stat, cacheKey], idx)=>{
+    setTimeout(()=>{
+      const avg=Math.round(stat.sum/stat.cnt);
+      const cleanNm=aptNm.replace(/\([^)]*\)/g,'').replace(/아파트$/,'').trim();
+      const bonbunNum=stat.roadNmBonbun?String(parseInt(stat.roadNmBonbun,10)):'';
+      const roadAddr=stat.roadNm&&bonbunNum?`${sido} ${sggName} ${stat.roadNm} ${bonbunNum}`:'';
+      const jibunAddr=stat.jibun?`${sido} ${sggName} ${stat.umdNm} ${stat.jibun}`:'';
+      const queries=[`${sido} ${sggName} ${dong} ${cleanNm}`,`${sido} ${sggName} ${cleanNm}`,cleanNm];
+
+      function addMarker(x,y){
+        aptCoordCache[cacheKey]={x,y};
+        saveCache(APT_CACHE_KEY, aptCoordCache);
+        addMarkerEl(aptNm, stat, cacheKey, x, y);
+      }
+      function searchAddr(addr, fallback){
+        geocoder.addressSearch(addr,(result,status)=>{
+          if(status===kakao.maps.services.Status.OK) addMarker(result[0].x,result[0].y);
+          else fallback();
+        });
+      }
+      function searchKeyword(idx, queries){
+        if(idx>=queries.length)return;
+        ps.keywordSearch(queries[idx],(data,status)=>{
+          if(status===kakao.maps.services.Status.OK) addMarker(data[0].x,data[0].y);
+          else searchKeyword(idx+1,queries);
+        });
+      }
+      if(roadAddr) searchAddr(roadAddr,()=>{ if(jibunAddr) searchAddr(jibunAddr,()=>searchKeyword(0,queries)); else searchKeyword(0,queries); });
+      else if(jibunAddr) searchAddr(jibunAddr,()=>searchKeyword(0,queries));
+      else searchKeyword(0,queries);
+    }, idx*100);
   });
 }
+
+function addMarkerEl(aptNm, stat, cacheKey, x, y){
+  const avg=Math.round(stat.sum/stat.cnt);
+  const el=document.createElement('div');
+  el.style.cssText=`background:rgba(15,110,86,0.92);color:#fff;padding:5px 9px;border-radius:8px;font-size:11px;font-weight:600;white-space:nowrap;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.3);border:1.5px solid rgba(96,212,164,0.5);position:relative;`;
+  el.innerHTML=`<div style="font-size:10px;opacity:0.85;margin-bottom:1px">${aptNm}</div><div>${fmtPrice(avg)}</div><div style="font-size:9px;opacity:0.7">${stat.cnt}건</div>`;
+
+  const tooltip=document.createElement('div');
+  tooltip.style.cssText=`display:none;position:absolute;bottom:110%;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:8px 12px;border-radius:10px;font-size:12px;white-space:nowrap;z-index:99999;box-shadow:0 3px 10px rgba(0,0,0,0.3);min-width:160px;pointer-events:none;`;
+
+  const aptDeals=allData.filter(d=>d.aptNm===aptNm).sort((a,b)=>{
+    const da=`${a.dealYear}${String(a.dealMonth).padStart(2,'0')}${String(a.dealDay||'').padStart(2,'0')}`;
+    const db=`${b.dealYear}${String(b.dealMonth).padStart(2,'0')}${String(b.dealDay||'').padStart(2,'0')}`;
+    return db.localeCompare(da);
+  });
+  if(aptDeals.length>0){
+    const latest=aptDeals[0];
+    const p=mapDataMode==='trade'?parsePrice(latest.dealAmount):parsePrice(latest.deposit);
+    const mon=parsePrice(latest.monthlyRent||0);
+    const dt=`${latest.dealYear}.${String(latest.dealMonth).padStart(2,'0')}.${String(latest.dealDay||'').padStart(2,'0')}`;
+    const priceStr=mapDataMode==='trade'?fmtPrice(p):`보증금 ${fmtPrice(p)}${mon?` / ${fmtPrice(mon)}`:''}`;
+    tooltip.innerHTML=`<div style="font-weight:700;margin-bottom:4px">${aptNm}</div><div style="color:#60D4A4;font-size:13px;font-weight:700">${priceStr}</div><div style="opacity:0.7;font-size:11px;margin-top:2px">${parseFloat(latest.excluUseAr||0).toFixed(1)}㎡ · ${latest.floor||'-'}층 · ${dt}</div><div style="opacity:0.5;font-size:10px;margin-top:1px">총 ${aptDeals.length}건 · 클릭 시 전체이력</div>`;
+  }
+  el.appendChild(tooltip);
+
+  const overlay=new kakao.maps.CustomOverlay({position:new kakao.maps.LatLng(y,x),content:el,yAnchor:1.1,zIndex:1});
+  overlay.setMap(mainMapInstance);
+  mainMapOverlays.push(overlay);
+
+  el.addEventListener('mouseover',()=>{tooltip.style.display='block';overlay.setZIndex(999);});
+  el.addEventListener('mouseout',()=>{tooltip.style.display='none';overlay.setZIndex(1);});
+  el.addEventListener('click',()=>showAptModal(aptNm, stat.roadNm||stat.jibun, stat.aptSeq));
+}
+
+
 
 const SEOUL_SGG={
   '종로구':{lat:37.5730,lng:126.9794},'중구':{lat:37.5638,lng:126.9978},
