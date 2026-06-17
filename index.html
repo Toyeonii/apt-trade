@@ -1134,6 +1134,7 @@ function onZoomChanged(){
 
 let centerChangeTimer=null;
 const dongCoordCache={}; // 동 좌표 캐시
+const aptCoordCache={}; // 아파트 좌표 캐시
 
 function onCenterChanged(){
   if(!mainMapInstance||!allData.length)return;
@@ -1197,19 +1198,27 @@ function addAptMarkersForDong(deals, dong, sido, sggName){
 
     function searchAddr(addr, fallback){
       geocoder.addressSearch(addr,(result,status)=>{
-        if(status===kakao.maps.services.Status.OK)addMarker(result[0].x,result[0].y);
-        else fallback();
+        if(status===kakao.maps.services.Status.OK){
+          aptCoordCache[aptNm]={x:result[0].x,y:result[0].y};
+          addMarker(result[0].x,result[0].y);
+        } else fallback();
       });
     }
     function searchKeyword(idx, queries){
       if(idx>=queries.length)return;
       ps.keywordSearch(queries[idx],(data,status)=>{
-        if(status===kakao.maps.services.Status.OK)addMarker(data[0].x,data[0].y);
-        else searchKeyword(idx+1,queries);
+        if(status===kakao.maps.services.Status.OK){
+          aptCoordCache[aptNm]={x:data[0].x,y:data[0].y};
+          addMarker(data[0].x,data[0].y);
+        } else searchKeyword(idx+1,queries);
       });
     }
     const queries=[`${sido} ${sggName} ${dong} ${cleanNm}`,`${sido} ${sggName} ${cleanNm}`,cleanNm];
-    if(roadAddr) searchAddr(roadAddr,()=>{ if(jibunAddr) searchAddr(jibunAddr,()=>searchKeyword(0,queries)); else searchKeyword(0,queries); });
+    // 캐시 확인
+    if(aptCoordCache[aptNm]){
+      const c=aptCoordCache[aptNm];
+      addMarker(c.x,c.y);
+    } else if(roadAddr) searchAddr(roadAddr,()=>{ if(jibunAddr) searchAddr(jibunAddr,()=>searchKeyword(0,queries)); else searchKeyword(0,queries); });
     else if(jibunAddr) searchAddr(jibunAddr,()=>searchKeyword(0,queries));
     else searchKeyword(0,queries);
   });
