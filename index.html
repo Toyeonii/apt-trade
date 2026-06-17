@@ -1300,6 +1300,7 @@ function renderAptInfo(d){
   if(d.kaptTopFloor) chips.push(`📐 최고층 <span>${d.kaptTopFloor}층</span>`);
   if(d.kaptUsedate) chips.push(`📅 준공 <span>${d.kaptUsedate.substring(0,4)}년</span>`);
   if(d.kaptBcompany) chips.push(`🏭 건설사 <span>${d.kaptBcompany}</span>`);
+  if(d.parkingPerHouse) chips.push(`🅿️ 주차 <span>${d.parkingPerHouse}대/세대</span>`);
   bar.className='apt-info-bar';
   bar.innerHTML=chips.map(c=>`<div class="apt-info-chip">${c}</div>`).join('');
 }

@@ -215,6 +215,25 @@ def apt_info():
             'kaptTopFloor':str(item.get('kaptTopFloor', '')),
             'doroJuso':    str(item.get('doroJuso', '')),
         }
+
+        # 3단계: 상세정보 조회 (주차대수)
+        try:
+            dtl_url = f"https://apis.data.go.kr/1613000/AptBasisInfoServiceV4/getAphusDtlInfoV4?serviceKey={API_KEY_APT_INFO}&kaptCode={kapt_code}&_type=json"
+            dtl_resp = requests.get(dtl_url, timeout=10)
+            dtl_resp.raise_for_status()
+            dtl_data = dtl_resp.json()
+            dtl_item = dtl_data.get('response', {}).get('body', {}).get('item', {})
+            if dtl_item:
+                park_up = dtl_item.get('parkingSpaceCount', 0) or 0
+                park_down = dtl_item.get('parkingGroundCount', 0) or 0
+                total_park = int(park_up or 0) + int(park_down or 0)
+                kaptdaCnt = int(item.get('kaptdaCnt', 0) or 0)
+                if total_park > 0 and kaptdaCnt > 0:
+                    result['parkingPerHouse'] = f"{total_park/kaptdaCnt:.1f}"
+                result['parkingTotal'] = str(total_park)
+        except:
+            pass
+
         return jsonify({'ok': True, 'data': result, 'kaptCode': kapt_code})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
