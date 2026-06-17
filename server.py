@@ -12,10 +12,10 @@ CORS(app)
 TRADE_API = 'https://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev'
 RENT_API  = 'https://apis.data.go.kr/1613000/RTMSDataSvcAptRent/getRTMSDataSvcAptRent'
 
-API_KEY_TRADE    = os.environ.get('API_KEY', '')
-API_KEY_RENT     = os.environ.get('API_KEY_RENT', '')
-API_KEY_APT_LIST = os.environ.get('API_KEY_APT_LIST', '')
-API_KEY_APT_INFO = os.environ.get('API_KEY_APT_INFO', '')
+API_KEY_TRADE    = os.environ.get('API_KEY', '').strip()
+API_KEY_RENT     = os.environ.get('API_KEY_RENT', '').strip()
+API_KEY_APT_LIST = os.environ.get('API_KEY_APT_LIST', '').strip()
+API_KEY_APT_INFO = os.environ.get('API_KEY_APT_INFO', '').strip()
 
 _cache = {}
 CACHE_TTL = 3600
