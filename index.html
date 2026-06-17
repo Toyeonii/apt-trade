@@ -362,6 +362,25 @@ function switchMode(mode){
   document.querySelector('.search-panel').style.display='block';
   document.getElementById('tab-map').classList.remove('active');
 
+  const prevMode=currentMode;
+  currentMode=mode;
+
+  // 지도 탭에서 왔을 때는 데이터 유지
+  if(prevMode==='map'){
+    document.getElementById('tab-trade').classList.toggle('active',mode==='trade');
+    document.getElementById('tab-rent').classList.toggle('active',mode==='rent');
+    const btn=document.getElementById('btnSearch');
+    btn.className=`btn-search ${mode}`;
+    const strip=document.getElementById('summaryStrip');
+    strip.className=`summary-strip ${mode}`;
+    if(filteredData.length>0){
+      applyFilter();
+      document.getElementById('filterBar').style.display='flex';
+      document.getElementById('summaryStrip').style.display='grid';
+    }
+    return;
+  }
+
   currentMode=mode;
   allData=[];filteredData=[];
   document.getElementById('filterBar').style.display='none';
