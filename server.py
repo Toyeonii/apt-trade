@@ -143,10 +143,10 @@ def fetch_apt_list(sgg_cd):
     page = 1
     while True:
         resp = requests.get(
-            'https://apis.data.go.kr/1613000/AptListService2/getAptList2',
+            'https://apis.data.go.kr/1611000/AptListService/getLegaldongAptList',
             params={
                 'serviceKey': API_KEY_APT_LIST,
-                'bjdCode': sgg_cd,
+                'ldCode': sgg_cd,
                 'pageNo': page,
                 'numOfRows': 100,
             },
@@ -208,7 +208,7 @@ def apt_info():
 
         # 2단계: 기본정보 조회
         resp = requests.get(
-            'https://apis.data.go.kr/1613000/AptBasisInfoService1/getAphusBassInfo',
+            'https://apis.data.go.kr/1613000/AptBasisInfoServiceV3/getAphusBassInfoV3',
             params={
                 'serviceKey': API_KEY_APT_INFO,
                 'kaptCode': kapt_code,
