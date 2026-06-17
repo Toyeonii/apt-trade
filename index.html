@@ -1180,6 +1180,7 @@ function renderAptMarkers(deals, dong){
     const cleanNm=aptNm.replace(/\([^)]*\)/g,'').replace(/아파트$/,'').trim();
     const bonbunNum=stat.roadNmBonbun?String(parseInt(stat.roadNmBonbun,10)):'';
     const roadAddr=stat.roadNm&&bonbunNum?`${sido} ${sggName} ${stat.roadNm} ${bonbunNum}`:'';
+    const jibunAddr=stat.jibun?`${sido} ${sggName} ${stat.umdNm} ${stat.jibun}`:'';
 
     function addAptMarker(x,y){
       const el=document.createElement('div');
@@ -1206,22 +1207,38 @@ function renderAptMarkers(deals, dong){
       mainMapOverlays.push(overlay);
     }
 
-    if(roadAddr){
-      geocoder.addressSearch(roadAddr,(result,status)=>{
-        if(status===kakao.maps.services.Status.OK){
-          addAptMarker(result[0].x,result[0].y);
-        } else {
-          const ps=new kakao.maps.services.Places();
-          ps.keywordSearch(`${sido} ${sggName} ${dong} ${cleanNm}`,(data,status)=>{
-            if(status===kakao.maps.services.Status.OK)addAptMarker(data[0].x,data[0].y);
-          });
-        }
-      });
-    } else {
-      const ps=new kakao.maps.services.Places();
-      ps.keywordSearch(`${sido} ${sggName} ${dong} ${cleanNm}`,(data,status)=>{
+    const ps=new kakao.maps.services.Places();
+    const queries=[
+      `${sido} ${sggName} ${dong} ${cleanNm}`,
+      `${sido} ${sggName} ${cleanNm}`,
+      cleanNm
+    ];
+
+    function searchKeyword(idx){
+      if(idx>=queries.length)return;
+      ps.keywordSearch(queries[idx],(data,status)=>{
         if(status===kakao.maps.services.Status.OK)addAptMarker(data[0].x,data[0].y);
+        else searchKeyword(idx+1);
       });
+    }
+
+    function searchAddr(addr, fallback){
+      geocoder.addressSearch(addr,(result,status)=>{
+        if(status===kakao.maps.services.Status.OK)addAptMarker(result[0].x,result[0].y);
+        else fallback();
+      });
+    }
+
+    // 도로명주소 → 지번주소 → 키워드 순으로 검색
+    if(roadAddr){
+      searchAddr(roadAddr, ()=>{
+        if(jibunAddr) searchAddr(jibunAddr, ()=>searchKeyword(0));
+        else searchKeyword(0);
+      });
+    } else if(jibunAddr){
+      searchAddr(jibunAddr, ()=>searchKeyword(0));
+    } else {
+      searchKeyword(0);
     }
   });
 
@@ -1280,10 +1297,11 @@ async function selectMapTab(btn, aptNm, roadNm=''){
     const sidoEl=document.getElementById('sido');
     const sido=sidoEl.value||'';
 
-    const aptDeals=allData.filter(d=>d.aptNm===aptNm&&(!roadNm||d.roadNm===roadNm));
+    const aptDeals=allData.filter(d=>d.aptNm===aptNm&&(!roadNm||(d.roadNm===roadNm||d.jibun===roadNm)));
     const umdNm=aptDeals[0]?.umdNm||'';
     const aptRoadNm=aptDeals[0]?.roadNm||'';
     const aptRoadBonbun=aptDeals[0]?.roadNmBonbun||'';
+    const aptJibun=aptDeals[0]?.jibun||'';
 
     // 아파트명 정제 (괄호 제거, '아파트' 단어 제거)
     const cleanAptNm=aptNm.replace(/\([^)]*\)/g,'').replace(/아파트$/,'').trim();
@@ -1291,6 +1309,8 @@ async function selectMapTab(btn, aptNm, roadNm=''){
     // 도로명+번지 (앞의 0 제거)
     const bonbunNum=aptRoadBonbun?String(parseInt(aptRoadBonbun,10)):'';
     const roadAddr=aptRoadNm&&bonbunNum?`${sido} ${sggName} ${aptRoadNm} ${bonbunNum}`:'';
+    // 지번 주소 (전월세용)
+    const jibunAddr=aptJibun?`${sido} ${sggName} ${umdNm} ${aptJibun}`:'';
 
     const ps=new kakao.maps.services.Places();
     const geocoder=new kakao.maps.services.Geocoder();
@@ -1322,15 +1342,21 @@ async function selectMapTab(btn, aptNm, roadNm=''){
       });
     }
 
-    // 도로명 주소로 먼저 검색 → 실패 시 키워드 검색
-    if(roadAddr){
-      geocoder.addressSearch(roadAddr,(result,status)=>{
-        if(status===kakao.maps.services.Status.OK){
-          placeMarker(result[0].x, result[0].y);
-        } else {
-          searchByKeyword(0);
-        }
+    function searchByAddr(addr, fallback){
+      geocoder.addressSearch(addr,(result,status)=>{
+        if(status===kakao.maps.services.Status.OK){placeMarker(result[0].x,result[0].y);}
+        else{fallback();}
       });
+    }
+
+    // 검색 순서: 도로명주소 → 지번주소 → 키워드
+    if(roadAddr){
+      searchByAddr(roadAddr, ()=>{
+        if(jibunAddr) searchByAddr(jibunAddr, ()=>searchByKeyword(0));
+        else searchByKeyword(0);
+      });
+    } else if(jibunAddr){
+      searchByAddr(jibunAddr, ()=>searchByKeyword(0));
     } else {
       searchByKeyword(0);
     }
