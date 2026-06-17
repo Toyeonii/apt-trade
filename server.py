@@ -12,8 +12,9 @@ CORS(app)
 TRADE_API = 'https://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev'
 RENT_API  = 'https://apis.data.go.kr/1613000/RTMSDataSvcAptRent/getRTMSDataSvcAptRent'
 
-API_KEY_TRADE = os.environ.get('API_KEY', '')
-API_KEY_RENT  = os.environ.get('API_KEY_RENT', '')
+API_KEY_TRADE    = os.environ.get('API_KEY', '')
+API_KEY_RENT     = os.environ.get('API_KEY_RENT', '')
+API_KEY_APT_INFO = os.environ.get('API_KEY_APT_INFO', '')
 
 _cache = {}
 CACHE_TTL = 3600
@@ -131,6 +132,52 @@ def kakao_key():
     if not key:
         return jsonify({'error': 'KAKAO_MAP_KEY 미설정'}), 500
     return jsonify({'key': key})
+
+@app.route('/api/apt-info')
+def apt_info():
+    kapt_code = request.args.get('kaptCode', '')
+    if not kapt_code:
+        return jsonify({'error': 'kaptCode 필요'}), 400
+    if not API_KEY_APT_INFO:
+        return jsonify({'error': 'API_KEY_APT_INFO 미설정'}), 500
+
+    try:
+        resp = requests.get(
+            'https://apis.data.go.kr/1613000/AptBasisInfoService1/getAphusBassInfo',
+            params={
+                'serviceKey': API_KEY_APT_INFO,
+                'kaptCode': kapt_code,
+                'pageNo': 1,
+                'numOfRows': 1,
+            },
+            timeout=10
+        )
+        resp.raise_for_status()
+        root = ET.fromstring(resp.text)
+        item = root.find('.//item')
+        if item is None:
+            return jsonify({'ok': False, 'data': {}})
+
+        def g(tag):
+            v = item.findtext(tag)
+            return v.strip() if v else ''
+
+        data = {
+            'kaptName':   g('kaptName'),    # 단지명
+            'kaptAddr':   g('kaptAddr'),    # 주소
+            'kaptDongCnt': g('kaptDongCnt'), # 동수
+            'kaptdaCnt':  g('kaptdaCnt'),   # 세대수
+            'kaptdaYear': g('kaptdaYear'),  # 준공연도
+            'kaptdaBuild': g('kaptdaBuild'), # 건설사
+            'kaptdaPark': g('kaptdaPark'),  # 주차대수
+            'kaptdaFloor': g('kaptdaFloor'), # 최고층수
+            'kaptdaBassR': g('kaptdaBassR'), # 용적률
+            'kaptdaBcraTr': g('kaptdaBcraTr'), # 건폐율
+        }
+        return jsonify({'ok': True, 'data': data})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/')
 def index():
