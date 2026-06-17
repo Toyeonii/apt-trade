@@ -383,6 +383,8 @@ function switchMode(mode){
   // 탭 자체 전환 (매매↔전월세) 또는 지도에서 다른 모드로
   currentMode=mode;
   mapDataMode=mode;
+  // 지도 마커 초기화
+  if(typeof mainMapOverlays!=='undefined'){mainMapOverlays.forEach(o=>o.setMap(null));mainMapOverlays=[];}
   allData=[];filteredData=[];
   document.getElementById('filterBar').style.display='none';
   document.getElementById('summaryStrip').style.display='none';
@@ -925,7 +927,7 @@ function selectModalTab(arKey, btn){
     const mon=parsePrice(d.monthlyRent||0);
     const pyung=p>0&&ar>0?Math.round(p/(ar/3.3058)):0;
     const dt=d.dealYear&&d.dealMonth?`${d.dealYear}.${String(d.dealMonth).padStart(2,'0')}.${String(d.dealDay||'').padStart(2,'0')}`:'-';
-    const priceStr=currentMode==='trade'?fmtPrice(p):`보증금 ${fmtPrice(p)}${mon?` / 월세 ${fmtPrice(mon)}`:''}`;
+    const priceStr=getDataMode()==='trade'?fmtPrice(p):`보증금 ${fmtPrice(p)}${mon?` / 월세 ${fmtPrice(mon)}`:''}`;
     html+=`<div class="modal-list-item">
       <div class="modal-item-left">
         <span class="modal-item-date">${dt}</span>
@@ -933,7 +935,7 @@ function selectModalTab(arKey, btn){
       </div>
       <div style="text-align:right">
         <div class="modal-item-price">${priceStr}</div>
-        ${pyung&&currentMode==='trade'?`<div class="modal-item-pyung">${fmtPrice(pyung)}/평</div>`:''}
+        ${pyung&&getDataMode()==='trade'?`<div class="modal-item-pyung">${fmtPrice(pyung)}/평</div>`:''}
       </div>
     </div>`;
   });
@@ -1005,6 +1007,7 @@ async function shareModal(){
 let mainMapInstance=null;
 let mainMapOverlays=[];
 let mapDataMode='trade'; // 지도에서 사용할 데이터 모드
+function getDataMode(){ return currentMode==='map' ? mapDataMode : currentMode; }
 
 const SEOUL_SGG={
   '종로구':{lat:37.5730,lng:126.9794},'중구':{lat:37.5638,lng:126.9978},
@@ -1380,9 +1383,9 @@ function renderChart(){
   if(!filteredData.length){resetChart();return;}
 
   const aptQ=(document.getElementById('aptFilter')?.value||'').trim();
-  const color=currentMode==='trade'?'#185FA5':'#0F6E56';
-  const bgColor=currentMode==='trade'?'rgba(24,95,165,0.15)':'rgba(15,110,86,0.15)';
-  const modeLabel=currentMode==='trade'?'거래가':'보증금';
+  const color=getDataMode()==='trade'?'#185FA5':'#0F6E56';
+  const bgColor=getDataMode()==='trade'?'rgba(24,95,165,0.15)':'rgba(15,110,86,0.15)';
+  const modeLabel=getDataMode()==='trade'?'거래가':'보증금';
   const ctx=document.getElementById('priceChart').getContext('2d');
   if(chartInstance){chartInstance.destroy();chartInstance=null;}
 
