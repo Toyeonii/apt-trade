@@ -909,36 +909,70 @@ function selectModalTab(arKey, btn){
   kakaoMapInstance=null;
   document.getElementById('modalMapWrap').style.display='none';
   document.getElementById('modalBody').style.display='block';
+
   const pts=deals.map(d=>{
-    const p=mapDataMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
+    const p=getDataMode()==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
     const dateStr=`${d.dealYear}-${String(d.dealMonth).padStart(2,'0')}-${String(d.dealDay||'01').padStart(2,'0')}`;
     return p>0?{x:dateStr,y:p,floor:d.floor}:null;
   }).filter(Boolean).sort((a,b)=>a.x.localeCompare(b.x));
+
+  // 구 전체 동일 면적 월별 평균가
+  const arMin=ar*0.95, arMax=ar*1.05;
+  const districtByMonth={};
+  allData.forEach(d=>{
+    const dAr=parseFloat(d.excluUseAr||0);
+    if(dAr<arMin||dAr>arMax)return;
+    const p=getDataMode()==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
+    if(!p)return;
+    const key=`${d.dealYear}-${String(d.dealMonth).padStart(2,'0')}`;
+    if(!districtByMonth[key])districtByMonth[key]=[];
+    districtByMonth[key].push(p);
+  });
+  const districtPts=Object.entries(districtByMonth).sort((a,b)=>a[0].localeCompare(b[0])).map(([month,prices])=>({
+    x:`${month}-15`,
+    y:Math.round(prices.reduce((a,b)=>a+b,0)/prices.length)
+  }));
 
   const chartWrap=document.getElementById('modalChartWrap');
   if(pts.length>=2){
     chartWrap.style.display='block';
     const ctx=document.getElementById('modalChart').getContext('2d');
+    const datasets=[{
+      label:modalAptNm,
+      data:pts,
+      borderColor:'#185FA5',
+      backgroundColor:'rgba(24,95,165,0.08)',
+      borderWidth:2,
+      pointRadius:4,
+      pointHoverRadius:6,
+      fill:true,
+      tension:0.3
+    }];
+    if(districtPts.length>=2){
+      datasets.push({
+        label:'구 전체 평균',
+        data:districtPts,
+        borderColor:'#E65100',
+        backgroundColor:'transparent',
+        borderWidth:1.5,
+        pointRadius:2,
+        pointHoverRadius:4,
+        fill:false,
+        tension:0.3,
+        borderDash:[4,3]
+      });
+    }
     modalChartInstance=new Chart(ctx,{
       type:'line',
-      data:{datasets:[{
-        data:pts,
-        borderColor:'#185FA5',
-        backgroundColor:'rgba(24,95,165,0.08)',
-        borderWidth:2,
-        pointRadius:4,
-        pointHoverRadius:6,
-        fill:true,
-        tension:0.3
-      }]},
+      data:{datasets},
       options:{
         responsive:true,
         maintainAspectRatio:false,
         parsing:{xAxisKey:'x',yAxisKey:'y'},
         plugins:{
-          legend:{display:false},
+          legend:{display:districtPts.length>=2,position:'top',labels:{font:{size:10},boxWidth:12,padding:8}},
           tooltip:{callbacks:{
-            label:ctx=>`${fmtPrice(ctx.raw.y)} · ${ctx.raw.floor||'-'}층`
+            label:ctx=>ctx.dataset.label==='구 전체 평균'?`구 평균: ${fmtPrice(ctx.raw.y)}`:`${fmtPrice(ctx.raw.y)}${ctx.raw.floor?' · '+ctx.raw.floor+'층':''}`
           }}
         },
         scales:{
