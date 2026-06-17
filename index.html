@@ -1164,6 +1164,7 @@ function addAptMarkersForDong(deals, dong, sido, sggName){
     const roadAddr=stat.roadNm&&bonbunNum?`${sido} ${sggName} ${stat.roadNm} ${bonbunNum}`:'';
     const jibunAddr=stat.jibun?`${sido} ${sggName} ${stat.umdNm} ${stat.jibun}`:'';
 
+    const cacheKey=stat.aptSeq||`${aptNm}_${stat.jibun||stat.roadNm}`;
     function addMarker(x,y){
       const el=document.createElement('div');
       el.style.cssText=`background:rgba(15,110,86,0.92);color:#fff;padding:5px 9px;border-radius:8px;font-size:11px;font-weight:600;white-space:nowrap;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.3);border:1.5px solid rgba(96,212,164,0.5);position:relative;`;
@@ -1199,7 +1200,7 @@ function addAptMarkersForDong(deals, dong, sido, sggName){
     function searchAddr(addr, fallback){
       geocoder.addressSearch(addr,(result,status)=>{
         if(status===kakao.maps.services.Status.OK){
-          aptCoordCache[aptNm]={x:result[0].x,y:result[0].y};
+          aptCoordCache[cacheKey]={x:result[0].x,y:result[0].y};
           addMarker(result[0].x,result[0].y);
         } else fallback();
       });
@@ -1208,15 +1209,15 @@ function addAptMarkersForDong(deals, dong, sido, sggName){
       if(idx>=queries.length)return;
       ps.keywordSearch(queries[idx],(data,status)=>{
         if(status===kakao.maps.services.Status.OK){
-          aptCoordCache[aptNm]={x:data[0].x,y:data[0].y};
+          aptCoordCache[cacheKey]={x:data[0].x,y:data[0].y};
           addMarker(data[0].x,data[0].y);
         } else searchKeyword(idx+1,queries);
       });
     }
     const queries=[`${sido} ${sggName} ${dong} ${cleanNm}`,`${sido} ${sggName} ${cleanNm}`,cleanNm];
     // 캐시 확인
-    if(aptCoordCache[aptNm]){
-      const c=aptCoordCache[aptNm];
+    if(aptCoordCache[cacheKey]){
+      const c=aptCoordCache[cacheKey];
       addMarker(c.x,c.y);
     } else if(roadAddr) searchAddr(roadAddr,()=>{ if(jibunAddr) searchAddr(jibunAddr,()=>searchKeyword(0,queries)); else searchKeyword(0,queries); });
     else if(jibunAddr) searchAddr(jibunAddr,()=>searchKeyword(0,queries));
