@@ -1240,13 +1240,51 @@ function renderAptMarkers(deals, dong){
         font-size:11px;font-weight:600;
         white-space:nowrap;cursor:pointer;
         box-shadow:0 2px 6px rgba(0,0,0,0.3);
-        border:1.5px solid rgba(96,212,164,0.5)
+        border:1.5px solid rgba(96,212,164,0.5);
+        position:relative;
       `;
       el.innerHTML=`
         <div style="font-size:10px;opacity:0.85;margin-bottom:1px">${aptNm}</div>
         <div>${fmtPrice(avg)}</div>
         <div style="font-size:9px;opacity:0.7">${stat.cnt}건</div>
       `;
+
+      // 툴팁 생성
+      const tooltip=document.createElement('div');
+      tooltip.style.cssText=`
+        display:none;position:absolute;bottom:110%;left:50%;transform:translateX(-50%);
+        background:#1a1a1a;color:#fff;padding:8px 12px;border-radius:10px;
+        font-size:12px;white-space:nowrap;z-index:999;
+        box-shadow:0 3px 10px rgba(0,0,0,0.3);min-width:160px;
+        pointer-events:none;
+      `;
+
+      // 최신 거래 찾기
+      const aptDeals=allData.filter(d=>d.aptNm===aptNm)
+        .sort((a,b)=>{
+          const da=`${a.dealYear}${String(a.dealMonth).padStart(2,'0')}${String(a.dealDay||'').padStart(2,'0')}`;
+          const db=`${b.dealYear}${String(b.dealMonth).padStart(2,'0')}${String(b.dealDay||'').padStart(2,'0')}`;
+          return db.localeCompare(da);
+        });
+
+      if(aptDeals.length>0){
+        const latest=aptDeals[0];
+        const p=mapDataMode==='trade'?parsePrice(latest.dealAmount):parsePrice(latest.deposit);
+        const mon=parsePrice(latest.monthlyRent||0);
+        const dt=`${latest.dealYear}.${String(latest.dealMonth).padStart(2,'0')}.${String(latest.dealDay||'').padStart(2,'0')}`;
+        const priceStr=mapDataMode==='trade'?fmtPrice(p):`보증금 ${fmtPrice(p)}${mon?` / ${fmtPrice(mon)}`:''}`;
+        tooltip.innerHTML=`
+          <div style="font-weight:700;margin-bottom:4px">${aptNm}</div>
+          <div style="color:#60D4A4;font-size:13px;font-weight:700">${priceStr}</div>
+          <div style="opacity:0.7;font-size:11px;margin-top:2px">${parseFloat(latest.excluUseAr||0).toFixed(1)}㎡ · ${latest.floor||'-'}층 · ${dt}</div>
+          <div style="opacity:0.5;font-size:10px;margin-top:1px">총 ${aptDeals.length}건 · 클릭 시 전체이력</div>
+        `;
+      }
+
+      el.appendChild(tooltip);
+
+      el.addEventListener('mouseover',()=>{tooltip.style.display='block';});
+      el.addEventListener('mouseout',()=>{tooltip.style.display='none';});
       el.addEventListener('click',()=>showAptModal(aptNm, stat.roadNm||stat.jibun, stat.aptSeq));
       const overlay=new kakao.maps.CustomOverlay({
         position:new kakao.maps.LatLng(y,x),
