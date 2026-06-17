@@ -370,6 +370,11 @@ function switchMode(mode){
   // 지도 탭에서 왔을 때는 데이터 유지
   if(prevMode==='map'){
     currentMode=mapDataMode; // 이전 모드 복원
+    // 요청한 모드가 다르면 mapDataMode도 업데이트
+    if(mode!==mapDataMode){
+      mapDataMode=mode;
+      currentMode=mode;
+    }
     document.getElementById('tab-trade').classList.toggle('active',mode==='trade');
     document.getElementById('tab-rent').classList.toggle('active',mode==='rent');
     const btn=document.getElementById('btnSearch');
