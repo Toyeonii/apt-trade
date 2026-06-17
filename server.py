@@ -182,6 +182,7 @@ def apt_list_debug():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/apt-info')
 def apt_info():
     apt_nm  = request.args.get('aptNm', '')
     sgg_cd  = request.args.get('sggCd', '')
@@ -200,9 +201,11 @@ def apt_info():
         def normalize(s):
             return re.sub(r'[ \t\(\)\-_]', '', s).lower()
         def simplify(s):
-            # 숫자, 단지, 아파트 등 제거하고 핵심 키워드만
+            # 숫자단지, 아파트, 동(행정구역) 등 제거
             s = re.sub(r'[0-9]+단지', '', s)
             s = re.sub(r'아파트$', '', s)
+            s = re.sub(r'\([^)]*\)', '', s)  # 괄호 제거
+            s = re.sub(r'동(?=[가-힣])', '', s)  # 동+한글 앞의 '동' 제거 (방화동→방화)
             return re.sub(r'[ \t\(\)\-_]', '', s).lower()
 
         norm_nm = normalize(apt_nm)
