@@ -1115,6 +1115,7 @@ function onZoomChanged(){
         geocoder.addressSearch(`${sido} ${sggName} ${dong}`,(result,status)=>{
           if(status===kakao.maps.services.Status.OK){
             dongCoordCache[cacheKey]={x:result[0].x, y:result[0].y};
+            saveCache(DONG_CACHE_KEY, dongCoordCache);
             const pos=new kakao.maps.LatLng(result[0].y,result[0].x);
             if(level<=4||bounds.contain(pos)){
               addAptMarkersForDong(stat.deals, dong, sido, sggName);
@@ -1133,8 +1134,20 @@ function onZoomChanged(){
 }
 
 let centerChangeTimer=null;
-const dongCoordCache={}; // 동 좌표 캐시
-const aptCoordCache={}; // 아파트 좌표 캐시
+
+// 좌표 캐시 - localStorage에서 로드
+const DONG_CACHE_KEY='apt_dong_coords_v1';
+const APT_CACHE_KEY='apt_coords_v1';
+
+function loadCache(key){
+  try{const v=localStorage.getItem(key);return v?JSON.parse(v):{};} catch(e){return {};}
+}
+function saveCache(key, cache){
+  try{localStorage.setItem(key, JSON.stringify(cache));} catch(e){}
+}
+
+const dongCoordCache=loadCache(DONG_CACHE_KEY);
+const aptCoordCache=loadCache(APT_CACHE_KEY);
 
 function onCenterChanged(){
   if(!mainMapInstance||!allData.length)return;
@@ -1201,6 +1214,7 @@ function addAptMarkersForDong(deals, dong, sido, sggName){
       geocoder.addressSearch(addr,(result,status)=>{
         if(status===kakao.maps.services.Status.OK){
           aptCoordCache[cacheKey]={x:result[0].x,y:result[0].y};
+          saveCache(APT_CACHE_KEY, aptCoordCache);
           addMarker(result[0].x,result[0].y);
         } else fallback();
       });
@@ -1210,6 +1224,7 @@ function addAptMarkersForDong(deals, dong, sido, sggName){
       ps.keywordSearch(queries[idx],(data,status)=>{
         if(status===kakao.maps.services.Status.OK){
           aptCoordCache[cacheKey]={x:data[0].x,y:data[0].y};
+          saveCache(APT_CACHE_KEY, aptCoordCache);
           addMarker(data[0].x,data[0].y);
         } else searchKeyword(idx+1,queries);
       });
