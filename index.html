@@ -1123,7 +1123,15 @@ function onZoomChanged(){
   }
 }
 
-function addAptMarkersForDong(deals, dong, sido, sggName){
+let centerChangeTimer=null;
+function onCenterChanged(){
+  if(!mainMapInstance||!allData.length)return;
+  const level=mainMapInstance.getLevel();
+  if(level>5)return;
+  // 디바운스 - 이동 멈춘 후 300ms 후에 실행
+  clearTimeout(centerChangeTimer);
+  centerChangeTimer=setTimeout(()=>onZoomChanged(), 300);
+}deals, dong, sido, sggName){
   const aptStats={};
   deals.forEach(d=>{
     const key=d.aptNm||'기타';
@@ -1231,6 +1239,9 @@ async function initMainMap(){
     // 줌 변경 이벤트 (항상 등록)
     kakao.maps.event.removeListener(mainMapInstance,'zoom_changed',onZoomChanged);
     kakao.maps.event.addListener(mainMapInstance,'zoom_changed',onZoomChanged);
+    // 지도 이동 이벤트
+    kakao.maps.event.removeListener(mainMapInstance,'center_changed',onCenterChanged);
+    kakao.maps.event.addListener(mainMapInstance,'center_changed',onCenterChanged);
 
     // 조회된 데이터가 있으면 동별 평균가 표시
     if(allData.length>0){
