@@ -344,6 +344,7 @@ function init(){
 function switchMode(mode){
   // 지도 탭
   if(mode==='map'){
+    mapDataMode=currentMode; // 이전 모드 저장
     currentMode='map';
     document.getElementById('tab-trade').classList.remove('active');
     document.getElementById('tab-rent').classList.remove('active');
@@ -368,6 +369,7 @@ function switchMode(mode){
 
   // 지도 탭에서 왔을 때는 데이터 유지
   if(prevMode==='map'){
+    currentMode=mapDataMode; // 이전 모드 복원
     document.getElementById('tab-trade').classList.toggle('active',mode==='trade');
     document.getElementById('tab-rent').classList.toggle('active',mode==='rent');
     const btn=document.getElementById('btnSearch');
@@ -534,7 +536,7 @@ function applyFilter(){
     const dongOk=!dong||(d.umdNm||'')===dong;
     const ar=parseFloat(d.excluUseAr||0);
     const areaOk=!area||(area==='~60'?ar<60:area==='60~85'?ar>=60&&ar<85:area==='85~135'?ar>=85&&ar<135:area==='135~'?ar>=135:true);
-    const p=currentMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
+    const p=mapDataMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
     const pm=p/10000;
     const priceOk=!price||(price==='~3'?pm<3:price==='3~6'?pm>=3&&pm<6:price==='6~10'?pm>=6&&pm<10:price==='10~20'?pm>=10&&pm<20:price==='20~'?pm>=20:true);
     const fl=parseInt(d.floor||0);
@@ -874,7 +876,7 @@ function selectModalTab(arKey, btn){
   document.getElementById('modalMapWrap').style.display='none';
   document.getElementById('modalBody').style.display='block';
   const pts=deals.map(d=>{
-    const p=currentMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
+    const p=mapDataMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
     const dateStr=`${d.dealYear}-${String(d.dealMonth).padStart(2,'0')}-${String(d.dealDay||'01').padStart(2,'0')}`;
     return p>0?{x:dateStr,y:p,floor:d.floor}:null;
   }).filter(Boolean).sort((a,b)=>a.x.localeCompare(b.x));
@@ -918,7 +920,7 @@ function selectModalTab(arKey, btn){
   // 거래 목록
   let html='';
   deals.forEach(d=>{
-    const p=currentMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
+    const p=mapDataMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
     const mon=parsePrice(d.monthlyRent||0);
     const pyung=p>0&&ar>0?Math.round(p/(ar/3.3058)):0;
     const dt=d.dealYear&&d.dealMonth?`${d.dealYear}.${String(d.dealMonth).padStart(2,'0')}.${String(d.dealDay||'').padStart(2,'0')}`:'-';
@@ -1001,6 +1003,7 @@ async function shareModal(){
 // ── 메인 지도 (동별 평균가) ──
 let mainMapInstance=null;
 let mainMapOverlays=[];
+let mapDataMode='trade'; // 지도에서 사용할 데이터 모드
 
 const SEOUL_SGG={
   '종로구':{lat:37.5730,lng:126.9794},'중구':{lat:37.5638,lng:126.9978},
@@ -1057,7 +1060,7 @@ function renderDongMarkers(){
   allData.forEach(d=>{
     const key=d.umdNm||'기타';
     if(!dongStats[key])dongStats[key]={sum:0,cnt:0,deals:[]};
-    const p=currentMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
+    const p=mapDataMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
     if(p>0){dongStats[key].sum+=p;dongStats[key].cnt++;dongStats[key].deals.push(d);}
   });
 
@@ -1106,7 +1109,7 @@ function renderDongMarkers(){
   });
 
   document.getElementById('mapInfo').style.display='block';
-  document.getElementById('mapInfo').textContent=`${sggName} · ${Object.keys(dongStats).length}개 동 · 동 클릭 시 아파트 상세`;
+  document.getElementById('mapInfo').textContent=`${sggName} · ${Object.keys(dongStats).length}개 동 · ${mapDataMode==='trade'?'매매':'전월세'} · 동 클릭 시 아파트 상세`;
 }
 
 function renderAptMarkers(deals, dong){
@@ -1119,7 +1122,7 @@ function renderAptMarkers(deals, dong){
   deals.forEach(d=>{
     const key=d.aptNm||'기타';
     if(!aptStats[key])aptStats[key]={sum:0,cnt:0,roadNm:d.roadNm||'',roadNmBonbun:d.roadNmBonbun||'',umdNm:d.umdNm||''};
-    const p=currentMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
+    const p=mapDataMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
     if(p>0){aptStats[key].sum+=p;aptStats[key].cnt++;}
   });
 
@@ -1197,7 +1200,7 @@ function renderAptMarkers(deals, dong){
     }
   });
 
-  document.getElementById('mapInfo').textContent=`${dong} · ${Object.keys(aptStats).length}개 아파트 · 클릭 시 거래이력`;
+  document.getElementById('mapInfo').textContent=`${dong} · ${Object.keys(aptStats).length}개 아파트 · ${mapDataMode==='trade'?'매매':'전월세'} · 클릭 시 거래이력`;
 }
 
 // ── 카카오 지도 ──
@@ -1385,7 +1388,7 @@ function renderChart(){
   if(aptQ){
     // ── 스캐터 차트: 아파트명 검색 시 개별 거래 점 ──
     const points=filteredData.map(d=>{
-      const p=currentMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
+      const p=mapDataMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
       const dateStr=`${d.dealYear}-${String(d.dealMonth).padStart(2,'0')}-${String(d.dealDay||'01').padStart(2,'0')}`;
       return p>0?{x:dateStr,y:p,floor:d.floor,area:d.excluUseAr}:null;
     }).filter(Boolean).sort((a,b)=>a.x.localeCompare(b.x));
@@ -1434,7 +1437,7 @@ function renderChart(){
     filteredData.forEach(d=>{
       const key=`${d.dealYear}-${String(d.dealMonth).padStart(2,'0')}`;
       if(!byMonth[key])byMonth[key]=[];
-      const p=currentMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
+      const p=mapDataMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
       if(p>0)byMonth[key].push(p);
     });
 
