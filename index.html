@@ -194,6 +194,7 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
 <div class="tab-bar">
   <button class="tab-btn active" id="tab-trade" onclick="switchMode('trade')">🏠 매매</button>
   <button class="tab-btn" id="tab-rent" onclick="switchMode('rent')">📋 전월세</button>
+  <button class="tab-btn" id="tab-map" onclick="switchMode('map')">🗺️ 지도</button>
 </div>
 <div id="favPanel" class="fav-panel" style="display:none">
   <div class="fav-title">⭐ 즐겨찾기</div>
@@ -272,6 +273,10 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
   <div class="chart-canvas-wrap" id="chartWrap">
     <canvas id="priceChart"></canvas>
   </div>
+</div>
+<div id="mapView" style="display:none;height:calc(100vh - 140px);position:relative">
+  <div id="mainMap" style="width:100%;height:100%"></div>
+  <div id="mapInfo" style="position:absolute;bottom:16px;left:50%;transform:translateX(-50%);background:rgba(12,68,124,0.9);color:#fff;padding:8px 16px;border-radius:20px;font-size:12px;white-space:nowrap;pointer-events:none;display:none"></div>
 </div>
 <main id="main">
   <div class="state-screen">
@@ -951,6 +956,135 @@ async function shareModal(){
   }
 }
 
+
+
+// ── 메인 지도 (동별 평균가) ──
+let mainMapInstance=null;
+let mainMapOverlays=[];
+
+const SEOUL_SGG={
+  '종로구':{lat:37.5730,lng:126.9794},'중구':{lat:37.5638,lng:126.9978},
+  '용산구':{lat:37.5311,lng:126.9810},'성동구':{lat:37.5636,lng:127.0369},
+  '광진구':{lat:37.5385,lng:127.0823},'동대문구':{lat:37.5744,lng:127.0395},
+  '중랑구':{lat:37.6063,lng:127.0927},'성북구':{lat:37.5894,lng:127.0167},
+  '강북구':{lat:37.6397,lng:127.0257},'도봉구':{lat:37.6688,lng:127.0471},
+  '노원구':{lat:37.6542,lng:127.0568},'은평구':{lat:37.6026,lng:126.9291},
+  '서대문구':{lat:37.5791,lng:126.9368},'마포구':{lat:37.5638,lng:126.9086},
+  '양천구':{lat:37.5170,lng:126.8664},'강서구':{lat:37.5509,lng:126.8495},
+  '구로구':{lat:37.4954,lng:126.8874},'금천구':{lat:37.4601,lng:126.9001},
+  '영등포구':{lat:37.5263,lng:126.8963},'동작구':{lat:37.5124,lng:126.9393},
+  '관악구':{lat:37.4784,lng:126.9516},'서초구':{lat:37.4836,lng:127.0327},
+  '강남구':{lat:37.5172,lng:127.0473},'송파구':{lat:37.5145,lng:127.1059},
+  '강동구':{lat:37.5492,lng:127.1465}
+};
+
+async function initMainMap(){
+  const mapEl=document.getElementById('mainMap');
+  if(!mapEl)return;
+
+  try{
+    const key=await getKakaoKey();
+    if(!key)throw new Error('키 없음');
+    await loadKakaoScript(key);
+
+    if(!mainMapInstance){
+      mainMapInstance=new kakao.maps.Map(mapEl,{
+        center:new kakao.maps.LatLng(37.5665,126.9780),
+        level:8
+      });
+    } else {
+      mainMapInstance.relayout();
+    }
+
+    // 조회된 데이터가 있으면 동별 평균가 표시
+    if(allData.length>0){
+      renderDongMarkers();
+    } else {
+      document.getElementById('mapInfo').style.display='block';
+      document.getElementById('mapInfo').textContent='매매/전월세 탭에서 조회 후 지도 탭을 클릭하세요';
+    }
+  } catch(e){
+    mapEl.innerHTML=`<div class="map-loading">지도 로드 실패: ${e.message}</div>`;
+  }
+}
+
+function renderDongMarkers(){
+  // 기존 오버레이 제거
+  mainMapOverlays.forEach(o=>o.setMap(null));
+  mainMapOverlays=[];
+
+  // 동별 평균가 계산
+  const dongStats={};
+  allData.forEach(d=>{
+    const key=d.umdNm||'기타';
+    if(!dongStats[key])dongStats[key]={sum:0,cnt:0};
+    const p=currentMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
+    if(p>0){dongStats[key].sum+=p;dongStats[key].cnt++;}
+  });
+
+  // 지역 중심 이동
+  const sggEl=document.getElementById('sigungu');
+  const sggName=sggEl.options[sggEl.selectedIndex]?.text||'';
+  const sggCoord=SEOUL_SGG[sggName];
+  if(sggCoord&&mainMapInstance){
+    mainMapInstance.setCenter(new kakao.maps.LatLng(sggCoord.lat,sggCoord.lng));
+    mainMapInstance.setLevel(6);
+  }
+
+  // 동별 geocoding & 마커 표시
+  const geocoder=new kakao.maps.services.Geocoder();
+  const sidoEl=document.getElementById('sido');
+  const sido=sidoEl.value||'서울특별시';
+
+  Object.entries(dongStats).forEach(([dong,stat])=>{
+    const avg=Math.round(stat.sum/stat.cnt);
+    const label=fmtPrice(avg);
+    geocoder.addressSearch(`${sido} ${sggName} ${dong}`,(result,status)=>{
+      if(status!==kakao.maps.services.Status.OK)return;
+      const pos=new kakao.maps.LatLng(result[0].y,result[0].x);
+      const content=`<div style="
+        background:rgba(12,68,124,0.92);color:#fff;
+        padding:6px 10px;border-radius:8px;
+        font-size:12px;font-weight:600;
+        white-space:nowrap;cursor:pointer;
+        box-shadow:0 2px 6px rgba(0,0,0,0.3);
+        border:1.5px solid rgba(96,212,164,0.6)
+      ">
+        <div style="font-size:10px;opacity:0.8;margin-bottom:2px">${dong}</div>
+        <div>${label}</div>
+        <div style="font-size:10px;opacity:0.7">${stat.cnt}건</div>
+      </div>`;
+      const overlay=new kakao.maps.CustomOverlay({
+        position:pos,
+        content,
+        yAnchor:1.1
+      });
+      overlay.setMap(mainMapInstance);
+      mainMapOverlays.push(overlay);
+
+      // 클릭시 해당 동으로 필터링
+      overlay.getContent().addEventListener&&
+      setTimeout(()=>{
+        const el=overlay.getContent();
+        if(el&&el.addEventListener){
+          el.addEventListener('click',()=>{
+            switchMode(currentMode==='map'?'trade':currentMode);
+            setTimeout(()=>{
+              const dongSel=document.getElementById('dong');
+              if(dongSel){
+                dongSel.value=dong;
+                applyFilter();
+              }
+            },300);
+          });
+        }
+      },500);
+    });
+  });
+
+  document.getElementById('mapInfo').style.display='block';
+  document.getElementById('mapInfo').textContent=`${sggName} · ${Object.keys(dongStats).length}개 동 · ${currentMode==='trade'?'매매':'전월세'} 평균가`;
+}
 
 // ── 카카오 지도 ──
 let kakaoMapInstance=null, kakaoKeyLoaded=false, kakaoScriptLoaded=false;
