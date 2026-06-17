@@ -342,6 +342,26 @@ function init(){
 }
 
 function switchMode(mode){
+  // 지도 탭
+  if(mode==='map'){
+    document.getElementById('tab-trade').classList.remove('active');
+    document.getElementById('tab-rent').classList.remove('active');
+    document.getElementById('tab-map').classList.add('active');
+    document.getElementById('mapView').style.display='block';
+    document.getElementById('main').style.display='none';
+    document.getElementById('filterBar').style.display='none';
+    document.getElementById('summaryStrip').style.display='none';
+    document.querySelector('.search-panel').style.display='none';
+    initMainMap();
+    return;
+  }
+
+  // 지도에서 다른 탭으로 전환 시
+  document.getElementById('mapView').style.display='none';
+  document.getElementById('main').style.display='block';
+  document.querySelector('.search-panel').style.display='block';
+  document.getElementById('tab-map').classList.remove('active');
+
   currentMode=mode;
   allData=[];filteredData=[];
   document.getElementById('filterBar').style.display='none';
