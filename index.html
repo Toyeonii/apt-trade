@@ -1131,7 +1131,9 @@ function onCenterChanged(){
   // 디바운스 - 이동 멈춘 후 300ms 후에 실행
   clearTimeout(centerChangeTimer);
   centerChangeTimer=setTimeout(()=>onZoomChanged(), 300);
-}deals, dong, sido, sggName){
+}
+
+function addAptMarkersForDong(deals, dong, sido, sggName){
   const aptStats={};
   deals.forEach(d=>{
     const key=d.aptNm||'기타';
