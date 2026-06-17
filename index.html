@@ -1116,7 +1116,7 @@ function onZoomChanged(){
           if(status===kakao.maps.services.Status.OK){
             dongCoordCache[cacheKey]={x:result[0].x, y:result[0].y};
             const pos=new kakao.maps.LatLng(result[0].y,result[0].x);
-            if(level<=3||bounds.contain(pos)){
+            if(level<=4||bounds.contain(pos)){
               addAptMarkersForDong(stat.deals, dong, sido, sggName);
             }
           }
