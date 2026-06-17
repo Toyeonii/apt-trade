@@ -1029,7 +1029,6 @@ async function initMainMap(){
 }
 
 function renderDongMarkers(){
-  // 기존 오버레이 제거
   mainMapOverlays.forEach(o=>o.setMap(null));
   mainMapOverlays=[];
 
@@ -1037,12 +1036,11 @@ function renderDongMarkers(){
   const dongStats={};
   allData.forEach(d=>{
     const key=d.umdNm||'기타';
-    if(!dongStats[key])dongStats[key]={sum:0,cnt:0};
+    if(!dongStats[key])dongStats[key]={sum:0,cnt:0,deals:[]};
     const p=currentMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
-    if(p>0){dongStats[key].sum+=p;dongStats[key].cnt++;}
+    if(p>0){dongStats[key].sum+=p;dongStats[key].cnt++;dongStats[key].deals.push(d);}
   });
 
-  // 지역 중심 이동
   const sggEl=document.getElementById('sigungu');
   const sggName=sggEl.options[sggEl.selectedIndex]?.text||'';
   const sggCoord=SEOUL_SGG[sggName];
@@ -1051,59 +1049,135 @@ function renderDongMarkers(){
     mainMapInstance.setLevel(6);
   }
 
-  // 동별 geocoding & 마커 표시
   const geocoder=new kakao.maps.services.Geocoder();
   const sidoEl=document.getElementById('sido');
   const sido=sidoEl.value||'서울특별시';
 
   Object.entries(dongStats).forEach(([dong,stat])=>{
     const avg=Math.round(stat.sum/stat.cnt);
-    const label=fmtPrice(avg);
     geocoder.addressSearch(`${sido} ${sggName} ${dong}`,(result,status)=>{
       if(status!==kakao.maps.services.Status.OK)return;
       const pos=new kakao.maps.LatLng(result[0].y,result[0].x);
-      const content=`<div style="
+      const el=document.createElement('div');
+      el.style.cssText=`
         background:rgba(12,68,124,0.92);color:#fff;
         padding:6px 10px;border-radius:8px;
         font-size:12px;font-weight:600;
         white-space:nowrap;cursor:pointer;
         box-shadow:0 2px 6px rgba(0,0,0,0.3);
         border:1.5px solid rgba(96,212,164,0.6)
-      ">
+      `;
+      el.innerHTML=`
         <div style="font-size:10px;opacity:0.8;margin-bottom:2px">${dong}</div>
-        <div>${label}</div>
+        <div>${fmtPrice(avg)}</div>
         <div style="font-size:10px;opacity:0.7">${stat.cnt}건</div>
-      </div>`;
-      const overlay=new kakao.maps.CustomOverlay({
-        position:pos,
-        content,
-        yAnchor:1.1
+      `;
+      el.addEventListener('click',()=>{
+        // 동 클릭 → 줌인 후 아파트 마커 표시
+        mainMapInstance.setCenter(pos);
+        mainMapInstance.setLevel(3);
+        renderAptMarkers(stat.deals, dong);
       });
+
+      const overlay=new kakao.maps.CustomOverlay({position:pos,content:el,yAnchor:1.1});
       overlay.setMap(mainMapInstance);
       mainMapOverlays.push(overlay);
-
-      // 클릭시 해당 동으로 필터링
-      overlay.getContent().addEventListener&&
-      setTimeout(()=>{
-        const el=overlay.getContent();
-        if(el&&el.addEventListener){
-          el.addEventListener('click',()=>{
-            switchMode(currentMode==='map'?'trade':currentMode);
-            setTimeout(()=>{
-              const dongSel=document.getElementById('dong');
-              if(dongSel){
-                dongSel.value=dong;
-                applyFilter();
-              }
-            },300);
-          });
-        }
-      },500);
     });
   });
 
   document.getElementById('mapInfo').style.display='block';
-  document.getElementById('mapInfo').textContent=`${sggName} · ${Object.keys(dongStats).length}개 동 · ${currentMode==='trade'?'매매':'전월세'} 평균가`;
+  document.getElementById('mapInfo').textContent=`${sggName} · ${Object.keys(dongStats).length}개 동 · 동 클릭 시 아파트 상세`;
+}
+
+function renderAptMarkers(deals, dong){
+  // 기존 오버레이 제거 후 동 마커만 유지 안하고 전체 교체
+  mainMapOverlays.forEach(o=>o.setMap(null));
+  mainMapOverlays=[];
+
+  // 아파트별 그룹핑
+  const aptStats={};
+  deals.forEach(d=>{
+    const key=d.aptNm||'기타';
+    if(!aptStats[key])aptStats[key]={sum:0,cnt:0,roadNm:d.roadNm||'',roadNmBonbun:d.roadNmBonbun||'',umdNm:d.umdNm||''};
+    const p=currentMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
+    if(p>0){aptStats[key].sum+=p;aptStats[key].cnt++;}
+  });
+
+  const geocoder=new kakao.maps.services.Geocoder();
+  const sidoEl=document.getElementById('sido');
+  const sggEl=document.getElementById('sigungu');
+  const sido=sidoEl.value||'서울특별시';
+  const sggName=sggEl.options[sggEl.selectedIndex]?.text||'';
+
+  // 뒤로가기 버튼 오버레이
+  const backEl=document.createElement('div');
+  backEl.style.cssText='background:#0C447C;color:#fff;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.3)';
+  backEl.textContent='← 동 목록으로';
+  backEl.addEventListener('click',()=>{
+    mainMapInstance.setLevel(6);
+    renderDongMarkers();
+  });
+  const backOverlay=new kakao.maps.CustomOverlay({
+    position:mainMapInstance.getCenter(),
+    content:backEl,
+    xAnchor:0,
+    yAnchor:0,
+    zIndex:10
+  });
+  backOverlay.setMap(mainMapInstance);
+  mainMapOverlays.push(backOverlay);
+
+  Object.entries(aptStats).forEach(([aptNm,stat])=>{
+    const avg=Math.round(stat.sum/stat.cnt);
+    const cleanNm=aptNm.replace(/\([^)]*\)/g,'').replace(/아파트$/,'').trim();
+    const bonbunNum=stat.roadNmBonbun?String(parseInt(stat.roadNmBonbun,10)):'';
+    const roadAddr=stat.roadNm&&bonbunNum?`${sido} ${sggName} ${stat.roadNm} ${bonbunNum}`:'';
+
+    function addAptMarker(x,y){
+      const el=document.createElement('div');
+      el.style.cssText=`
+        background:rgba(15,110,86,0.92);color:#fff;
+        padding:5px 9px;border-radius:8px;
+        font-size:11px;font-weight:600;
+        white-space:nowrap;cursor:pointer;
+        box-shadow:0 2px 6px rgba(0,0,0,0.3);
+        border:1.5px solid rgba(96,212,164,0.5)
+      `;
+      el.innerHTML=`
+        <div style="font-size:10px;opacity:0.85;margin-bottom:1px">${aptNm}</div>
+        <div>${fmtPrice(avg)}</div>
+        <div style="font-size:9px;opacity:0.7">${stat.cnt}건</div>
+      `;
+      el.addEventListener('click',()=>showAptModal(aptNm, stat.roadNm));
+      const overlay=new kakao.maps.CustomOverlay({
+        position:new kakao.maps.LatLng(y,x),
+        content:el,
+        yAnchor:1.1
+      });
+      overlay.setMap(mainMapInstance);
+      mainMapOverlays.push(overlay);
+    }
+
+    if(roadAddr){
+      geocoder.addressSearch(roadAddr,(result,status)=>{
+        if(status===kakao.maps.services.Status.OK){
+          addAptMarker(result[0].x,result[0].y);
+        } else {
+          const ps=new kakao.maps.services.Places();
+          ps.keywordSearch(`${sido} ${sggName} ${dong} ${cleanNm}`,(data,status)=>{
+            if(status===kakao.maps.services.Status.OK)addAptMarker(data[0].x,data[0].y);
+          });
+        }
+      });
+    } else {
+      const ps=new kakao.maps.services.Places();
+      ps.keywordSearch(`${sido} ${sggName} ${dong} ${cleanNm}`,(data,status)=>{
+        if(status===kakao.maps.services.Status.OK)addAptMarker(data[0].x,data[0].y);
+      });
+    }
+  });
+
+  document.getElementById('mapInfo').textContent=`${dong} · ${Object.keys(aptStats).length}개 아파트 · 클릭 시 거래이력`;
 }
 
 // ── 카카오 지도 ──
