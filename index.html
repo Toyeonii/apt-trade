@@ -1104,15 +1104,24 @@ function onZoomChanged(){
 
     // 모든 동 확인해서 화면에 보이는 동의 아파트 마커 표시
     Object.entries(dongStats).forEach(([dong, stat])=>{
-      geocoder.addressSearch(`${sido} ${sggName} ${dong}`,(result,status)=>{
-        if(status===kakao.maps.services.Status.OK){
-          const pos=new kakao.maps.LatLng(result[0].y,result[0].x);
-          // 레벨 3 이하면 bounds 체크 없이 다 표시
-          if(level<=3 || bounds.contain(pos)){
-            addAptMarkersForDong(stat.deals, dong, sido, sggName);
-          }
+      const cacheKey=`${sido}_${sggName}_${dong}`;
+      if(dongCoordCache[cacheKey]){
+        const {x,y}=dongCoordCache[cacheKey];
+        const pos=new kakao.maps.LatLng(y,x);
+        if(level<=3||bounds.contain(pos)){
+          addAptMarkersForDong(stat.deals, dong, sido, sggName);
         }
-      });
+      } else {
+        geocoder.addressSearch(`${sido} ${sggName} ${dong}`,(result,status)=>{
+          if(status===kakao.maps.services.Status.OK){
+            dongCoordCache[cacheKey]={x:result[0].x, y:result[0].y};
+            const pos=new kakao.maps.LatLng(result[0].y,result[0].x);
+            if(level<=3||bounds.contain(pos)){
+              addAptMarkersForDong(stat.deals, dong, sido, sggName);
+            }
+          }
+        });
+      }
     });
 
     document.getElementById('mapInfo').style.display='block';
@@ -1124,6 +1133,8 @@ function onZoomChanged(){
 }
 
 let centerChangeTimer=null;
+const dongCoordCache={}; // 동 좌표 캐시
+
 function onCenterChanged(){
   if(!mainMapInstance||!allData.length)return;
   const level=mainMapInstance.getLevel();
