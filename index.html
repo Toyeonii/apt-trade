@@ -1267,9 +1267,8 @@ async function loadAptInfo(aptSeq){
   try{
     // 캐시 확인
     const cacheKey=aptSeq||modalAptNm;
-    if(cacheKey in aptInfoCache){
-      if(aptInfoCache[cacheKey]) renderAptInfo(aptInfoCache[cacheKey]);
-      else bar.style.display='none';
+    if(aptInfoCache[cacheKey]){
+      renderAptInfo(aptInfoCache[cacheKey]);
       return;
     }
 
@@ -1285,7 +1284,6 @@ async function loadAptInfo(aptSeq){
       aptInfoCache[cacheKey]=json.data;
       renderAptInfo(json.data);
     } else {
-      aptInfoCache[cacheKey]=null; // 실패도 캐시해서 중복 호출 방지
       bar.style.display='none';
     }
   } catch(e){
