@@ -1107,8 +1107,8 @@ function onZoomChanged(){
       geocoder.addressSearch(`${sido} ${sggName} ${dong}`,(result,status)=>{
         if(status===kakao.maps.services.Status.OK){
           const pos=new kakao.maps.LatLng(result[0].y,result[0].x);
-          if(bounds.contain(pos)){
-            // 해당 동 아파트 마커 추가
+          // 레벨 3 이하면 bounds 체크 없이 다 표시
+          if(level<=3 || bounds.contain(pos)){
             addAptMarkersForDong(stat.deals, dong, sido, sggName);
           }
         }
