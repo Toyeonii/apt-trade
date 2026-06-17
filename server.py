@@ -60,6 +60,8 @@ def parse_xml_items(xml_text, mode='trade'):
                 'dealDay':        g('dealDay'),
                 'buildYear':      g('buildYear'),
                 'umdNm':          g('umdNm'),
+                'jibun':          g('jibun'),
+                'roadNm':         g('roadNm'),
                 'preDeposit':     g('preDeposit'),
                 'preMonthlyRent': g('preMonthlyRent'),
             })
