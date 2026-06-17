@@ -1331,13 +1331,20 @@ function renderAptMarkers(deals, dong){
 
       el.appendChild(tooltip);
 
-      el.addEventListener('mouseover',()=>{tooltip.style.display='block';});
-      el.addEventListener('mouseout',()=>{tooltip.style.display='none';});
+      el.addEventListener('mouseover',()=>{
+        tooltip.style.display='block';
+        overlay.setZIndex(999);
+      });
+      el.addEventListener('mouseout',()=>{
+        tooltip.style.display='none';
+        overlay.setZIndex(1);
+      });
       el.addEventListener('click',()=>showAptModal(aptNm, stat.roadNm||stat.jibun, stat.aptSeq));
       const overlay=new kakao.maps.CustomOverlay({
         position:new kakao.maps.LatLng(y,x),
         content:el,
-        yAnchor:1.1
+        yAnchor:1.1,
+        zIndex:1
       });
       overlay.setMap(mainMapInstance);
       mainMapOverlays.push(overlay);
