@@ -236,6 +236,14 @@ def apt_info():
                     kapt_code = apt['kaptCode']
                     break
 
+        # 4단계: 부분 포함 매칭 (최소 3글자 이상)
+        if not kapt_code and len(simp_nm) >= 3:
+            for apt in apt_list:
+                n = simplify(apt['kaptName'])
+                if simp_nm in n and len(simp_nm) >= len(n) * 0.5:
+                    kapt_code = apt['kaptCode']
+                    break
+
         if not kapt_code:
             return jsonify({'ok': False, 'data': {}, 'msg': '단지 없음'})
 
