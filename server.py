@@ -143,31 +143,31 @@ def fetch_apt_list(sgg_cd):
     page = 1
     while True:
         resp = requests.get(
-            'https://apis.data.go.kr/1611000/AptListService/getLegaldongAptList',
+            'https://apis.data.go.kr/1613000/AptListService2/getSigunguAptList3',
             params={
                 'serviceKey': API_KEY_APT_LIST,
-                'ldCode': sgg_cd,
+                'sggCode': sgg_cd,
                 'pageNo': page,
                 'numOfRows': 100,
+                '_type': 'json',
             },
             timeout=15
         )
         resp.raise_for_status()
-        root = ET.fromstring(resp.text)
-        items = root.findall('.//item')
+        data = resp.json()
+        body = data.get('response', {}).get('body', {})
+        items = body.get('items', [])
+        if isinstance(items, dict):
+            items = items.get('item', [])
         if not items:
             break
-        for item in items:
-            def g(tag, item=item):
-                v = item.findtext(tag)
-                return v.strip() if v else ''
+        for item in (items if isinstance(items, list) else [items]):
             all_items.append({
-                'kaptCode': g('kaptCode'),
-                'kaptName': g('kaptName'),
-                'doroJuso': g('doroJuso'),
-                'bjdCode':  g('bjdCode'),
+                'kaptCode': item.get('kaptCode', ''),
+                'kaptName': item.get('kaptName', ''),
+                'bjdCode':  item.get('bjdCode', ''),
             })
-        total = int(root.findtext('.//totalCount') or 0)
+        total = int(body.get('totalCount', 0))
         if page * 100 >= total:
             break
         page += 1
