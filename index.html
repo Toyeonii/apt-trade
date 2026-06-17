@@ -916,7 +916,7 @@ function selectModalTab(arKey, btn){
     return p>0?{x:dateStr,y:p,floor:d.floor}:null;
   }).filter(Boolean).sort((a,b)=>a.x.localeCompare(b.x));
 
-  // 구 전체 동일 면적 월별 평균가
+  // 구 전체 동일 면적 월별 평균가 (월 기준으로 통일)
   const arMin=ar*0.95, arMax=ar*1.05;
   const districtByMonth={};
   allData.forEach(d=>{
@@ -928,10 +928,16 @@ function selectModalTab(arKey, btn){
     if(!districtByMonth[key])districtByMonth[key]=[];
     districtByMonth[key].push(p);
   });
-  const districtPts=Object.entries(districtByMonth).sort((a,b)=>a[0].localeCompare(b[0])).map(([month,prices])=>({
-    x:`${month}-15`,
-    y:Math.round(prices.reduce((a,b)=>a+b,0)/prices.length)
-  }));
+
+  // 아파트 거래 날짜 목록에서 월 추출해서 x축 통일
+  const aptMonths=[...new Set(pts.map(p=>p.x.substring(0,7)))].sort();
+  const districtPts=aptMonths.map(month=>{
+    const prices=districtByMonth[month];
+    if(!prices||!prices.length)return null;
+    // 해당 월의 아파트 거래 중 첫 번째 날짜 사용
+    const aptPt=pts.find(p=>p.x.startsWith(month));
+    return aptPt?{x:aptPt.x, y:Math.round(prices.reduce((a,b)=>a+b,0)/prices.length)}:null;
+  }).filter(Boolean);
 
   const chartWrap=document.getElementById('modalChartWrap');
   if(pts.length>=2){
