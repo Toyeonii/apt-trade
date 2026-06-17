@@ -718,7 +718,7 @@ function renderRentTable(){
     const dep=parsePrice(d.deposit),mon=parsePrice(d.monthlyRent);
     const isRenew=(d.contractType||'').includes('갱신');
     const dt=d.dealYear&&d.dealMonth?`${d.dealYear}.${String(d.dealMonth).padStart(2,'0')}.${String(d.dealDay||'').padStart(2,'0')}`:'-';
-    html+=`<tr><td style="font-weight:500">${d.aptNm||'-'}${isRenew?'<span class="badge-renew">갱신</span>':''}</td><td style="color:#555;font-size:12px">${fmtArea(d.excluUseAr)}</td><td><span class="badge">${d.floor||'-'}층</span></td><td class="deposit">${fmtPrice(dep)}</td><td style="text-align:right;font-size:12px">${!mon?'<span class="badge-jeonse">전세</span>':`<span class="badge-monthly">${fmtPrice(mon)}</span>`}</td><td style="color:#666;font-size:12px">${dt}</td><td style="color:#888;font-size:12px">${d.contractTerm||'-'}</td><td style="color:#888;font-size:12px">${d.umdNm||'-'}</td></tr>`;
+    html+=`<tr style="cursor:pointer" data-road="${(d.roadNm||'')}" data-apt="${(d.aptNm||'').replace(/"/g,'&quot;')}"><td style="font-weight:500">${d.aptNm||'-'}${isRenew?'<span class="badge-renew">갱신</span>':''}<div style="font-size:11px;color:#aaa;font-weight:400">${d.roadNm||d.umdNm||''}</div></td><td style="color:#555;font-size:12px">${fmtArea(d.excluUseAr)}</td><td><span class="badge">${d.floor||'-'}층</span></td><td class="deposit">${fmtPrice(dep)}</td><td style="text-align:right;font-size:12px">${!mon?'<span class="badge-jeonse">전세</span>':`<span class="badge-monthly">${fmtPrice(mon)}</span>`}</td><td style="color:#666;font-size:12px">${dt}</td><td style="color:#888;font-size:12px">${d.contractTerm||'-'}</td><td style="color:#888;font-size:12px">${d.umdNm||'-'}</td></tr>`;
   });
   html+='</tbody></table></div>';
 
@@ -729,7 +729,7 @@ function renderRentTable(){
     const isJeonse=!mon;
     const isRenew=(d.contractType||'').includes('갱신');
     const dt=d.dealYear&&d.dealMonth?`${d.dealYear}.${String(d.dealMonth).padStart(2,'0')}.${String(d.dealDay||'').padStart(2,'0')}`:'-';
-    cards+=`<div class="card">
+    cards+=`<div class="card" data-road="${(d.roadNm||'')}" data-apt="${(d.aptNm||'').replace(/"/g,'&quot;')}">
       <div class="card-top">
         <span class="card-name">${d.aptNm||'-'}${isRenew?'<span class="card-renew">갱신</span>':''}</span>
         <span class="card-price deposit">${fmtPrice(dep)}</span>
@@ -740,7 +740,7 @@ function renderRentTable(){
         <span class="card-tag">${d.floor||'-'}층</span>
       </div>
       <div class="card-bot">
-        <span>${d.umdNm||'-'} · ${d.contractTerm||'-'}</span>
+        <span>${d.umdNm||'-'} ${d.roadNm?'· '+d.roadNm:''} · ${d.contractTerm||'-'}</span>
         <span>${dt}</span>
       </div>
     </div>`;
@@ -749,6 +749,10 @@ function renderRentTable(){
 
   html+=cards+buildPagination(tp,total);
   document.getElementById('main').innerHTML=html;
+  // 롱프레스 바인딩
+  document.querySelectorAll('[data-apt]').forEach(el=>{
+    bindLongPress(el, el.dataset.apt, el.dataset.road||'');
+  });
   renderChart();
 }
 
