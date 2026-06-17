@@ -142,8 +142,7 @@ def fetch_apt_list(sgg_cd):
     all_items = []
     page = 1
     while True:
-        import urllib.parse
-        url = f"https://apis.data.go.kr/1613000/AptListService2/getSigunguAptList3?serviceKey={API_KEY_APT_LIST}&sigunguCode={sgg_cd}&pageNo={page}&numOfRows=100&_type=json"
+        url = f"https://apis.data.go.kr/1613000/AptListService3/getSigunguAptList3?serviceKey={API_KEY_APT_LIST}&sigunguCode={sgg_cd}&pageNo={page}&numOfRows=100&_type=json"
         resp = requests.get(url, timeout=15)
         resp.raise_for_status()
         data = resp.json()
