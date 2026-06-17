@@ -198,16 +198,8 @@ def apt_info():
             return jsonify({'ok': False, 'data': {}, 'msg': '단지 없음'})
 
         # 2단계: 기본정보 조회
-        resp = requests.get(
-            'https://apis.data.go.kr/1613000/AptBasisInfoServiceV3/getAphusBassInfoV3',
-            params={
-                'serviceKey': API_KEY_APT_INFO,
-                'kaptCode': kapt_code,
-                'pageNo': 1,
-                'numOfRows': 1,
-            },
-            timeout=10
-        )
+        info_url = f"https://apis.data.go.kr/1613000/AptBasisInfoService1/getAphusBassInfo?serviceKey={API_KEY_APT_INFO}&kaptCode={kapt_code}&pageNo=1&numOfRows=1"
+        resp = requests.get(info_url, timeout=10)
         resp.raise_for_status()
         root = ET.fromstring(resp.text)
         item = root.find('.//item')
