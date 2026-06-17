@@ -1261,6 +1261,7 @@ const aptInfoCache={};
 
 async function loadAptInfo(aptSeq){
   const bar=document.getElementById('aptInfoBar');
+  bar.style.display='block';
   bar.className='apt-info-loading';
   bar.textContent='단지 정보 불러오는 중...';
 
