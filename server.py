@@ -256,7 +256,7 @@ def icon():
 
 @app.route('/health')
 def health():
-    return jsonify({'status': 'ok', 'trade_key': bool(API_KEY_TRADE), 'rent_key': bool(API_KEY_RENT)})
+    return jsonify({'status': 'ok', 'trade_key': bool(API_KEY_TRADE), 'rent_key': bool(API_KEY_RENT), 'apt_list_key': bool(API_KEY_APT_LIST), 'apt_info_key': bool(API_KEY_APT_INFO)})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
