@@ -241,8 +241,8 @@ def apt_info():
             dtl_data = dtl_resp.json()
             dtl_item = dtl_data.get('response', {}).get('body', {}).get('item', {})
             if dtl_item:
-                park_up = dtl_item.get('parkingSpaceCount', 0) or 0
-                park_down = dtl_item.get('parkingGroundCount', 0) or 0
+                park_up = dtl_item.get('kaptdPcnt', 0) or 0
+                park_down = dtl_item.get('kaptdPcntu', 0) or 0
                 total_park = int(park_up or 0) + int(park_down or 0)
                 kaptdaCnt = int(item.get('kaptdaCnt', 0) or 0)
                 if total_park > 0 and kaptdaCnt > 0:
