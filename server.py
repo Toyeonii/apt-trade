@@ -167,7 +167,21 @@ def fetch_apt_list(sgg_cd):
     return all_items
 
 
-@app.route('/api/apt-info')
+@app.route('/api/apt-list')
+def apt_list_debug():
+    sgg_cd = request.args.get('sggCd', '')
+    keyword = request.args.get('keyword', '')
+    if not sgg_cd:
+        return jsonify({'error': 'sggCd 필요'}), 400
+    try:
+        apt_list = fetch_apt_list(sgg_cd)
+        if keyword:
+            apt_list = [a for a in apt_list if keyword.lower() in a.get('kaptName','').lower() or keyword.lower() in a.get('doroJuso','').lower()]
+        return jsonify({'ok': True, 'count': len(apt_list), 'items': apt_list[:20]})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 def apt_info():
     apt_nm  = request.args.get('aptNm', '')
     sgg_cd  = request.args.get('sggCd', '')
