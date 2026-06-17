@@ -197,18 +197,10 @@ def apt_info():
             if normalize(apt['kaptName']) == norm_nm:
                 kapt_code = apt['kaptCode']
                 break
-        # 2단계: 부분 일치
+        # 2단계: 단순화 완전 일치 (괄호/번지 제거 후)
         if not kapt_code:
             for apt in apt_list:
-                n = normalize(apt['kaptName'])
-                if norm_nm in n or n in norm_nm:
-                    kapt_code = apt['kaptCode']
-                    break
-        # 3단계: 단순화 후 매칭
-        if not kapt_code:
-            for apt in apt_list:
-                n = simplify(apt['kaptName'])
-                if simp_nm and n and (simp_nm in n or n in simp_nm):
+                if simplify(apt['kaptName']) == simp_nm:
                     kapt_code = apt['kaptCode']
                     break
         if not kapt_code:
