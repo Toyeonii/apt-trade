@@ -45,6 +45,7 @@ def parse_xml_items(xml_text, mode='trade'):
                 'roadNmBonbun': g('roadNmBonbun'),
                 'umdNm':        g('umdNm'),
                 'jibun':        g('jibun'),
+                'aptSeq':       g('aptSeq'),
             })
         else:
             items.append({
@@ -62,6 +63,7 @@ def parse_xml_items(xml_text, mode='trade'):
                 'umdNm':          g('umdNm'),
                 'jibun':          g('jibun'),
                 'roadNm':         g('roadNm'),
+                'aptSeq':         g('aptSeq'),
                 'preDeposit':     g('preDeposit'),
                 'preMonthlyRent': g('preMonthlyRent'),
             })

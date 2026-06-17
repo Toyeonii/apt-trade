@@ -630,7 +630,7 @@ function renderTradeTable(){
     const isRecordL=p===allMinP&&p>0&&allPrices.length>1;
     const dt=d.dealYear&&d.dealMonth?`${d.dealYear}.${String(d.dealMonth).padStart(2,'0')}.${String(d.dealDay||'').padStart(2,'0')}`:'-';
     const recordBadge=isRecordH?'<span class="badge-record-high">신고가</span>':isRecordL?'<span class="badge-record-low">역대최저</span>':'';
-    html+=`<tr style="cursor:pointer" data-road="${(d.roadNm||'')}" data-apt="${(d.aptNm||'').replace(/"/g,'&quot;')}" title="${d.aptNm||''} · 클릭:이력보기">
+    html+=`<tr style="cursor:pointer" data-seq="${d.aptSeq||''}" data-road="${(d.roadNm||'')}" data-apt="${(d.aptNm||'').replace(/"/g,'&quot;')}" title="${d.aptNm||''} · 클릭:이력보기">
       <td style="font-weight:500">${d.aptNm||'-'}${recordBadge}<div style="font-size:11px;color:#aaa;font-weight:400">${d.roadNm||d.umdNm||''}</div></td>
       <td style="color:#555;font-size:12px">${fmtArea(d.excluUseAr)}</td>
       <td><span class="badge">${d.floor||'-'}층</span></td>
@@ -655,7 +655,7 @@ function renderTradeTable(){
     const pc=isH?'hi':isL?'lo':'';
     const dt=d.dealYear&&d.dealMonth?`${d.dealYear}.${String(d.dealMonth).padStart(2,'0')}.${String(d.dealDay||'').padStart(2,'0')}`:'-';
     const recordBadge=isRecordH?'<span class="badge-record-high">신고가</span>':isRecordL?'<span class="badge-record-low">역대최저</span>':'';
-    cards+=`<div class="card" data-road="${(d.roadNm||'')}" data-apt="${(d.aptNm||'').replace(/"/g,'&quot;')}">
+    cards+=`<div class="card" data-seq="${d.aptSeq||''}" data-road="${(d.roadNm||'')}" data-apt="${(d.aptNm||'').replace(/"/g,'&quot;')}">
       <div class="card-top">
         <span class="card-name">${d.aptNm||'-'}${recordBadge}</span>
         <span class="card-price ${pc}">${fmtPrice(p)}</span>
@@ -678,7 +678,7 @@ function renderTradeTable(){
   document.getElementById('main').innerHTML=html;
   // 롱프레스 바인딩
   document.querySelectorAll('[data-apt]').forEach(el=>{
-    bindLongPress(el, el.dataset.apt, el.dataset.road||'');
+    bindLongPress(el, el.dataset.apt, el.dataset.road||'', el.dataset.seq||'');
   });
   renderChart();
 }
@@ -718,7 +718,7 @@ function renderRentTable(){
     const dep=parsePrice(d.deposit),mon=parsePrice(d.monthlyRent);
     const isRenew=(d.contractType||'').includes('갱신');
     const dt=d.dealYear&&d.dealMonth?`${d.dealYear}.${String(d.dealMonth).padStart(2,'0')}.${String(d.dealDay||'').padStart(2,'0')}`:'-';
-    html+=`<tr style="cursor:pointer" data-road="${(d.jibun||d.roadNm||'')}" data-apt="${(d.aptNm||'').replace(/"/g,'&quot;')}"><td style="font-weight:500">${d.aptNm||'-'}${isRenew?'<span class="badge-renew">갱신</span>':''}<div style="font-size:11px;color:#aaa;font-weight:400">${d.roadNm||d.umdNm||''}${d.jibun?' ('+d.jibun+')':''}</div></td><td style="color:#555;font-size:12px">${fmtArea(d.excluUseAr)}</td><td><span class="badge">${d.floor||'-'}층</span></td><td class="deposit">${fmtPrice(dep)}</td><td style="text-align:right;font-size:12px">${!mon?'<span class="badge-jeonse">전세</span>':`<span class="badge-monthly">${fmtPrice(mon)}</span>`}</td><td style="color:#666;font-size:12px">${dt}</td><td style="color:#888;font-size:12px">${d.contractTerm||'-'}</td><td style="color:#888;font-size:12px">${d.umdNm||'-'}</td></tr>`;
+    html+=`<tr style="cursor:pointer" data-seq="${d.aptSeq||''}" data-road="${(d.jibun||d.roadNm||'')}" data-apt="${(d.aptNm||'').replace(/"/g,'&quot;')}"><td style="font-weight:500">${d.aptNm||'-'}${isRenew?'<span class="badge-renew">갱신</span>':''}<div style="font-size:11px;color:#aaa;font-weight:400">${d.roadNm||d.umdNm||''}${d.jibun?' ('+d.jibun+')':''}</div></td><td style="color:#555;font-size:12px">${fmtArea(d.excluUseAr)}</td><td><span class="badge">${d.floor||'-'}층</span></td><td class="deposit">${fmtPrice(dep)}</td><td style="text-align:right;font-size:12px">${!mon?'<span class="badge-jeonse">전세</span>':`<span class="badge-monthly">${fmtPrice(mon)}</span>`}</td><td style="color:#666;font-size:12px">${dt}</td><td style="color:#888;font-size:12px">${d.contractTerm||'-'}</td><td style="color:#888;font-size:12px">${d.umdNm||'-'}</td></tr>`;
   });
   html+='</tbody></table></div>';
 
@@ -729,7 +729,7 @@ function renderRentTable(){
     const isJeonse=!mon;
     const isRenew=(d.contractType||'').includes('갱신');
     const dt=d.dealYear&&d.dealMonth?`${d.dealYear}.${String(d.dealMonth).padStart(2,'0')}.${String(d.dealDay||'').padStart(2,'0')}`:'-';
-    cards+=`<div class="card" data-road="${(d.jibun||d.roadNm||'')}" data-apt="${(d.aptNm||'').replace(/"/g,'&quot;')}">
+    cards+=`<div class="card" data-seq="${d.aptSeq||''}" data-road="${(d.jibun||d.roadNm||'')}" data-apt="${(d.aptNm||'').replace(/"/g,'&quot;')}">
       <div class="card-top">
         <span class="card-name">${d.aptNm||'-'}${isRenew?'<span class="card-renew">갱신</span>':''}</span>
         <span class="card-price deposit">${fmtPrice(dep)}</span>
@@ -751,7 +751,7 @@ function renderRentTable(){
   document.getElementById('main').innerHTML=html;
   // 롱프레스 바인딩
   document.querySelectorAll('[data-apt]').forEach(el=>{
-    bindLongPress(el, el.dataset.apt, el.dataset.road||'');
+    bindLongPress(el, el.dataset.apt, el.dataset.road||'', el.dataset.seq||'');
   });
   renderChart();
 }
@@ -829,8 +829,11 @@ let modalChartInstance=null;
 
 let modalAptNm='', modalAreaGroups={}, modalAreaKeys=[];
 
-function showAptModal(aptNm, roadNm){
-  const deals=allData.filter(d=>d.aptNm===aptNm&&(!roadNm||(d.roadNm===roadNm||d.jibun===roadNm)))
+function showAptModal(aptNm, roadNm, aptSeq){
+  const deals=allData.filter(d=>{
+    if(aptSeq) return d.aptSeq===aptSeq;
+    return d.aptNm===aptNm&&(!roadNm||(d.roadNm===roadNm||d.jibun===roadNm));
+  })
     .sort((a,b)=>{
       const da=`${a.dealYear}${String(a.dealMonth).padStart(2,'0')}${String(a.dealDay||'').padStart(2,'0')}`;
       const db=`${b.dealYear}${String(b.dealMonth).padStart(2,'0')}${String(b.dealDay||'').padStart(2,'0')}`;
@@ -1129,7 +1132,7 @@ function renderAptMarkers(deals, dong){
   const aptStats={};
   deals.forEach(d=>{
     const key=d.aptNm||'기타';
-    if(!aptStats[key])aptStats[key]={sum:0,cnt:0,roadNm:d.roadNm||'',roadNmBonbun:d.roadNmBonbun||'',umdNm:d.umdNm||''};
+    if(!aptStats[key])aptStats[key]={sum:0,cnt:0,roadNm:d.roadNm||'',roadNmBonbun:d.roadNmBonbun||'',umdNm:d.umdNm||'',jibun:d.jibun||'',aptSeq:d.aptSeq||''};
     const p=mapDataMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
     if(p>0){aptStats[key].sum+=p;aptStats[key].cnt++;}
   });
@@ -1179,7 +1182,7 @@ function renderAptMarkers(deals, dong){
         <div>${fmtPrice(avg)}</div>
         <div style="font-size:9px;opacity:0.7">${stat.cnt}건</div>
       `;
-      el.addEventListener('click',()=>showAptModal(aptNm, stat.roadNm));
+      el.addEventListener('click',()=>showAptModal(aptNm, stat.roadNm||stat.jibun, stat.aptSeq));
       const overlay=new kakao.maps.CustomOverlay({
         position:new kakao.maps.LatLng(y,x),
         content:el,
@@ -1334,8 +1337,8 @@ function closeModal(e){
 
 
 // ── 클릭 바인딩 ──
-function bindLongPress(el, aptNm, roadNm){
-  el.addEventListener('click', ()=>showAptModal(aptNm, roadNm));
+function bindLongPress(el, aptNm, roadNm, aptSeq){
+  el.addEventListener('click', ()=>showAptModal(aptNm, roadNm, aptSeq));
 }
 
 // ── 아파트 클릭 필터링 ──
