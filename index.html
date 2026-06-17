@@ -1080,6 +1080,50 @@ let mainMapOverlays=[];
 let mapDataMode='trade'; // 지도에서 사용할 데이터 모드
 function getDataMode(){ return currentMode==='map' ? mapDataMode : currentMode; }
 
+function onZoomChanged(){
+  if(!mainMapInstance||!allData.length)return;
+  const level=mainMapInstance.getLevel();
+  if(level<=4){
+    // 줌인 시 현재 지도 중심 기준 가장 많은 거래 동 찾아서 아파트 마커 표시
+    const bounds=mainMapInstance.getBounds();
+    const dongStats={};
+    allData.forEach(d=>{
+      const key=d.umdNm||'기타';
+      if(!dongStats[key])dongStats[key]={sum:0,cnt:0,deals:[]};
+      const p=mapDataMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
+      if(p>0){dongStats[key].sum+=p;dongStats[key].cnt++;dongStats[key].deals.push(d);}
+    });
+    const sidoEl=document.getElementById('sido');
+    const sggEl=document.getElementById('sigungu');
+    const sido=sidoEl.value||'';
+    const sggName=sggEl.options[sggEl.selectedIndex]?.text||'';
+    const geocoder=new kakao.maps.services.Geocoder();
+    // 거래량 많은 동부터 확인해서 현재 화면에 있는 동 찾기
+    const sortedDongs=Object.entries(dongStats).sort((a,b)=>b[1].cnt-a[1].cnt);
+    let found=false;
+    const checkNext=(idx)=>{
+      if(idx>=sortedDongs.length||found)return;
+      const [dong,stat]=sortedDongs[idx];
+      geocoder.addressSearch(`${sido} ${sggName} ${dong}`,(result,status)=>{
+        if(status===kakao.maps.services.Status.OK){
+          const pos=new kakao.maps.LatLng(result[0].y,result[0].x);
+          if(bounds.contain(pos)&&!found){
+            found=true;
+            renderAptMarkers(stat.deals, dong);
+          } else {
+            checkNext(idx+1);
+          }
+        } else {
+          checkNext(idx+1);
+        }
+      });
+    };
+    checkNext(0);
+  } else if(level>=6){
+    renderDongMarkers();
+  }
+}
+
 const SEOUL_SGG={
   '종로구':{lat:37.5730,lng:126.9794},'중구':{lat:37.5638,lng:126.9978},
   '용산구':{lat:37.5311,lng:126.9810},'성동구':{lat:37.5636,lng:127.0369},
@@ -1110,45 +1154,13 @@ async function initMainMap(){
         center:new kakao.maps.LatLng(37.5665,126.9780),
         level:8
       });
-      // 줌 변경 시 자동 아파트 마커
-      kakao.maps.event.addListener(mainMapInstance,'zoom_changed',()=>{
-        const level=mainMapInstance.getLevel();
-        if(level<=4 && allData.length>0){
-          // 현재 지도 중심에서 가장 가까운 동 찾아서 아파트 마커 표시
-          const center=mainMapInstance.getCenter();
-          const dongStats={};
-          allData.forEach(d=>{
-            const key=d.umdNm||'기타';
-            if(!dongStats[key])dongStats[key]={sum:0,cnt:0,deals:[]};
-            const p=mapDataMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
-            if(p>0){dongStats[key].sum+=p;dongStats[key].cnt++;dongStats[key].deals.push(d);}
-          });
-          // 현재 보이는 영역의 동 찾기
-          const bounds=mainMapInstance.getBounds();
-          const geocoder=new kakao.maps.services.Geocoder();
-          const sidoEl=document.getElementById('sido');
-          const sggEl=document.getElementById('sigungu');
-          const sido=sidoEl.value||'';
-          const sggName=sggEl.options[sggEl.selectedIndex]?.text||'';
-          // 가장 많은 거래가 있는 동부터 확인
-          const topDong=Object.entries(dongStats).sort((a,b)=>b[1].cnt-a[1].cnt)[0];
-          if(topDong){
-            geocoder.addressSearch(`${sido} ${sggName} ${topDong[0]}`,(result,status)=>{
-              if(status===kakao.maps.services.Status.OK){
-                const pos=new kakao.maps.LatLng(result[0].y,result[0].x);
-                if(bounds.contain(pos)){
-                  renderAptMarkers(topDong[1].deals, topDong[0]);
-                }
-              }
-            });
-          }
-        } else if(level>=6 && allData.length>0){
-          renderDongMarkers();
-        }
-      });
     } else {
       mainMapInstance.relayout();
     }
+
+    // 줌 변경 이벤트 (항상 등록)
+    kakao.maps.event.removeListener(mainMapInstance,'zoom_changed',onZoomChanged);
+    kakao.maps.event.addListener(mainMapInstance,'zoom_changed',onZoomChanged);
 
     // 조회된 데이터가 있으면 동별 평균가 표시
     if(allData.length>0){
