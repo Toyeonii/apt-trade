@@ -1929,7 +1929,6 @@ function addFav(aptNm, aptSeq, sggCd, sggName, umdNm, sido){
 function loadFav(i){
   const fav=getFavs()[i];
   if(!fav)return;
-  document.getElementById('favPanel').style.display='none';
   openFavModal(fav);
 }
 
