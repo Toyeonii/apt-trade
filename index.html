@@ -580,6 +580,7 @@ async function doSearch(){
       applyFilter();
       document.getElementById('filterBar').style.display='flex';
       document.getElementById('summaryStrip').style.display='grid';
+
     }
   } catch(e){
     showError('조회 오류',e.message);
@@ -2206,16 +2207,19 @@ function renderFavAreaDeals(ar, deals, mode){
       data:{
         labels:monthLabels,
         datasets:[
-          {type:'line',data:pts.map(p=>p.y),borderColor:color,backgroundColor:'transparent',borderWidth:2,pointRadius:3,tension:0.3,yAxisID:'y'},
-          {type:'bar',data:monthLabels.map(m=>{
+          {type:'line',data:monthLabels.map(m=>{
             const mPts=pts.filter(p=>p.x.startsWith(m));
             return mPts.length?Math.round(mPts.reduce((a,b)=>a+b.y,0)/mPts.length):null;
+          }),borderColor:color,backgroundColor:'transparent',borderWidth:2,pointRadius:3,tension:0.3,yAxisID:'y'},
+          {type:'bar',data:monthLabels.map(m=>{
+            const mPts=pts.filter(p=>p.x.startsWith(m));
+            return mPts.length?Math.max(...mPts.map(p=>p.y)):null;
           }),backgroundColor:color+'33',yAxisID:'y',borderRadius:3},
         ]
       },
       options:{
         responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.datasetIndex===0?fmtPrice(c.raw):(fmtPrice(c.raw)+' (월평균)')}}},
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.datasetIndex===0?fmtPrice(c.raw)+' (월평균)':fmtPrice(c.raw)+' (최고가)'}}}},
         scales:{
           y:{ticks:{callback:v=>fmtPrice(v),font:{size:9},maxTicksLimit:4},grid:{color:'rgba(0,0,0,0.04)'}},
           x:{ticks:{font:{size:9}},grid:{display:false}}
