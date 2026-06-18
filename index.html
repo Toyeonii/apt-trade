@@ -2299,79 +2299,91 @@ function renderFavAptInfo(d, tradeDeals, rentDeals, addr=''){
     }
   }
 
-  bar.className='apt-info-bar';
-  bar.innerHTML=chips.map(c=>`<div class="apt-info-chip">${c}</div>`).join('');
+  // 교통정보 자리 미리 확보 (캐시 있으면 즉시, 없으면 placeholder)
+  const transitCacheKey=`transit_${addr}`;
+  let transitChips='';
+  try{
+    const tc=localStorage.getItem(transitCacheKey);
+    if(tc){
+      const {chips:tChips,ts}=JSON.parse(tc);
+      if(Date.now()-ts < 7*24*3600*1000 && tChips?.length){
+        transitChips=tChips.map(h=>`<div class="apt-info-chip">${h}</div>`).join('');
+      }
+    }
+  } catch(e){}
+  if(!transitChips && addr){
+    transitChips=`<div class="apt-info-chip transit-placeholder">🚇 교통정보 조회 중...</div>`;
+  }
 
-  // 지하철/버스 거리 (비동기)
-  addNearbyTransit(bar, addr);
+  bar.className='apt-info-bar';
+  bar.innerHTML=chips.map(c=>`<div class="apt-info-chip">${c}</div>`).join('')+transitChips;
+
+  // 캐시 없을 때만 카카오 API 조회
+  if(addr && !localStorage.getItem(transitCacheKey)){
+    addNearbyTransit(bar, addr);
+  }
 }
 
 async function addNearbyTransit(bar, addr=''){
   if(!addr) return;
-
-  // 캐시 확인 (7일)
-  const transitCacheKey=`transit_${addr}`;
-  try{
-    const cached=localStorage.getItem(transitCacheKey);
-    if(cached){
-      const {chips, ts}=JSON.parse(cached);
-      if(Date.now()-ts < 7*24*3600*1000 && chips?.length){
-        chips.forEach(html=>{
-          const chip=document.createElement('div');
-          chip.className='apt-info-chip';
-          chip.innerHTML=html;
-          bar.appendChild(chip);
-        });
-        return;
-      }
-    }
-  } catch(e){}
 
   // 카카오맵 로드 확인 및 로드
   if(!window.kakao||!window.kakao.maps||!window.kakao.maps.services){
     try{
       const key=await getKakaoKey();
       await loadKakaoScript(key);
-    } catch(e){ return; }
+    } catch(e){
+      bar.querySelector('.transit-placeholder')?.remove();
+      return;
+    }
   }
 
+  const transitCacheKey=`transit_${addr}`;
   const geocoder=new kakao.maps.services.Geocoder();
   geocoder.addressSearch(addr,(result,status)=>{
-    if(status!==kakao.maps.services.Status.OK)return;
+    if(status!==kakao.maps.services.Status.OK){
+      bar.querySelector('.transit-placeholder')?.remove();
+      return;
+    }
     const lat=result[0].y, lng=result[0].x;
     const ps=new kakao.maps.services.Places();
     const cachedChips=[];
 
     // 지하철역 검색
     ps.categorySearch('SW8', (data,status)=>{
+      let subwayHtml='';
       if(status===kakao.maps.services.Status.OK&&data.length>0){
         const station=data[0];
         const dist=parseInt(station.distance);
         const distStr=dist>=1000?`${(dist/1000).toFixed(1)}km`:`${dist}m`;
         const stName=station.place_name.replace(/\s*\d+호선/g,'').replace('역','').trim();
         const walkMin=Math.ceil(dist/80);
-        const html=`🚇 지하철 <span>${stName}역 ${distStr} (도보 ${walkMin}분)</span>`;
-        cachedChips.push(html);
-        const chip=document.createElement('div');
-        chip.className='apt-info-chip';
-        chip.innerHTML=html;
-        bar.appendChild(chip);
+        subwayHtml=`🚇 지하철 <span>${stName}역 ${distStr} (도보 ${walkMin}분)</span>`;
+        cachedChips.push(subwayHtml);
       }
       // 버스정류장 검색
       ps.categorySearch('BK9', (data,status)=>{
+        let busHtml='';
         if(status===kakao.maps.services.Status.OK&&data.length>0){
           const stop=data[0];
           const dist=parseInt(stop.distance);
           const distStr=dist>=1000?`${(dist/1000).toFixed(1)}km`:`${dist}m`;
           const busWalkMin=Math.ceil(dist/80);
-          const html=`🚌 버스 <span>${stop.place_name} ${distStr} (도보 ${busWalkMin}분)</span>`;
-          cachedChips.push(html);
-          const chip=document.createElement('div');
-          chip.className='apt-info-chip';
-          chip.innerHTML=html;
-          bar.appendChild(chip);
+          busHtml=`🚌 버스 <span>${stop.place_name} ${distStr} (도보 ${busWalkMin}분)</span>`;
+          cachedChips.push(busHtml);
         }
-        // 둘 다 완료 후 캐시 저장
+        // placeholder 제거 후 결과 한번에 교체
+        const placeholder=bar.querySelector('.transit-placeholder');
+        if(placeholder){
+          if(subwayHtml||busHtml){
+            const newHtml=[subwayHtml,busHtml].filter(Boolean)
+              .map(h=>`<div class="apt-info-chip">${h}</div>`).join('');
+            placeholder.outerHTML=newHtml;
+          } else {
+            placeholder.remove();
+          }
+        }
+        // 캐시 저장
         try{
           localStorage.setItem(transitCacheKey, JSON.stringify({chips:cachedChips, ts:Date.now()}));
         } catch(e){}
