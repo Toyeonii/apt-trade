@@ -1953,7 +1953,7 @@ async function openFavModal(fav){
       document.getElementById('favModalSub').textContent=`매매 ${tradeDeals.length}건 · 전월세 ${rentDeals.length}건 (캐시)`;
       document.getElementById('favModalAddr').textContent=addr||'';
       renderFavTabs(tradeDeals, rentDeals);
-      loadFavAptInfo(fav.aptNm, fav.sggCd, tradeDeals[0]?.roadNm||'', tradeDeals[0]?.roadNmBonbun||'', tradeDeals, rentDeals);
+      loadFavAptInfo(fav.aptNm, fav.sggCd, tradeDeals[0]?.roadNm||'', tradeDeals[0]?.roadNmBonbun||'', tradeDeals, rentDeals, addr||'');
       // 1시간 이내면 갱신 안함
       if(Date.now()-ts < 3600000) return;
       document.getElementById('favModalSub').textContent+=` · 갱신 중...`;
@@ -1993,7 +1993,7 @@ async function openFavModal(fav){
     document.getElementById('favModalSub').textContent=`매매 ${tradeDeals.length}건 · 전월세 ${rentDeals.length}건`;
     document.getElementById('favModalAddr').textContent=addr.trim();
     renderFavTabs(tradeDeals, rentDeals);
-    loadFavAptInfo(fav.aptNm, fav.sggCd, d0?.roadNm||'', d0?.roadNmBonbun||'', tradeDeals, rentDeals);
+    loadFavAptInfo(fav.aptNm, fav.sggCd, d0?.roadNm||'', d0?.roadNmBonbun||'', tradeDeals, rentDeals, addr.trim());
 
   } catch(e){
     document.getElementById('favModalBody').innerHTML=`<div class="state-screen"><div class="state-icon">⚠️</div><div class="state-title">조회 실패</div><div class="state-sub">${e.message}</div></div>`;
@@ -2130,14 +2130,14 @@ function renderFavAreaDeals(ar, deals, mode){
   areaBody.innerHTML=html;
 }
 
-async function loadFavAptInfo(aptNm, sggCd, roadNm, roadNmBonbun, tradeDeals=[], rentDeals=[]){
+async function loadFavAptInfo(aptNm, sggCd, roadNm, roadNmBonbun, tradeDeals=[], rentDeals=[], addr=''){
   const bar=document.getElementById('favAptInfoBar');
   try{
     const params=new URLSearchParams({aptNm, sggCd, roadNm, roadNmBonbun});
     const resp=await fetch(`/api/apt-info?${params}`);
     const json=await resp.json();
     if(json.ok&&json.data&&Object.keys(json.data).length>0){
-      renderFavAptInfo(json.data, tradeDeals, rentDeals);
+      renderFavAptInfo(json.data, tradeDeals, rentDeals, addr);
     } else {
       bar.style.display='none';
     }
@@ -2146,7 +2146,7 @@ async function loadFavAptInfo(aptNm, sggCd, roadNm, roadNmBonbun, tradeDeals=[],
   }
 }
 
-function renderFavAptInfo(d, tradeDeals, rentDeals){
+function renderFavAptInfo(d, tradeDeals, rentDeals, addr=''){
   const bar=document.getElementById('favAptInfoBar');
   if(!d||!Object.values(d).some(v=>v)){bar.style.display='none';return;}
   const chips=[];
@@ -2179,21 +2179,18 @@ function renderFavAptInfo(d, tradeDeals, rentDeals){
   bar.innerHTML=chips.map(c=>`<div class="apt-info-chip">${c}</div>`).join('');
 
   // 지하철/버스 거리 (비동기)
-  addNearbyTransit(bar);
+  addNearbyTransit(bar, addr);
 }
 
-async function addNearbyTransit(bar){
+async function addNearbyTransit(bar, addr=''){
+  if(!addr) return;
   // 카카오맵 로드 확인 및 로드
   if(!window.kakao||!window.kakao.maps||!window.kakao.maps.services){
     try{
       const key=await getKakaoKey();
       await loadKakaoScript(key);
-      await new Promise(r=>setTimeout(r,500));
     } catch(e){ return; }
   }
-  const addrEl=document.getElementById('favModalAddr');
-  const addr=addrEl.textContent;
-  if(!addr) return;
 
   const geocoder=new kakao.maps.services.Geocoder();
   geocoder.addressSearch(addr,(result,status)=>{
