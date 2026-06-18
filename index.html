@@ -168,6 +168,9 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
 .modal-map-wrap #kakaoMap{width:100%;height:100%}
 .map-loading{display:flex;align-items:center;justify-content:center;height:100%;font-size:13px;color:#888}
 
+.fav-period-bar{display:flex;align-items:center;gap:5px;padding:6px 14px;border-bottom:0.5px solid #eee;background:#fafbff;flex-shrink:0}
+.fav-period-btn{height:24px;padding:0 9px;font-size:11px;border:0.5px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;color:#555;white-space:nowrap}
+.fav-period-btn.active{background:#E6F1FB;border-color:#185FA5;color:#0C447C;font-weight:600}
 .modal-tabs{display:flex;gap:0;border-bottom:0.5px solid #eee;overflow-x:auto;flex-shrink:0}
 .modal-tab{height:36px;padding:0 14px;border:none;background:transparent;font-size:13px;color:#888;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;flex-shrink:0}
 .modal-tab.active{color:#0C447C;border-bottom-color:#0C447C;font-weight:600}
@@ -336,6 +339,13 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
       <div style="display:flex;align-items:center">
         <button class="modal-close" onclick="closeFavModal()">✕</button>
       </div>
+    </div>
+    <div class="fav-period-bar">
+      <span style="font-size:11px;color:#888">조회기간</span>
+      <button class="fav-period-btn" onclick="setFavPeriod(3)">3개월</button>
+      <button class="fav-period-btn active" id="favPeriodBtn6" onclick="setFavPeriod(6)">6개월</button>
+      <button class="fav-period-btn" onclick="setFavPeriod(12)">12개월</button>
+      <button class="fav-period-btn" onclick="setFavPeriod(24)">24개월</button>
     </div>
     <div class="apt-info-loading" id="favAptInfoBar">단지 정보 불러오는 중...</div>
     <div class="modal-tabs" id="favModalTabs"></div>
@@ -1936,6 +1946,8 @@ function toggleChart(){
 }
 
 // ── 즐겨찾기 ──
+let _currentFav=null, _favMonths=6;
+
 function getFavs(){try{return JSON.parse(localStorage.getItem('apt_favs_v2')||'[]');}catch{return [];}}
 function saveFavs(f){localStorage.setItem('apt_favs_v2',JSON.stringify(f));}
 
@@ -1977,20 +1989,33 @@ function loadFav(i){
   openFavModal(fav);
 }
 
-async function openFavModal(fav){
+function setFavPeriod(months){
+  document.querySelectorAll('.fav-period-btn').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+  _favMonths=months;
+  if(_currentFav) openFavModal(_currentFav, true);
+}
+
+async function openFavModal(fav, forceRefresh=false){
   // 팝업 오픈
+  _currentFav=fav;
+  if(!forceRefresh) _favMonths=6;
   document.getElementById('favModal').style.display='flex';
   document.body.style.overflow='hidden';
   document.getElementById('favModalTitle').textContent=fav.aptNm;
+  // 기간 버튼 active 동기화
+  document.querySelectorAll('.fav-period-btn').forEach(b=>{
+    b.classList.toggle('active', b.textContent===`${_favMonths}개월`);
+  });
   document.getElementById('favModalAddr').textContent='';
   document.getElementById('favAptInfoBar').className='apt-info-loading';
   document.getElementById('favAptInfoBar').textContent='단지 정보 불러오는 중...';
   document.getElementById('favModalTabs').innerHTML='';
   document.getElementById('favModalChartWrap').style.display='none';
 
-  // 캐시 확인 - 있으면 먼저 표시
-  const cacheKey=`fav_data_${fav.aptSeq||fav.aptNm}_${fav.sggCd}`;
-  const cached=localStorage.getItem(cacheKey);
+  // 캐시 확인 - 있으면 먼저 표시 (forceRefresh면 스킵)
+  const cacheKey=`fav_data_${fav.aptSeq||fav.aptNm}_${fav.sggCd}_${_favMonths}`;
+  const cached=forceRefresh?null:localStorage.getItem(cacheKey);
   if(cached){
     try{
       const {tradeDeals, rentDeals, addr, aptInfo, ts}=JSON.parse(cached);
@@ -2014,7 +2039,7 @@ async function openFavModal(fav){
   // 매매 + 전월세 + 단지정보 동시 조회
   const months=[];
   const now=new Date();
-  for(let i=0;i<6;i++){
+  for(let i=0;i<_favMonths;i++){
     const d=new Date(now.getFullYear(),now.getMonth()-i,1);
     months.push(`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`);
   }
