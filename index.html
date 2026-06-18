@@ -192,7 +192,6 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
   <div class="header-sub">국토교통부 실거래가 공개시스템</div>
   <div class="header-btns">
     <button class="hdr-btn" onclick="toggleFavPanel()">⭐ 즐겨찾기</button>
-    <button class="hdr-btn" onclick="addFav()">+ 지역 저장</button>
     <button class="hdr-btn" onclick="copyShareUrl()">🔗 공유</button>
   </div>
 </header>
@@ -300,6 +299,7 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
       </div>
       <div style="display:flex;align-items:center">
         <button class="modal-share" onclick="shareModal()" title="공유">📤</button>
+        <button class="modal-share" onclick="favModal()" title="즐겨찾기" id="btnFavModal">⭐</button>
         <button class="modal-close" onclick="closeModal()">✕</button>
       </div>
     </div>
@@ -1870,18 +1870,21 @@ function toggleChart(){
 }
 
 // ── 즐겨찾기 ──
-function getFavs(){try{return JSON.parse(localStorage.getItem('apt_favs')||'[]');}catch{return [];}}
-function saveFavs(f){localStorage.setItem('apt_favs',JSON.stringify(f));}
+function getFavs(){try{return JSON.parse(localStorage.getItem('apt_favs_v2')||'[]');}catch{return [];}}
+function saveFavs(f){localStorage.setItem('apt_favs_v2',JSON.stringify(f));}
 
 function renderFavList(){
   const list=document.getElementById('favList');
   const favs=getFavs();
-  if(!favs.length){list.innerHTML='<span class="fav-empty">저장된 지역이 없습니다</span>';return;}
+  if(!favs.length){list.innerHTML='<span class="fav-empty">저장된 아파트가 없습니다</span>';return;}
   list.innerHTML=favs.map((f,i)=>`
-    <span class="fav-chip" onclick="loadFav(${i})">
-      ${f.sidoShort} ${f.sggName}
-      <span class="fav-del" onclick="event.stopPropagation();deleteFav(${i})">×</span>
-    </span>`).join('');
+    <div class="fav-chip" onclick="loadFav(${i})" style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;margin-bottom:6px;background:#f8faff;border-radius:8px;cursor:pointer;border:1px solid #e0e8f0">
+      <div>
+        <div style="font-weight:600;font-size:13px">${f.aptNm}</div>
+        <div style="font-size:11px;color:#888;margin-top:2px">${f.sidoShort} ${f.sggName} ${f.umdNm||''}</div>
+      </div>
+      <span class="fav-del" onclick="event.stopPropagation();deleteFav(${i})" style="color:#aaa;font-size:18px;padding:0 4px">×</span>
+    </div>`).join('');
 }
 
 function toggleFavPanel(){
@@ -1890,38 +1893,49 @@ function toggleFavPanel(){
   if(p.style.display==='block')renderFavList();
 }
 
-function addFav(){
-  const sidoEl=document.getElementById('sido');
-  const sggEl=document.getElementById('sigungu');
-  const sido=sidoEl.value;
-  const sggCd=sggEl.value;
-  const sggName=sggEl.options[sggEl.selectedIndex]?.text||'';
-  if(!sggCd){showToast('시/군/구를 먼저 선택해 주세요');return;}
-  const sidoShort=sido.replace('특별시','').replace('광역시','').replace('특별자치시','').replace('특별자치도','').replace('도','');
+function addFav(aptNm, aptSeq, sggCd, sggName, umdNm, sido){
+  if(!aptNm){showToast('아파트를 먼저 선택해 주세요');return;}
+  const sidoShort=(sido||'').replace('특별시','').replace('광역시','').replace('특별자치시','').replace('특별자치도','').replace('도','');
   const favs=getFavs();
-  if(favs.some(f=>f.sggCd===sggCd)){showToast('이미 저장된 지역입니다');return;}
+  if(favs.some(f=>f.aptSeq===aptSeq&&f.aptNm===aptNm)){showToast('이미 저장된 아파트입니다');return;}
   if(favs.length>=10){showToast('즐겨찾기는 최대 10개입니다');return;}
-  favs.push({sido,sggCd,sggName,sidoShort});
+  favs.push({aptNm, aptSeq, sggCd, sggName, umdNm, sido, sidoShort});
   saveFavs(favs);
   renderFavList();
-  document.getElementById('favPanel').style.display='block';
-  showToast(`${sggName} 저장완료`);
+  showToast(`⭐ ${aptNm} 저장완료`);
 }
 
 function loadFav(i){
   const fav=getFavs()[i];
   if(!fav)return;
-  document.getElementById('sido').value=fav.sido;
+  document.getElementById('favPanel').style.display='none';
+  // 해당 구로 조회 후 아파트 팝업 오픈
+  const sidoEl=document.getElementById('sido');
+  const sggEl=document.getElementById('sigungu');
+  sidoEl.value=fav.sido;
   loadSgg();
   setTimeout(()=>{
-    document.getElementById('sigungu').value=fav.sggCd;
-    document.getElementById('favPanel').style.display='none';
-    showToast(`${fav.sggName} 선택됨`);
-  },50);
+    sggEl.value=fav.sggCd;
+    // 현재 모드로 조회
+    doSearch().then(()=>{
+      setTimeout(()=>showAptModal(fav.aptNm, '', fav.aptSeq), 500);
+    });
+  },100);
 }
 
 function deleteFav(i){
   const favs=getFavs();favs.splice(i,1);saveFavs(favs);renderFavList();
+}
+
+function favModal(){
+  const sggEl=document.getElementById('sigungu');
+  const sidoEl=document.getElementById('sido');
+  const sggCd=sggEl.value;
+  const sggName=sggEl.options[sggEl.selectedIndex]?.text||'';
+  const sido=sidoEl.value||'';
+  const deals=allData.filter(d=>modalAptSeq?d.aptSeq===modalAptSeq:d.aptNm===modalAptNm);
+  const umdNm=deals[0]?.umdNm||'';
+  addFav(modalAptNm, modalAptSeq, sggCd, sggName, umdNm, sido);
 }
 
 // ── 공유링크 ──
