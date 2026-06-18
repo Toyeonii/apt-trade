@@ -491,7 +491,7 @@ function loadSgg(){
 function onSggChange(){resetDong();resetFilters();resetResult();resetChart();}
 
 function resetResult(){
-  allData=[];filteredData=[];window._mapSearchMode=false;
+  allData=[];filteredData=[];window._mapSearchMode=false;window._mapSido='';window._mapSggName='';
   document.getElementById('filterBar').style.display='none';
   document.getElementById('summaryStrip').style.display='none';
   document.getElementById('main').innerHTML=`<div class="state-screen"><div class="state-icon">🏢</div><div class="state-title">지역과 기간을 선택하세요</div><div class="state-sub">시/도 → 시/군/구 → 동(선택) → 기간<br>순서로 선택 후 조회하기를 누르세요</div></div>`;
@@ -1207,7 +1207,7 @@ function onZoomChanged(){
     document.getElementById('mapInfo').textContent=`줌인 · 아파트 상세`;
 
   } else if(level>=6){
-    renderDongMarkers();
+    renderDongMarkers(window._mapSido, window._mapSggName);
   }
 }
 
@@ -1419,7 +1419,9 @@ async function searchThisArea(){
       mapDataMode=mode;
       searching.style.display='none';
       window._mapSearchMode=true;
-      renderDongMarkers();
+      window._mapSido=sido;
+      window._mapSggName=sggName;
+      renderDongMarkers(sido, sggName);
       document.getElementById('mapInfo').textContent=`${sido} ${sggName} · ${allData.length.toLocaleString()}건`;
     } catch(e){
       searching.style.display='none';
@@ -1467,7 +1469,7 @@ async function initMainMap(){
   }
 }
 
-function renderDongMarkers(){
+function renderDongMarkers(forceSido, forceSggName){
   mainMapOverlays.forEach(o=>o.setMap(null));
   mainMapOverlays=[];
 
@@ -1481,7 +1483,7 @@ function renderDongMarkers(){
   });
 
   const sggEl=document.getElementById('sigungu');
-  const sggName=sggEl.options[sggEl.selectedIndex]?.text||'';
+  const sggName=forceSggName||sggEl.options[sggEl.selectedIndex]?.text||'';
   // 이 지역 검색으로 조회된 경우엔 현재 지도 위치 유지
   if(!window._mapSearchMode){
     const sggCoord=SEOUL_SGG[sggName];
@@ -1493,7 +1495,7 @@ function renderDongMarkers(){
 
   const geocoder=new kakao.maps.services.Geocoder();
   const sidoEl=document.getElementById('sido');
-  const sido=sidoEl.value||'서울특별시';
+  const sido=forceSido||sidoEl.value||'서울특별시';
 
   Object.entries(dongStats).forEach(([dong,stat])=>{
     const avg=Math.round(stat.sum/stat.cnt);
@@ -1518,7 +1520,7 @@ function renderDongMarkers(){
         // 동 클릭 → 줌인 후 아파트 마커 표시
         mainMapInstance.setCenter(pos);
         mainMapInstance.setLevel(3);
-        renderAptMarkers(stat.deals, dong);
+        renderAptMarkers(stat.deals, dong, sido, sggName);
       });
 
       const overlay=new kakao.maps.CustomOverlay({position:pos,content:el,yAnchor:1.1});
@@ -1531,7 +1533,14 @@ function renderDongMarkers(){
   document.getElementById('mapInfo').textContent=`${sggName} · ${Object.keys(dongStats).length}개 동 · ${mapDataMode==='trade'?'매매':'전월세'} · 동 클릭 시 아파트 상세`;
 }
 
-function renderAptMarkers(deals, dong){
+function renderAptMarkers(deals, dong, sido, sggName){
+  if(!sido||!sggName){
+    // fallback: DOM에서 읽기
+    const sidoEl=document.getElementById('sido');
+    const sggEl=document.getElementById('sigungu');
+    sido=sido||sidoEl.value||'서울특별시';
+    sggName=sggName||sggEl.options[sggEl.selectedIndex]?.text||'';
+  }
   // 기존 오버레이 제거 후 동 마커만 유지 안하고 전체 교체
   mainMapOverlays.forEach(o=>o.setMap(null));
   mainMapOverlays=[];
@@ -1546,10 +1555,6 @@ function renderAptMarkers(deals, dong){
   });
 
   const geocoder=new kakao.maps.services.Geocoder();
-  const sidoEl=document.getElementById('sido');
-  const sggEl=document.getElementById('sigungu');
-  const sido=sidoEl.value||'서울특별시';
-  const sggName=sggEl.options[sggEl.selectedIndex]?.text||'';
 
   // 뒤로가기 버튼 오버레이
   const backEl=document.createElement('div');
