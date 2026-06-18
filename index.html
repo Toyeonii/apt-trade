@@ -1108,7 +1108,7 @@ function onZoomChanged(){
       if(dongCoordCache[cacheKey]){
         const {x,y}=dongCoordCache[cacheKey];
         const pos=new kakao.maps.LatLng(y,x);
-        if(level<=3||bounds.contain(pos)){
+        if(level<=4||bounds.contain(pos)){
           addAptMarkersForDong(stat.deals, dong, sido, sggName);
         }
       } else {
