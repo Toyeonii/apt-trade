@@ -2308,6 +2308,25 @@ function renderFavAptInfo(d, tradeDeals, rentDeals, addr=''){
 
 async function addNearbyTransit(bar, addr=''){
   if(!addr) return;
+
+  // 캐시 확인 (7일)
+  const transitCacheKey=`transit_${addr}`;
+  try{
+    const cached=localStorage.getItem(transitCacheKey);
+    if(cached){
+      const {chips, ts}=JSON.parse(cached);
+      if(Date.now()-ts < 7*24*3600*1000 && chips?.length){
+        chips.forEach(html=>{
+          const chip=document.createElement('div');
+          chip.className='apt-info-chip';
+          chip.innerHTML=html;
+          bar.appendChild(chip);
+        });
+        return;
+      }
+    }
+  } catch(e){}
+
   // 카카오맵 로드 확인 및 로드
   if(!window.kakao||!window.kakao.maps||!window.kakao.maps.services){
     try{
@@ -2321,6 +2340,7 @@ async function addNearbyTransit(bar, addr=''){
     if(status!==kakao.maps.services.Status.OK)return;
     const lat=result[0].y, lng=result[0].x;
     const ps=new kakao.maps.services.Places();
+    const cachedChips=[];
 
     // 지하철역 검색
     ps.categorySearch('SW8', (data,status)=>{
@@ -2330,26 +2350,33 @@ async function addNearbyTransit(bar, addr=''){
         const distStr=dist>=1000?`${(dist/1000).toFixed(1)}km`:`${dist}m`;
         const stName=station.place_name.replace(/\s*\d+호선/g,'').replace('역','').trim();
         const walkMin=Math.ceil(dist/80);
+        const html=`🚇 지하철 <span>${stName}역 ${distStr} (도보 ${walkMin}분)</span>`;
+        cachedChips.push(html);
         const chip=document.createElement('div');
         chip.className='apt-info-chip';
-        chip.innerHTML=`🚇 지하철 <span>${stName}역 ${distStr} (도보 ${walkMin}분)</span>`;
+        chip.innerHTML=html;
         bar.appendChild(chip);
       }
+      // 버스정류장 검색
+      ps.categorySearch('BK9', (data,status)=>{
+        if(status===kakao.maps.services.Status.OK&&data.length>0){
+          const stop=data[0];
+          const dist=parseInt(stop.distance);
+          const distStr=dist>=1000?`${(dist/1000).toFixed(1)}km`:`${dist}m`;
+          const busWalkMin=Math.ceil(dist/80);
+          const html=`🚌 버스 <span>${stop.place_name} ${distStr} (도보 ${busWalkMin}분)</span>`;
+          cachedChips.push(html);
+          const chip=document.createElement('div');
+          chip.className='apt-info-chip';
+          chip.innerHTML=html;
+          bar.appendChild(chip);
+        }
+        // 둘 다 완료 후 캐시 저장
+        try{
+          localStorage.setItem(transitCacheKey, JSON.stringify({chips:cachedChips, ts:Date.now()}));
+        } catch(e){}
+      },{location:new kakao.maps.LatLng(lat,lng), radius:500, sort:kakao.maps.services.SortBy.DISTANCE});
     },{location:new kakao.maps.LatLng(lat,lng), radius:1000, sort:kakao.maps.services.SortBy.DISTANCE});
-
-    // 버스정류장 검색
-    ps.categorySearch('BK9', (data,status)=>{
-      if(status===kakao.maps.services.Status.OK&&data.length>0){
-        const stop=data[0];
-        const dist=parseInt(stop.distance);
-        const distStr=dist>=1000?`${(dist/1000).toFixed(1)}km`:`${dist}m`;
-        const chip=document.createElement('div');
-        chip.className='apt-info-chip';
-        const busWalkMin=Math.ceil(parseInt(stop.distance)/80);
-        chip.innerHTML=`🚌 버스 <span>${stop.place_name} ${distStr} (도보 ${busWalkMin}분)</span>`;
-        bar.appendChild(chip);
-      }
-    },{location:new kakao.maps.LatLng(lat,lng), radius:500, sort:kakao.maps.services.SortBy.DISTANCE});
   });
 }
 
