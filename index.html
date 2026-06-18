@@ -2219,7 +2219,7 @@ function renderFavAreaDeals(ar, deals, mode){
       },
       options:{
         responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.datasetIndex===0?fmtPrice(c.raw)+' (월평균)':fmtPrice(c.raw)+' (최고가)'}}}},
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.datasetIndex===0?fmtPrice(c.raw)+' (월평균)':fmtPrice(c.raw)+' (최고가)'}}},
         scales:{
           y:{ticks:{callback:v=>fmtPrice(v),font:{size:9},maxTicksLimit:4},grid:{color:'rgba(0,0,0,0.04)'}},
           x:{ticks:{font:{size:9}},grid:{display:false}}
