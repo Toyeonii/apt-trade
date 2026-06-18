@@ -45,6 +45,8 @@ html{overflow-x:hidden}
 .filter-bar input{flex:1;min-width:120px;height:36px;border:0.5px solid #ccc;border-radius:8px;padding:0 10px;font-size:16px}
 .filter-bar input:focus{outline:none;border-color:#185FA5}
 .filter-bar select{height:36px;border:0.5px solid #ddd;border-radius:8px;padding:0 8px;font-size:14px;background:#fff;cursor:pointer;color:#444;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center;padding-right:22px}
+.period-btn{height:28px;padding:0 10px;font-size:12px;border:0.5px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;white-space:nowrap;color:#555}
+.period-btn.active{background:#E6F1FB;border-color:#185FA5;color:#0C447C;font-weight:600}
 .sort-btn{height:30px;padding:0 10px;font-size:12px;border:0.5px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;white-space:nowrap;color:#555}
 .sort-btn.active-trade{background:#E6F1FB;border-color:#185FA5;color:#0C447C;font-weight:600}
 .sort-btn.active-rent{background:#E1F5EE;border-color:#0F6E56;color:#0F6E56;font-weight:600}
@@ -72,6 +74,10 @@ td.lo{color:#0F6E56;font-weight:700;text-align:right}
 td.deposit{font-weight:600;color:#0F6E56;text-align:right}
 .badge{display:inline-block;background:#F1EFE8;border:0.5px solid #D3D1C7;border-radius:4px;padding:1px 6px;font-size:11px;color:#5F5E5A}
 
+.badge-chg{display:inline-block;font-size:10px;border-radius:4px;padding:1px 4px;margin-left:4px;vertical-align:middle;font-weight:600;white-space:nowrap}
+.badge-chg.up{background:#fff0f0;color:#c0392b}
+.badge-chg.down{background:#f0f4ff;color:#2563eb}
+.badge-chg.flat{background:#f5f5f5;color:#888}
 .badge-record-high{display:inline-block;background:#FDECEA;border:0.5px solid #F5A8A8;border-radius:4px;padding:1px 5px;font-size:10px;color:#A32D2D;margin-left:4px;white-space:nowrap}
 .badge-record-low{display:inline-block;background:#E8F5E9;border:0.5px solid #A5D6A7;border-radius:4px;padding:1px 5px;font-size:10px;color:#1B5E20;margin-left:4px;white-space:nowrap}
 .badge-jeonse{background:#E1F5EE;border:0.5px solid #9FE1CB;color:#085041;display:inline-block;border-radius:4px;padding:1px 6px;font-size:11px}
@@ -215,6 +221,12 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
     </select>
   </div>
   <div class="month-label">조회 기간</div>
+  <div style="display:flex;gap:5px;margin-bottom:6px;flex-wrap:wrap">
+    <button class="period-btn" onclick="setPeriod(3)">3개월</button>
+    <button class="period-btn active" onclick="setPeriod(6)">6개월</button>
+    <button class="period-btn" onclick="setPeriod(12)">12개월</button>
+    <button class="period-btn" onclick="setPeriod(24)">24개월</button>
+  </div>
   <div class="month-row">
     <input type="month" id="startM"/>
     <input type="month" id="endM"/>
@@ -358,6 +370,17 @@ const RD={
 
 let allData=[],filteredData=[],currentSort='date',currentPage=1,currentMode='trade';
 const PAGE_SIZE=50;
+
+function setPeriod(months){
+  document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+  const now=new Date();
+  const end=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const s=new Date(now.getFullYear(),now.getMonth()-months+1,1);
+  const start=`${s.getFullYear()}-${String(s.getMonth()+1).padStart(2,'0')}`;
+  document.getElementById('startM').value=start;
+  document.getElementById('endM').value=end;
+}
 
 function init(){
   const s=document.getElementById('sido');
@@ -617,6 +640,15 @@ function renderTradeTable(){
   const allMaxP=allPrices.length?Math.max(...allPrices):0;
   const allMinP=allPrices.length?Math.min(...allPrices):0;
 
+  // 아파트+면적별 직전 거래 대비 변동률 맵 (날짜순 정렬)
+  const prevPriceMap={};
+  const sortedAll=[...allData].sort((a,b)=>gD(a).localeCompare(gD(b)));
+  sortedAll.forEach(d=>{
+    const key=`${d.aptNm}_${d.excluUseAr}`;
+    const p=parsePrice(d.dealAmount);
+    if(p>0) prevPriceMap[key]=(prevPriceMap[key]||[]).concat(p);
+  });
+
   // 평균 평당가
   const pyungList=filteredData.map(d=>{
     const p=parsePrice(d.dealAmount);
@@ -660,11 +692,17 @@ function renderTradeTable(){
     const isRecordL=p===allMinP&&p>0&&allPrices.length>1;
     const dt=d.dealYear&&d.dealMonth?`${d.dealYear}.${String(d.dealMonth).padStart(2,'0')}.${String(d.dealDay||'').padStart(2,'0')}`:'-';
     const recordBadge=isRecordH?'<span class="badge-record-high">신고가</span>':isRecordL?'<span class="badge-record-low">역대최저</span>':'';
+    const pvKey=`${d.aptNm}_${d.excluUseAr}`;
+    const pvList=prevPriceMap[pvKey]||[];
+    const pvIdx=pvList.lastIndexOf(p);
+    const prevP=pvIdx>0?pvList[pvIdx-1]:null;
+    const chgRate=prevP?Math.round((p-prevP)/prevP*100):null;
+    const chgBadge=chgRate!==null?`<span class="badge-chg ${chgRate>0?'up':chgRate<0?'down':'flat'}">${chgRate>0?'▲':'▼'} ${Math.abs(chgRate)}%</span>`:'';
     html+=`<tr style="cursor:pointer" data-seq="${d.aptSeq||''}" data-road="${(d.roadNm||'')}" data-apt="${(d.aptNm||'').replace(/"/g,'&quot;')}" title="${d.aptNm||''} · 클릭:이력보기">
       <td style="font-weight:500">${d.aptNm||'-'}${recordBadge}<div style="font-size:11px;color:#aaa;font-weight:400">${d.roadNm||d.umdNm||''}</div></td>
       <td style="color:#555;font-size:12px">${fmtArea(d.excluUseAr)}</td>
       <td><span class="badge">${d.floor||'-'}층</span></td>
-      <td class="${isH?'hi':isL?'lo':'price'}">${fmtPrice(p)}</td>
+      <td class="${isH?'hi':isL?'lo':'price'}">${fmtPrice(p)}${chgBadge}</td>
       <td style="text-align:right;color:#888;font-size:12px">${pyung?fmtPrice(pyung)+'/평':'-'}</td>
       <td style="color:#666;font-size:12px">${dt}</td>
       <td style="color:#888;font-size:12px">${d.buildYear||'-'}</td>
@@ -685,10 +723,16 @@ function renderTradeTable(){
     const pc=isH?'hi':isL?'lo':'';
     const dt=d.dealYear&&d.dealMonth?`${d.dealYear}.${String(d.dealMonth).padStart(2,'0')}.${String(d.dealDay||'').padStart(2,'0')}`:'-';
     const recordBadge=isRecordH?'<span class="badge-record-high">신고가</span>':isRecordL?'<span class="badge-record-low">역대최저</span>':'';
+    const pvKey2=`${d.aptNm}_${d.excluUseAr}`;
+    const pvList2=prevPriceMap[pvKey2]||[];
+    const pvIdx2=pvList2.lastIndexOf(p);
+    const prevP2=pvIdx2>0?pvList2[pvIdx2-1]:null;
+    const chgRate2=prevP2?Math.round((p-prevP2)/prevP2*100):null;
+    const chgBadge2=chgRate2!==null?`<span class="badge-chg ${chgRate2>0?'up':chgRate2<0?'down':'flat'}">${chgRate2>0?'▲':'▼'} ${Math.abs(chgRate2)}%</span>`:'';
     cards+=`<div class="card" data-seq="${d.aptSeq||''}" data-road="${(d.roadNm||'')}" data-apt="${(d.aptNm||'').replace(/"/g,'&quot;')}">
       <div class="card-top">
         <span class="card-name">${d.aptNm||'-'}${recordBadge}</span>
-        <span class="card-price ${pc}">${fmtPrice(p)}</span>
+        <span class="card-price ${pc}">${fmtPrice(p)}${chgBadge2}</span>
       </div>
       <div class="card-mid">
         <span class="card-tag">${fmtArea(d.excluUseAr)}</span>
