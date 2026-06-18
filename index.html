@@ -1948,11 +1948,15 @@ async function openFavModal(fav){
   const cached=localStorage.getItem(cacheKey);
   if(cached){
     try{
-      const {tradeDeals, rentDeals, addr, ts}=JSON.parse(cached);
+      const {tradeDeals, rentDeals, addr, aptInfo, ts}=JSON.parse(cached);
       document.getElementById('favModalSub').textContent=`매매 ${tradeDeals.length}건 · 전월세 ${rentDeals.length}건 (캐시)`;
       document.getElementById('favModalAddr').textContent=addr||'';
       renderFavTabs(tradeDeals, rentDeals);
-      loadFavAptInfo(fav.aptNm, fav.sggCd, tradeDeals[0]?.roadNm||'', tradeDeals[0]?.roadNmBonbun||'', tradeDeals, rentDeals, addr||'');
+      if(aptInfo){
+        renderFavAptInfo(aptInfo, tradeDeals, rentDeals, addr||'');
+      } else {
+        loadFavAptInfo(fav.aptNm, fav.sggCd, tradeDeals[0]?.roadNm||'', tradeDeals[0]?.roadNmBonbun||'', tradeDeals, rentDeals, addr||'');
+      }
       // 1시간 이내면 갱신 안함
       if(Date.now()-ts < 3600000) return;
       document.getElementById('favModalSub').textContent+=` · 갱신 중...`;
@@ -1987,6 +1991,7 @@ async function openFavModal(fav){
     // localStorage에 캐시 저장
     try{
       localStorage.setItem(cacheKey, JSON.stringify({tradeDeals, rentDeals, addr:addr.trim(), ts:Date.now()}));
+      _pendingCacheKey=cacheKey;
     } catch(e){}
 
     document.getElementById('favModalSub').textContent=`매매 ${tradeDeals.length}건 · 전월세 ${rentDeals.length}건`;
@@ -2129,6 +2134,8 @@ function renderFavAreaDeals(ar, deals, mode){
   areaBody.innerHTML=html;
 }
 
+let _pendingCacheKey='';
+
 async function loadFavAptInfo(aptNm, sggCd, roadNm, roadNmBonbun, tradeDeals=[], rentDeals=[], addr=''){
   const bar=document.getElementById('favAptInfoBar');
   try{
@@ -2136,6 +2143,18 @@ async function loadFavAptInfo(aptNm, sggCd, roadNm, roadNmBonbun, tradeDeals=[],
     const resp=await fetch(`/api/apt-info?${params}`);
     const json=await resp.json();
     if(json.ok&&json.data&&Object.keys(json.data).length>0){
+      // aptInfo를 캐시에 업데이트
+      if(_pendingCacheKey){
+        try{
+          const cached=localStorage.getItem(_pendingCacheKey);
+          if(cached){
+            const obj=JSON.parse(cached);
+            obj.aptInfo=json.data;
+            localStorage.setItem(_pendingCacheKey, JSON.stringify(obj));
+          }
+        } catch(e){}
+        _pendingCacheKey='';
+      }
       renderFavAptInfo(json.data, tradeDeals, rentDeals, addr);
     } else {
       bar.style.display='none';
