@@ -2206,9 +2206,10 @@ async function addNearbyTransit(bar){
         const station=data[0];
         const dist=parseInt(station.distance);
         const distStr=dist>=1000?`${(dist/1000).toFixed(1)}km`:`${dist}m`;
+        const stName=station.place_name.replace(/\s*\d+호선/g,'').replace('역','').trim();
         const chip=document.createElement('div');
         chip.className='apt-info-chip';
-        chip.innerHTML=`🚇 지하철 <span>${station.place_name.replace('역','').trim()}역 ${distStr}</span>`;
+        chip.innerHTML=`🚇 지하철 <span>${stName}역 ${distStr}</span>`;
         bar.appendChild(chip);
       }
     },{location:new kakao.maps.LatLng(lat,lng), radius:1000, sort:kakao.maps.services.SortBy.DISTANCE});
