@@ -2207,9 +2207,10 @@ async function addNearbyTransit(bar){
         const dist=parseInt(station.distance);
         const distStr=dist>=1000?`${(dist/1000).toFixed(1)}km`:`${dist}m`;
         const stName=station.place_name.replace(/\s*\d+호선/g,'').replace('역','').trim();
+        const walkMin=Math.ceil(dist/80);
         const chip=document.createElement('div');
         chip.className='apt-info-chip';
-        chip.innerHTML=`🚇 지하철 <span>${stName}역 ${distStr}</span>`;
+        chip.innerHTML=`🚇 지하철 <span>${stName}역 ${distStr} (도보 ${walkMin}분)</span>`;
         bar.appendChild(chip);
       }
     },{location:new kakao.maps.LatLng(lat,lng), radius:1000, sort:kakao.maps.services.SortBy.DISTANCE});
@@ -2222,7 +2223,8 @@ async function addNearbyTransit(bar){
         const distStr=dist>=1000?`${(dist/1000).toFixed(1)}km`:`${dist}m`;
         const chip=document.createElement('div');
         chip.className='apt-info-chip';
-        chip.innerHTML=`🚌 버스 <span>${stop.place_name} ${distStr}</span>`;
+        const busWalkMin=Math.ceil(parseInt(stop.distance)/80);
+        chip.innerHTML=`🚌 버스 <span>${stop.place_name} ${distStr} (도보 ${busWalkMin}분)</span>`;
         bar.appendChild(chip);
       }
     },{location:new kakao.maps.LatLng(lat,lng), radius:500, sort:kakao.maps.services.SortBy.DISTANCE});
