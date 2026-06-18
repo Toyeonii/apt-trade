@@ -2014,7 +2014,7 @@ async function openFavModal(fav, forceRefresh=false){
 
   // 캐시 확인 - 있으면 먼저 표시 (forceRefresh면 스킵)
   const cacheKey=`fav_data_${fav.aptSeq||fav.aptNm}_${fav.sggCd}_${_favMonths}`;
-  const cached=forceRefresh?null:localStorage.getItem(cacheKey);
+  const cached=localStorage.getItem(cacheKey);
   if(cached){
     try{
       const {tradeDeals, rentDeals, addr, aptInfo, ts}=JSON.parse(cached);
