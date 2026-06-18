@@ -2188,6 +2188,7 @@ async function addNearbyTransit(bar){
     try{
       const key=await getKakaoKey();
       await loadKakaoScript(key);
+      await new Promise(r=>setTimeout(r,500));
     } catch(e){ return; }
   }
   const addrEl=document.getElementById('favModalAddr');
