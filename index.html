@@ -2030,13 +2030,40 @@ function renderFavTab(idx, tab){
     return;
   }
 
-  // 차트
+  // 면적별 그룹핑
+  const arGroups={};
+  deals.forEach(d=>{
+    const ar=parseFloat(d.excluUseAr||0).toFixed(1);
+    if(!arGroups[ar])arGroups[ar]=[];
+    arGroups[ar].push(d);
+  });
+  const arKeys=Object.keys(arGroups).sort((a,b)=>parseFloat(a)-parseFloat(b));
+
+  // 면적 탭 생성
+  const areaTabsHtml=arKeys.map((ar,i)=>`<button class="modal-tab ${i===0?'active':''}" style="font-size:11px;padding:6px 10px" onclick="selectFavAreaTab('${ar}',this,${idx})">${fmtArea(ar)} (${arGroups[ar].length}건)</button>`).join('');
+  body.innerHTML=`<div class="modal-tabs" style="border-bottom:1px solid #eee;overflow-x:auto;white-space:nowrap">${areaTabsHtml}</div><div id="favAreaBody"></div>`;
+
+  window._favArGroups=arGroups;
+  renderFavAreaDeals(arKeys[0], deals.filter(d=>parseFloat(d.excluUseAr||0).toFixed(1)===arKeys[0]), mode);
+}
+
+function selectFavAreaTab(ar, btn, tabIdx){
+  document.querySelectorAll('#favModalBody .modal-tabs .modal-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  const tab=window._favTabData[tabIdx];
+  const deals=tab.deals.filter(d=>parseFloat(d.excluUseAr||0).toFixed(1)===ar);
+  renderFavAreaDeals(ar, deals, tab.mode);
+}
+
+function renderFavAreaDeals(ar, deals, mode){
   const chartWrap=document.getElementById('favModalChartWrap');
   if(window._favChart){window._favChart.destroy();window._favChart=null;}
+
+  // 차트
   const pts=deals.map(d=>{
     const p=mode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
     const dateStr=`${d.dealYear}-${String(d.dealMonth).padStart(2,'0')}-${String(d.dealDay||'01').padStart(2,'0')}`;
-    return p>0?{x:dateStr,y:p}:null;
+    return p>0?{x:dateStr,y:p,floor:d.floor}:null;
   }).filter(Boolean).sort((a,b)=>a.x.localeCompare(b.x));
 
   if(pts.length>=2){
@@ -2045,14 +2072,15 @@ function renderFavTab(idx, tab){
     const color=mode==='trade'?'#185FA5':'#0F6E56';
     window._favChart=new Chart(ctx,{
       type:'line',
-      data:{datasets:[{data:pts,borderColor:color,backgroundColor:color.replace(')',',0.08)').replace('rgb','rgba'),borderWidth:2,pointRadius:3,fill:true,tension:0.3}]},
-      options:{responsive:true,maintainAspectRatio:false,parsing:{xAxisKey:'x',yAxisKey:'y'},plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>fmtPrice(ctx.raw.y)}}},scales:{y:{ticks:{callback:v=>fmtPrice(v),font:{size:9},maxTicksLimit:4},grid:{color:'rgba(0,0,0,0.04)'}},x:{type:'category',ticks:{font:{size:9},maxTicksLimit:6},grid:{display:false}}}}
+      data:{datasets:[{data:pts,borderColor:color,backgroundColor:color+'22',borderWidth:2,pointRadius:3,fill:true,tension:0.3}]},
+      options:{responsive:true,maintainAspectRatio:false,parsing:{xAxisKey:'x',yAxisKey:'y'},plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtPrice(c.raw.y)+(c.raw.floor?' · '+c.raw.floor+'층':'')}}},scales:{y:{ticks:{callback:v=>fmtPrice(v),font:{size:9},maxTicksLimit:4},grid:{color:'rgba(0,0,0,0.04)'}},x:{type:'category',ticks:{font:{size:9},maxTicksLimit:6},grid:{display:false}}}}
     });
   } else {
     chartWrap.style.display='none';
   }
 
   // 리스트
+  const areaBody=document.getElementById('favAreaBody');
   let html='<div class="trade-list">';
   deals.slice(0,30).forEach(d=>{
     const p=mode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
@@ -2065,11 +2093,11 @@ function renderFavTab(idx, tab){
         <div style="font-size:12px;color:#888">${dt}</div>
         ${priceStr}
       </div>
-      <div style="font-size:11px;color:#aaa;margin-top:4px">${d.floor||'-'}층 · ${fmtArea(d.excluUseAr)}${pyung?` (${pyung}평)`:''} · ${d.buildYear||'-'}년</div>
+      <div style="font-size:11px;color:#aaa;margin-top:4px">${d.floor||'-'}층${pyung?' · '+pyung+'평':''} · ${d.buildYear||'-'}년</div>
     </div>`;
   });
   html+='</div>';
-  body.innerHTML=html;
+  areaBody.innerHTML=html;
 }
 
 async function loadFavAptInfo(aptNm, sggCd, roadNm, roadNmBonbun){
