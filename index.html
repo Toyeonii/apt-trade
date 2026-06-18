@@ -491,7 +491,7 @@ function loadSgg(){
 function onSggChange(){resetDong();resetFilters();resetResult();resetChart();}
 
 function resetResult(){
-  allData=[];filteredData=[];
+  allData=[];filteredData=[];window._mapSearchMode=false;
   document.getElementById('filterBar').style.display='none';
   document.getElementById('summaryStrip').style.display='none';
   document.getElementById('main').innerHTML=`<div class="state-screen"><div class="state-icon">🏢</div><div class="state-title">지역과 기간을 선택하세요</div><div class="state-sub">시/도 → 시/군/구 → 동(선택) → 기간<br>순서로 선택 후 조회하기를 누르세요</div></div>`;
@@ -1418,7 +1418,7 @@ async function searchThisArea(){
       filteredData=[...allData];
       mapDataMode=mode;
       searching.style.display='none';
-      window._searchThisArea=true;
+      window._mapSearchMode=true;
       renderDongMarkers();
       document.getElementById('mapInfo').textContent=`${sido} ${sggName} · ${allData.length.toLocaleString()}건`;
     } catch(e){
@@ -1482,15 +1482,14 @@ function renderDongMarkers(){
 
   const sggEl=document.getElementById('sigungu');
   const sggName=sggEl.options[sggEl.selectedIndex]?.text||'';
-  // 이 지역 검색으로 호출 시엔 현재 지도 위치 유지 (_searchThisArea=true)
-  if(!window._searchThisArea){
+  // 이 지역 검색으로 조회된 경우엔 현재 지도 위치 유지
+  if(!window._mapSearchMode){
     const sggCoord=SEOUL_SGG[sggName];
     if(sggCoord&&mainMapInstance){
       mainMapInstance.setCenter(new kakao.maps.LatLng(sggCoord.lat,sggCoord.lng));
       mainMapInstance.setLevel(6);
     }
   }
-  window._searchThisArea=false;
 
   const geocoder=new kakao.maps.services.Geocoder();
   const sidoEl=document.getElementById('sido');
