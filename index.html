@@ -2197,6 +2197,7 @@ function renderFavAreaDeals(ar, deals, mode){
   const monthData=monthLabels.map(k=>monthCnt[k]);
 
   if(pts.length>=2){
+    chartWrap.style.visibility='hidden';
     chartWrap.style.display='block';
     const ctx=document.getElementById('favModalChart').getContext('2d');
     const color=mode==='trade'?'#185FA5':'#0F6E56';
@@ -2249,6 +2250,8 @@ function renderFavAreaDeals(ar, deals, mode){
   });
   html+='</div>';
   areaBody.innerHTML=html;
+  // 차트+리스트 모두 완성 후 한번에 표시
+  requestAnimationFrame(()=>{ chartWrap.style.visibility=''; });
 }
 
 async function loadFavAptInfo(aptNm, sggCd, roadNm, roadNmBonbun, tradeDeals=[], rentDeals=[], addr=''){
