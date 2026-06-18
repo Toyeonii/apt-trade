@@ -642,7 +642,8 @@ function renderTradeTable(){
 
   // 아파트+면적별 직전 거래 대비 변동률 맵 (날짜순 정렬)
   const prevPriceMap={};
-  const sortedAll=[...allData].sort((a,b)=>gD(a).localeCompare(gD(b)));
+  const _dt=d=>`${d.dealYear||''}${String(d.dealMonth||'').padStart(2,'0')}${String(d.dealDay||'').padStart(2,'0')}`;
+  const sortedAll=[...allData].sort((a,b)=>_dt(a).localeCompare(_dt(b)));
   sortedAll.forEach(d=>{
     const key=`${d.aptNm}_${d.excluUseAr}`;
     const p=parsePrice(d.dealAmount);
