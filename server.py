@@ -114,7 +114,7 @@ def api_bulk():
         return jsonify({'error': '최대 24개월'}), 400
 
     all_items, errors = [], []
-    with ThreadPoolExecutor(max_workers=8) as executor:
+    with ThreadPoolExecutor(max_workers=24) as executor:
         futures = {executor.submit(fetch_month, lawd_cd, ym, mode): ym for ym in month_list}
         for future in as_completed(futures):
             try:
@@ -135,6 +135,8 @@ def kakao_key():
     return jsonify({'key': key})
 
 _apt_list_cache = {}  # {sgg_cd: [{kaptCode, kaptName, ...}]}
+_apt_info_cache = {}  # {kapt_code: (ts, result)}
+CACHE_TTL_APT_INFO = 86400  # 24시간 (단지 기본정보는 거의 안 바뀜)
 
 def fetch_apt_list(sgg_cd):
     if sgg_cd in _apt_list_cache:
@@ -247,6 +249,13 @@ def apt_info():
         if not kapt_code:
             return jsonify({'ok': False, 'data': {}, 'msg': '단지 없음'})
 
+        # 캐시 확인
+        now = time.time()
+        if kapt_code in _apt_info_cache:
+            ts, cached_result = _apt_info_cache[kapt_code]
+            if now - ts < CACHE_TTL_APT_INFO:
+                return jsonify({'ok': True, 'data': cached_result, 'kaptCode': kapt_code})
+
         # 2단계: 기본정보 조회
         info_url = f"https://apis.data.go.kr/1613000/AptBasisInfoServiceV4/getAphusBassInfoV4?serviceKey={API_KEY_APT_INFO}&kaptCode={kapt_code}&_type=json"
         resp = requests.get(info_url, timeout=10)
@@ -284,6 +293,7 @@ def apt_info():
         except:
             pass
 
+        _apt_info_cache[kapt_code] = (time.time(), result)
         return jsonify({'ok': True, 'data': result, 'kaptCode': kapt_code})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
