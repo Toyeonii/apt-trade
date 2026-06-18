@@ -1966,7 +1966,7 @@ async function openFavModal(fav){
     document.getElementById('favModalBody').innerHTML='<div class="state-screen"><div class="state-icon">⏳</div><div class="state-title">조회 중...</div></div>';
   }
 
-  // 매매 + 전월세 동시 조회
+  // 매매 + 전월세 + 단지정보 동시 조회
   const months=[];
   const now=new Date();
   for(let i=0;i<6;i++){
@@ -1975,10 +1975,14 @@ async function openFavModal(fav){
   }
   const monthStr=months.join(',');
 
+  // apt-info는 aptNm/sggCd만으로 먼저 병렬 시작 (roadNm 없어도 서버에서 이름매칭 fallback)
+  const aptInfoPromise=fetch(`/api/apt-info?${new URLSearchParams({aptNm:fav.aptNm, sggCd:fav.sggCd, roadNm:'', roadNmBonbun:''})}`).then(r=>r.json()).catch(()=>null);
+
   try{
-    const [tradeRes, rentRes]=await Promise.all([
+    const [tradeRes, rentRes, aptInfoRes]=await Promise.all([
       fetch(`/api/trade/bulk?LAWD_CD=${fav.sggCd}&months=${monthStr}&mode=trade`).then(r=>r.json()),
-      fetch(`/api/trade/bulk?LAWD_CD=${fav.sggCd}&months=${monthStr}&mode=rent`).then(r=>r.json())
+      fetch(`/api/trade/bulk?LAWD_CD=${fav.sggCd}&months=${monthStr}&mode=rent`).then(r=>r.json()),
+      aptInfoPromise
     ]);
 
     const tradeDeals=(tradeRes.items||[]).filter(d=>fav.aptSeq?d.aptSeq===fav.aptSeq:d.aptNm===fav.aptNm);
@@ -1988,16 +1992,23 @@ async function openFavModal(fav){
     const addr=d0?(d0.roadNm?`${fav.sido} ${fav.sggName} ${d0.roadNm}${d0.roadNmBonbun?' '+parseInt(d0.roadNmBonbun,10):''}`:
                d0.jibun?`${fav.sido} ${fav.sggName} ${d0.umdNm||''} ${d0.jibun}`:`${fav.sido} ${fav.sggName} ${fav.umdNm||''}`):('');
 
-    // localStorage에 캐시 저장
+    // apt-info 결과 처리
+    const bar=document.getElementById('favAptInfoBar');
+    if(aptInfoRes?.ok&&aptInfoRes.data&&Object.keys(aptInfoRes.data).length>0){
+      renderFavAptInfo(aptInfoRes.data, tradeDeals, rentDeals, addr.trim());
+    } else {
+      bar.style.display='none';
+    }
+
+    // localStorage에 캐시 저장 (aptInfo 포함)
     try{
-      localStorage.setItem(cacheKey, JSON.stringify({tradeDeals, rentDeals, addr:addr.trim(), ts:Date.now()}));
-      _pendingCacheKey=cacheKey;
+      const aptInfo=aptInfoRes?.ok&&aptInfoRes.data?aptInfoRes.data:null;
+      localStorage.setItem(cacheKey, JSON.stringify({tradeDeals, rentDeals, addr:addr.trim(), aptInfo, ts:Date.now()}));
     } catch(e){}
 
     document.getElementById('favModalSub').textContent=`매매 ${tradeDeals.length}건 · 전월세 ${rentDeals.length}건`;
     document.getElementById('favModalAddr').textContent=addr.trim();
     renderFavTabs(tradeDeals, rentDeals);
-    loadFavAptInfo(fav.aptNm, fav.sggCd, d0?.roadNm||'', d0?.roadNmBonbun||'', tradeDeals, rentDeals, addr.trim());
 
   } catch(e){
     document.getElementById('favModalBody').innerHTML=`<div class="state-screen"><div class="state-icon">⚠️</div><div class="state-title">조회 실패</div><div class="state-sub">${e.message}</div></div>`;
@@ -2134,8 +2145,6 @@ function renderFavAreaDeals(ar, deals, mode){
   areaBody.innerHTML=html;
 }
 
-let _pendingCacheKey='';
-
 async function loadFavAptInfo(aptNm, sggCd, roadNm, roadNmBonbun, tradeDeals=[], rentDeals=[], addr=''){
   const bar=document.getElementById('favAptInfoBar');
   try{
@@ -2143,18 +2152,6 @@ async function loadFavAptInfo(aptNm, sggCd, roadNm, roadNmBonbun, tradeDeals=[],
     const resp=await fetch(`/api/apt-info?${params}`);
     const json=await resp.json();
     if(json.ok&&json.data&&Object.keys(json.data).length>0){
-      // aptInfo를 캐시에 업데이트
-      if(_pendingCacheKey){
-        try{
-          const cached=localStorage.getItem(_pendingCacheKey);
-          if(cached){
-            const obj=JSON.parse(cached);
-            obj.aptInfo=json.data;
-            localStorage.setItem(_pendingCacheKey, JSON.stringify(obj));
-          }
-        } catch(e){}
-        _pendingCacheKey='';
-      }
       renderFavAptInfo(json.data, tradeDeals, rentDeals, addr);
     } else {
       bar.style.display='none';
