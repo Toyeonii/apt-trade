@@ -2178,22 +2178,21 @@ function renderFavAptInfo(d, tradeDeals, rentDeals){
   bar.className='apt-info-bar';
   bar.innerHTML=chips.map(c=>`<div class="apt-info-chip">${c}</div>`).join('');
 
-  // 지하철/버스 거리 (카카오맵으로 검색)
+  // 지하철/버스 거리 (비동기)
   addNearbyTransit(bar);
 }
 
-function addNearbyTransit(bar){
-  // 카카오맵 로드 대기
+async function addNearbyTransit(bar){
+  // 카카오맵 로드 확인 및 로드
   if(!window.kakao||!window.kakao.maps||!window.kakao.maps.services){
-    setTimeout(()=>addNearbyTransit(bar), 500);
-    return;
+    try{
+      const key=await getKakaoKey();
+      await loadKakaoScript(key);
+    } catch(e){ return; }
   }
   const addrEl=document.getElementById('favModalAddr');
   const addr=addrEl.textContent;
-  if(!addr){
-    setTimeout(()=>addNearbyTransit(bar), 300);
-    return;
-  }
+  if(!addr) return;
 
   const geocoder=new kakao.maps.services.Geocoder();
   geocoder.addressSearch(addr,(result,status)=>{
