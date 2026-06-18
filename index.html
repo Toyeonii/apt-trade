@@ -2015,36 +2015,60 @@ async function openFavModal(fav, forceRefresh=false){
   // 캐시 확인 - 있으면 먼저 표시 (forceRefresh면 스킵)
   const cacheKey=`fav_data_${fav.aptSeq||fav.aptNm}_${fav.sggCd}_${_favMonths}`;
   const cached=localStorage.getItem(cacheKey);
+
+  // 현재 달 yyyyMM
+  const _now=new Date();
+  const currentYM=`${_now.getFullYear()}${String(_now.getMonth()+1).padStart(2,'0')}`;
+
+  // 전체 월 목록
+  const months=[];
+  for(let i=0;i<_favMonths;i++){
+    const d=new Date(_now.getFullYear(),_now.getMonth()-i,1);
+    months.push(`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`);
+  }
+  const prevMonths=months.filter(m=>m!==currentYM);  // 이전 달들
+  const currentMonthStr=currentYM;
+  const monthStr=months.join(',');
+
   if(cached){
     try{
-      const {tradeDeals, rentDeals, addr, aptInfo, ts}=JSON.parse(cached);
-      document.getElementById('favModalSub').textContent=`매매 ${tradeDeals.length}건 · 전월세 ${rentDeals.length}건 (캐시)`;
+      const {tradeDeals:cachedTrade, rentDeals:cachedRent, addr, aptInfo, ts}=JSON.parse(cached);
+      // 캐시 즉시 표시
+      document.getElementById('favModalSub').textContent=`매매 ${cachedTrade.length}건 · 전월세 ${cachedRent.length}건 (캐시)`;
       document.getElementById('favModalAddr').textContent=addr||'';
-      renderFavTabs(tradeDeals, rentDeals);
+      renderFavTabs(cachedTrade, cachedRent);
       if(aptInfo){
-        renderFavAptInfo(aptInfo, tradeDeals, rentDeals, addr||'');
+        renderFavAptInfo(aptInfo, cachedTrade, cachedRent, addr||'');
       } else {
-        loadFavAptInfo(fav.aptNm, fav.sggCd, tradeDeals[0]?.roadNm||'', tradeDeals[0]?.roadNmBonbun||'', tradeDeals, rentDeals, addr||'');
+        loadFavAptInfo(fav.aptNm, fav.sggCd, cachedTrade[0]?.roadNm||'', cachedTrade[0]?.roadNmBonbun||'', cachedTrade, cachedRent, addr||'');
       }
-      // 1시간 이내면 갱신 안함
-      if(Date.now()-ts < 3600000) return;
-      document.getElementById('favModalSub').textContent+=` · 갱신 중...`;
+      // 현재 달만 백그라운드 재조회해서 머지
+      try{
+        const [tradeRes, rentRes]=await Promise.all([
+          fetch(`/api/trade/bulk?LAWD_CD=${fav.sggCd}&months=${currentMonthStr}&mode=trade`).then(r=>r.json()),
+          fetch(`/api/trade/bulk?LAWD_CD=${fav.sggCd}&months=${currentMonthStr}&mode=rent`).then(r=>r.json()),
+        ]);
+        const newTrade=(tradeRes.items||[]).filter(d=>fav.aptSeq?d.aptSeq===fav.aptSeq:d.aptNm===fav.aptNm);
+        const newRent=(rentRes.items||[]).filter(d=>fav.aptSeq?d.aptSeq===fav.aptSeq:d.aptNm===fav.aptNm);
+        // 이전 달 캐시 + 현재 달 신규 머지
+        const mergedTrade=[...cachedTrade.filter(d=>d.dealMonth!=String(_now.getMonth()+1)||d.dealYear!=String(_now.getFullYear())),...newTrade];
+        const mergedRent=[...cachedRent.filter(d=>d.dealMonth!=String(_now.getMonth()+1)||d.dealYear!=String(_now.getFullYear())),...newRent];
+        // 캐시 업데이트
+        const cached2=JSON.parse(localStorage.getItem(cacheKey)||'{}');
+        localStorage.setItem(cacheKey, JSON.stringify({...cached2, tradeDeals:mergedTrade, rentDeals:mergedRent, ts:Date.now()}));
+        // UI 갱신
+        document.getElementById('favModalSub').textContent=`매매 ${mergedTrade.length}건 · 전월세 ${mergedRent.length}건`;
+        renderFavTabs(mergedTrade, mergedRent);
+      } catch(e){}
+      return;
     } catch(e){}
   } else {
     document.getElementById('favModalSub').textContent='조회 중...';
     document.getElementById('favModalBody').innerHTML='<div class="state-screen"><div class="state-icon">⏳</div><div class="state-title">조회 중...</div></div>';
   }
 
-  // 매매 + 전월세 + 단지정보 동시 조회
-  const months=[];
-  const now=new Date();
-  for(let i=0;i<_favMonths;i++){
-    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
-    months.push(`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`);
-  }
-  const monthStr=months.join(',');
-
-  // apt-info는 aptNm/sggCd만으로 먼저 병렬 시작 (roadNm 없어도 서버에서 이름매칭 fallback)
+  // 캐시 없을 때 전체 조회
+  // apt-info는 aptNm/sggCd만으로 먼저 병렬 시작
   const aptInfoPromise=fetch(`/api/apt-info?${new URLSearchParams({aptNm:fav.aptNm, sggCd:fav.sggCd, roadNm:'', roadNmBonbun:''})}`).then(r=>r.json()).catch(()=>null);
 
   try{
