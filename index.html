@@ -2033,16 +2033,7 @@ async function openFavModal(fav, forceRefresh=false){
   if(cached){
     try{
       const {tradeDeals:cachedTrade, rentDeals:cachedRent, addr, aptInfo, ts}=JSON.parse(cached);
-      // 캐시 즉시 표시
-      document.getElementById('favModalSub').textContent=`매매 ${cachedTrade.length}건 · 전월세 ${cachedRent.length}건 (캐시)`;
-      document.getElementById('favModalAddr').textContent=addr||'';
-      renderFavTabs(cachedTrade, cachedRent);
-      if(aptInfo){
-        renderFavAptInfo(aptInfo, cachedTrade, cachedRent, addr||'');
-      } else {
-        loadFavAptInfo(fav.aptNm, fav.sggCd, cachedTrade[0]?.roadNm||'', cachedTrade[0]?.roadNmBonbun||'', cachedTrade, cachedRent, addr||'');
-      }
-      // 현재 달만 백그라운드 재조회해서 머지
+      // 현재 달 재조회 후 머지해서 한번에 표시
       try{
         const [tradeRes, rentRes]=await Promise.all([
           fetch(`/api/trade/bulk?LAWD_CD=${fav.sggCd}&months=${currentMonthStr}&mode=trade`).then(r=>r.json()),
@@ -2051,15 +2042,31 @@ async function openFavModal(fav, forceRefresh=false){
         const newTrade=(tradeRes.items||[]).filter(d=>fav.aptSeq?d.aptSeq===fav.aptSeq:d.aptNm===fav.aptNm);
         const newRent=(rentRes.items||[]).filter(d=>fav.aptSeq?d.aptSeq===fav.aptSeq:d.aptNm===fav.aptNm);
         // 이전 달 캐시 + 현재 달 신규 머지
-        const mergedTrade=[...cachedTrade.filter(d=>d.dealMonth!=String(_now.getMonth()+1)||d.dealYear!=String(_now.getFullYear())),...newTrade];
-        const mergedRent=[...cachedRent.filter(d=>d.dealMonth!=String(_now.getMonth()+1)||d.dealYear!=String(_now.getFullYear())),...newRent];
-        // 캐시 업데이트
+        const curM=String(_now.getMonth()+1), curY=String(_now.getFullYear());
+        const mergedTrade=[...cachedTrade.filter(d=>!(d.dealMonth==curM&&d.dealYear==curY)),...newTrade];
+        const mergedRent=[...cachedRent.filter(d=>!(d.dealMonth==curM&&d.dealYear==curY)),...newRent];
+        // 캐시 업데이트 후 한번에 UI 갱신
         const cached2=JSON.parse(localStorage.getItem(cacheKey)||'{}');
         localStorage.setItem(cacheKey, JSON.stringify({...cached2, tradeDeals:mergedTrade, rentDeals:mergedRent, ts:Date.now()}));
-        // UI 갱신
         document.getElementById('favModalSub').textContent=`매매 ${mergedTrade.length}건 · 전월세 ${mergedRent.length}건`;
+        document.getElementById('favModalAddr').textContent=addr||'';
         renderFavTabs(mergedTrade, mergedRent);
-      } catch(e){}
+        if(aptInfo){
+          renderFavAptInfo(aptInfo, mergedTrade, mergedRent, addr||'');
+        } else {
+          loadFavAptInfo(fav.aptNm, fav.sggCd, cachedTrade[0]?.roadNm||'', cachedTrade[0]?.roadNmBonbun||'', mergedTrade, mergedRent, addr||'');
+        }
+      } catch(e){
+        // 현재달 조회 실패시 캐시 그대로 표시
+        document.getElementById('favModalSub').textContent=`매매 ${cachedTrade.length}건 · 전월세 ${cachedRent.length}건 (캐시)`;
+        document.getElementById('favModalAddr').textContent=addr||'';
+        renderFavTabs(cachedTrade, cachedRent);
+        if(aptInfo){
+          renderFavAptInfo(aptInfo, cachedTrade, cachedRent, addr||'');
+        } else {
+          loadFavAptInfo(fav.aptNm, fav.sggCd, cachedTrade[0]?.roadNm||'', cachedTrade[0]?.roadNmBonbun||'', cachedTrade, cachedRent, addr||'');
+        }
+      }
       return;
     } catch(e){}
   } else {
