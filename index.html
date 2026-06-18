@@ -1938,13 +1938,30 @@ async function openFavModal(fav){
   document.getElementById('favModal').style.display='flex';
   document.body.style.overflow='hidden';
   document.getElementById('favModalTitle').textContent=fav.aptNm;
-  document.getElementById('favModalSub').textContent='조회 중...';
   document.getElementById('favModalAddr').textContent='';
   document.getElementById('favAptInfoBar').className='apt-info-loading';
   document.getElementById('favAptInfoBar').textContent='단지 정보 불러오는 중...';
   document.getElementById('favModalTabs').innerHTML='';
-  document.getElementById('favModalBody').innerHTML='<div class="state-screen"><div class="state-icon">⏳</div><div class="state-title">조회 중...</div></div>';
   document.getElementById('favModalChartWrap').style.display='none';
+
+  // 캐시 확인 - 있으면 먼저 표시
+  const cacheKey=`fav_data_${fav.aptSeq||fav.aptNm}_${fav.sggCd}`;
+  const cached=localStorage.getItem(cacheKey);
+  if(cached){
+    try{
+      const {tradeDeals, rentDeals, addr, ts}=JSON.parse(cached);
+      document.getElementById('favModalSub').textContent=`매매 ${tradeDeals.length}건 · 전월세 ${rentDeals.length}건 (캐시)`;
+      document.getElementById('favModalAddr').textContent=addr||'';
+      renderFavTabs(tradeDeals, rentDeals);
+      loadFavAptInfo(fav.aptNm, fav.sggCd, tradeDeals[0]?.roadNm||'', tradeDeals[0]?.roadNmBonbun||'');
+      // 1시간 이내면 갱신 안함
+      if(Date.now()-ts < 3600000) return;
+      document.getElementById('favModalSub').textContent+=` · 갱신 중...`;
+    } catch(e){}
+  } else {
+    document.getElementById('favModalSub').textContent='조회 중...';
+    document.getElementById('favModalBody').innerHTML='<div class="state-screen"><div class="state-icon">⏳</div><div class="state-title">조회 중...</div></div>';
+  }
 
   // 매매 + 전월세 동시 조회
   const months=[];
@@ -1964,37 +1981,37 @@ async function openFavModal(fav){
     const tradeDeals=(tradeRes.items||[]).filter(d=>fav.aptSeq?d.aptSeq===fav.aptSeq:d.aptNm===fav.aptNm);
     const rentDeals=(rentRes.items||[]).filter(d=>fav.aptSeq?d.aptSeq===fav.aptSeq:d.aptNm===fav.aptNm);
 
-    document.getElementById('favModalSub').textContent=`매매 ${tradeDeals.length}건 · 전월세 ${rentDeals.length}건`;
-
-    // 주소 표시
     const d0=tradeDeals[0]||rentDeals[0];
-    if(d0){
-      const addr=d0.roadNm?`${fav.sido} ${fav.sggName} ${d0.roadNm}${d0.roadNmBonbun?' '+parseInt(d0.roadNmBonbun,10):''}`:
-               d0.jibun?`${fav.sido} ${fav.sggName} ${d0.umdNm||''} ${d0.jibun}`:`${fav.sido} ${fav.sggName} ${fav.umdNm||''}`;
-      document.getElementById('favModalAddr').textContent=addr.trim();
-    }
+    const addr=d0?(d0.roadNm?`${fav.sido} ${fav.sggName} ${d0.roadNm}${d0.roadNmBonbun?' '+parseInt(d0.roadNmBonbun,10):''}`:
+               d0.jibun?`${fav.sido} ${fav.sggName} ${d0.umdNm||''} ${d0.jibun}`:`${fav.sido} ${fav.sggName} ${fav.umdNm||''}`):('');
 
-    // 탭 생성 (매매 / 전세 / 월세)
-    const jeonseDeals=rentDeals.filter(d=>!parsePrice(d.monthlyRent));
-    const wolseDeals=rentDeals.filter(d=>parsePrice(d.monthlyRent)>0);
-    const tabs=[
-      {label:`매매 (${tradeDeals.length}건)`, deals:tradeDeals, mode:'trade'},
-      {label:`전세 (${jeonseDeals.length}건)`, deals:jeonseDeals, mode:'rent'},
-      {label:`월세 (${wolseDeals.length}건)`, deals:wolseDeals, mode:'rent'},
-    ];
+    // localStorage에 캐시 저장
+    try{
+      localStorage.setItem(cacheKey, JSON.stringify({tradeDeals, rentDeals, addr:addr.trim(), ts:Date.now()}));
+    } catch(e){}
 
-    const tabsEl=document.getElementById('favModalTabs');
-    tabsEl.innerHTML=tabs.map((t,i)=>`<button class="modal-tab ${i===0?'active':''}" onclick="selectFavTab(${i},this)">${t.label}</button>`).join('');
-
-    window._favTabData=tabs;
-    renderFavTab(0, tabs[0]);
-
-    // 단지정보
+    document.getElementById('favModalSub').textContent=`매매 ${tradeDeals.length}건 · 전월세 ${rentDeals.length}건`;
+    document.getElementById('favModalAddr').textContent=addr.trim();
+    renderFavTabs(tradeDeals, rentDeals);
     loadFavAptInfo(fav.aptNm, fav.sggCd, d0?.roadNm||'', d0?.roadNmBonbun||'');
 
   } catch(e){
     document.getElementById('favModalBody').innerHTML=`<div class="state-screen"><div class="state-icon">⚠️</div><div class="state-title">조회 실패</div><div class="state-sub">${e.message}</div></div>`;
   }
+}
+
+function renderFavTabs(tradeDeals, rentDeals){
+  const jeonseDeals=rentDeals.filter(d=>!parsePrice(d.monthlyRent));
+  const wolseDeals=rentDeals.filter(d=>parsePrice(d.monthlyRent)>0);
+  const tabs=[
+    {label:`매매 (${tradeDeals.length}건)`, deals:tradeDeals, mode:'trade'},
+    {label:`전세 (${jeonseDeals.length}건)`, deals:jeonseDeals, mode:'rent'},
+    {label:`월세 (${wolseDeals.length}건)`, deals:wolseDeals, mode:'rent'},
+  ];
+  const tabsEl=document.getElementById('favModalTabs');
+  tabsEl.innerHTML=tabs.map((t,i)=>`<button class="modal-tab ${i===0?'active':''}" onclick="selectFavTab(${i},this)">${t.label}</button>`).join('');
+  window._favTabData=tabs;
+  renderFavTab(0, tabs[0]);
 }
 
 function selectFavTab(idx, btn){
