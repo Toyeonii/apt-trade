@@ -295,6 +295,8 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
 <div id="mapView" style="display:none;height:calc(100vh - 140px);position:relative">
   <div id="mainMap" style="width:100%;height:100%"></div>
   <div id="mapInfo" style="position:absolute;bottom:16px;left:50%;transform:translateX(-50%);background:rgba(12,68,124,0.9);color:#fff;padding:8px 16px;border-radius:20px;font-size:12px;white-space:nowrap;pointer-events:none;display:none"></div>
+  <button id="searchThisAreaBtn" onclick="searchThisArea()" style="display:none;position:absolute;top:14px;left:50%;transform:translateX(-50%);background:#fff;color:#0C447C;border:1.5px solid #185FA5;border-radius:20px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.15);z-index:100;white-space:nowrap">🔍 이 지역 검색</button>
+  <div id="mapSearching" style="display:none;position:absolute;top:14px;left:50%;transform:translateX(-50%);background:rgba(12,68,124,0.9);color:#fff;border-radius:20px;padding:8px 18px;font-size:13px;z-index:100;white-space:nowrap">조회 중...</div>
 </div>
 <main id="main">
   <div class="state-screen">
@@ -1226,6 +1228,9 @@ const dongCoordCache=loadCache(DONG_CACHE_KEY);
 const aptCoordCache=loadCache(APT_CACHE_KEY);
 
 function onCenterChanged(){
+  // 지도 이동 시 "이 지역 검색" 버튼 표시
+  const btn=document.getElementById('searchThisAreaBtn');
+  if(btn) btn.style.display='block';
   if(!mainMapInstance||!allData.length)return;
   const level=mainMapInstance.getLevel();
   if(level>5)return;
@@ -1345,6 +1350,84 @@ const SEOUL_SGG={
   '강동구':{lat:37.5492,lng:127.1465}
 };
 
+async function searchThisArea(){
+  if(!mainMapInstance) return;
+  const btn=document.getElementById('searchThisAreaBtn');
+  const searching=document.getElementById('mapSearching');
+  btn.style.display='none';
+  searching.style.display='block';
+
+  const center=mainMapInstance.getCenter();
+  const lat=center.getLat(), lng=center.getLng();
+
+  // 카카오 geocoder로 좌표 → 시도/시군구 변환
+  const geocoder=new kakao.maps.services.Geocoder();
+  geocoder.coord2RegionCode(lng, lat, async (result, status)=>{
+    if(status!==kakao.maps.services.Status.OK){
+      searching.style.display='none';
+      btn.style.display='block';
+      showToast('지역 정보를 가져올 수 없습니다');
+      return;
+    }
+
+    // 행정구역 코드 추출 (region_type === 'B' : 법정동)
+    const region=result.find(r=>r.region_type==='B')||result[0];
+    const sido=region.region_1depth_name;
+    const sgg=region.region_2depth_name;
+
+    // RD에서 lawdCd 찾기
+    let lawdCd='', sggName='';
+    if(RD[sido]){
+      const entry=Object.entries(RD[sido]).find(([code,name])=>name===sgg||sgg.startsWith(name)||name.startsWith(sgg));
+      if(entry){ lawdCd=entry[0]; sggName=entry[1]; }
+    }
+    if(!lawdCd){
+      searching.style.display='none';
+      btn.style.display='block';
+      showToast(`${sido} ${sgg} 지역은 지원하지 않습니다`);
+      return;
+    }
+
+    // 시도/시군구 콤보 업데이트
+    const sidoEl=document.getElementById('sido');
+    sidoEl.value=sido;
+    loadSgg();
+    document.getElementById('sigungu').value=lawdCd;
+
+    // 기간 계산 (현재 startM/endM 유지, 없으면 6개월)
+    const now=new Date();
+    const endM=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    const s=new Date(now.getFullYear(),now.getMonth()-5,1);
+    const startM=`${s.getFullYear()}-${String(s.getMonth()+1).padStart(2,'0')}`;
+    const sm=document.getElementById('startM').value||startM;
+    const em=document.getElementById('endM').value||endM;
+
+    // 월 목록 생성
+    const months=[];
+    let cur=new Date(sm+'-01');
+    const end=new Date(em+'-01');
+    while(cur<=end){
+      months.push(`${cur.getFullYear()}${String(cur.getMonth()+1).padStart(2,'0')}`);
+      cur.setMonth(cur.getMonth()+1);
+    }
+
+    try{
+      const mode=mapDataMode||'trade';
+      const result2=await fetchAll(lawdCd, months, mode);
+      allData=result2.items||[];
+      filteredData=[...allData];
+      mapDataMode=mode;
+      searching.style.display='none';
+      renderDongMarkers();
+      document.getElementById('mapInfo').textContent=`${sido} ${sggName} · ${allData.length.toLocaleString()}건`;
+    } catch(e){
+      searching.style.display='none';
+      btn.style.display='block';
+      showToast('조회 중 오류가 발생했습니다');
+    }
+  });
+}
+
 async function initMainMap(){
   const mapEl=document.getElementById('mainMap');
   if(!mapEl)return;
@@ -1375,7 +1458,8 @@ async function initMainMap(){
       renderDongMarkers();
     } else {
       document.getElementById('mapInfo').style.display='block';
-      document.getElementById('mapInfo').textContent='매매/전월세 탭에서 조회 후 지도 탭을 클릭하세요';
+      document.getElementById('mapInfo').textContent='지도를 이동 후 "이 지역 검색" 버튼을 눌러보세요';
+      document.getElementById('searchThisAreaBtn').style.display='block';
     }
   } catch(e){
     mapEl.innerHTML=`<div class="map-loading">지도 로드 실패: ${e.message}</div>`;
