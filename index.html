@@ -2048,24 +2048,28 @@ async function openFavModal(fav, forceRefresh=false){
         // 캐시 업데이트 후 한번에 UI 갱신
         const cached2=JSON.parse(localStorage.getItem(cacheKey)||'{}');
         localStorage.setItem(cacheKey, JSON.stringify({...cached2, tradeDeals:mergedTrade, rentDeals:mergedRent, ts:Date.now()}));
-        document.getElementById('favModalSub').textContent=`매매 ${mergedTrade.length}건 · 전월세 ${mergedRent.length}건`;
-        document.getElementById('favModalAddr').textContent=addr||'';
-        renderFavTabs(mergedTrade, mergedRent);
-        if(aptInfo){
-          renderFavAptInfo(aptInfo, mergedTrade, mergedRent, addr||'');
-        } else {
-          loadFavAptInfo(fav.aptNm, fav.sggCd, cachedTrade[0]?.roadNm||'', cachedTrade[0]?.roadNmBonbun||'', mergedTrade, mergedRent, addr||'');
-        }
+        requestAnimationFrame(()=>{
+          document.getElementById('favModalSub').textContent=`매매 ${mergedTrade.length}건 · 전월세 ${mergedRent.length}건`;
+          document.getElementById('favModalAddr').textContent=addr||'';
+          renderFavTabs(mergedTrade, mergedRent);
+          if(aptInfo){
+            renderFavAptInfo(aptInfo, mergedTrade, mergedRent, addr||'');
+          } else {
+            loadFavAptInfo(fav.aptNm, fav.sggCd, cachedTrade[0]?.roadNm||'', cachedTrade[0]?.roadNmBonbun||'', mergedTrade, mergedRent, addr||'');
+          }
+        });
       } catch(e){
         // 현재달 조회 실패시 캐시 그대로 표시
-        document.getElementById('favModalSub').textContent=`매매 ${cachedTrade.length}건 · 전월세 ${cachedRent.length}건 (캐시)`;
-        document.getElementById('favModalAddr').textContent=addr||'';
-        renderFavTabs(cachedTrade, cachedRent);
-        if(aptInfo){
-          renderFavAptInfo(aptInfo, cachedTrade, cachedRent, addr||'');
-        } else {
-          loadFavAptInfo(fav.aptNm, fav.sggCd, cachedTrade[0]?.roadNm||'', cachedTrade[0]?.roadNmBonbun||'', cachedTrade, cachedRent, addr||'');
-        }
+        requestAnimationFrame(()=>{
+          document.getElementById('favModalSub').textContent=`매매 ${cachedTrade.length}건 · 전월세 ${cachedRent.length}건 (캐시)`;
+          document.getElementById('favModalAddr').textContent=addr||'';
+          renderFavTabs(cachedTrade, cachedRent);
+          if(aptInfo){
+            renderFavAptInfo(aptInfo, cachedTrade, cachedRent, addr||'');
+          } else {
+            loadFavAptInfo(fav.aptNm, fav.sggCd, cachedTrade[0]?.roadNm||'', cachedTrade[0]?.roadNmBonbun||'', cachedTrade, cachedRent, addr||'');
+          }
+        });
       }
       return;
     } catch(e){}
@@ -2106,9 +2110,11 @@ async function openFavModal(fav, forceRefresh=false){
       localStorage.setItem(cacheKey, JSON.stringify({tradeDeals, rentDeals, addr:addr.trim(), aptInfo, ts:Date.now()}));
     } catch(e){}
 
-    document.getElementById('favModalSub').textContent=`매매 ${tradeDeals.length}건 · 전월세 ${rentDeals.length}건`;
-    document.getElementById('favModalAddr').textContent=addr.trim();
-    renderFavTabs(tradeDeals, rentDeals);
+    requestAnimationFrame(()=>{
+      document.getElementById('favModalSub').textContent=`매매 ${tradeDeals.length}건 · 전월세 ${rentDeals.length}건`;
+      document.getElementById('favModalAddr').textContent=addr.trim();
+      renderFavTabs(tradeDeals, rentDeals);
+    });
 
   } catch(e){
     document.getElementById('favModalBody').innerHTML=`<div class="state-screen"><div class="state-icon">⚠️</div><div class="state-title">조회 실패</div><div class="state-sub">${e.message}</div></div>`;
