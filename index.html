@@ -1418,6 +1418,7 @@ async function searchThisArea(){
       filteredData=[...allData];
       mapDataMode=mode;
       searching.style.display='none';
+      window._searchThisArea=true;
       renderDongMarkers();
       document.getElementById('mapInfo').textContent=`${sido} ${sggName} · ${allData.length.toLocaleString()}건`;
     } catch(e){
@@ -1481,11 +1482,15 @@ function renderDongMarkers(){
 
   const sggEl=document.getElementById('sigungu');
   const sggName=sggEl.options[sggEl.selectedIndex]?.text||'';
-  const sggCoord=SEOUL_SGG[sggName];
-  if(sggCoord&&mainMapInstance){
-    mainMapInstance.setCenter(new kakao.maps.LatLng(sggCoord.lat,sggCoord.lng));
-    mainMapInstance.setLevel(6);
+  // 이 지역 검색으로 호출 시엔 현재 지도 위치 유지 (_searchThisArea=true)
+  if(!window._searchThisArea){
+    const sggCoord=SEOUL_SGG[sggName];
+    if(sggCoord&&mainMapInstance){
+      mainMapInstance.setCenter(new kakao.maps.LatLng(sggCoord.lat,sggCoord.lng));
+      mainMapInstance.setLevel(6);
+    }
   }
+  window._searchThisArea=false;
 
   const geocoder=new kakao.maps.services.Geocoder();
   const sidoEl=document.getElementById('sido');
