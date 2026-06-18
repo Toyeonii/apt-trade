@@ -75,9 +75,13 @@ def parse_xml_items(xml_text, mode='trade'):
 def fetch_month(lawd_cd, deal_ymd, mode='trade'):
     cache_key = f"{mode}_{lawd_cd}_{deal_ymd}"
     now = time.time()
+    # 현재 달이면 1시간 캐시, 이전 달이면 24시간 캐시
+    from datetime import datetime
+    current_ym = datetime.now().strftime('%Y%m')
+    ttl = CACHE_TTL if deal_ymd >= current_ym else 86400
     if cache_key in _cache:
         ts, items = _cache[cache_key]
-        if now - ts < CACHE_TTL:
+        if now - ts < ttl:
             return deal_ymd, items, True
 
     api_url = TRADE_API if mode == 'trade' else RENT_API
