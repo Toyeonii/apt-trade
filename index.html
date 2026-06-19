@@ -710,7 +710,7 @@ function applyFilter(){
     const dongOk=!dong||(d.umdNm||'')===dong;
     const ar=parseFloat(d.excluUseAr||0);
     const areaOk=!area||(area==='~60'?ar<60:area==='60~85'?ar>=60&&ar<85:area==='85~135'?ar>=85&&ar<135:area==='135~'?ar>=135:true);
-    const p=mapDataMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
+    const p=_modalType==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
     const pm=p/10000;
     const priceOk=!price||(price==='~3'?pm<3:price==='3~6'?pm>=3&&pm<6:price==='6~10'?pm>=6&&pm<10:price==='10~20'?pm>=10&&pm<20:price==='20~'?pm>=20:true);
     const fl=parseInt(d.floor||0);
@@ -1279,11 +1279,11 @@ function selectModalTab(arKey, btn){
   // 거래 목록
   let html='';
   deals.forEach(d=>{
-    const p=mapDataMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
+    const p=_modalType==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
     const mon=parsePrice(d.monthlyRent||0);
     const pyung=p>0&&ar>0?Math.round(p/(ar/3.3058)):0;
     const dt=d.dealYear&&d.dealMonth?`${d.dealYear}.${String(d.dealMonth).padStart(2,'0')}.${String(d.dealDay||'').padStart(2,'0')}`:'-';
-    const priceStr=getDataMode()==='trade'?fmtPrice(p):`보증금 ${fmtPrice(p)}${mon?` / 월세 ${fmtPrice(mon)}`:''}`;
+    const priceStr=_modalType==='trade'?fmtPrice(p):`보증금 ${fmtPrice(p)}${mon?` / 월세 ${fmtPrice(mon)}`:''}`;
     html+=`<div class="modal-list-item">
       <div class="modal-item-left">
         <span class="modal-item-date">${dt}</span>
@@ -1374,7 +1374,7 @@ function onZoomChanged(){
     allData.forEach(d=>{
       const key=d.umdNm||'기타';
       if(!dongStats[key])dongStats[key]={sum:0,cnt:0,deals:[]};
-      const p=mapDataMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
+      const p=_modalType==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
       if(p>0){dongStats[key].sum+=p;dongStats[key].cnt++;dongStats[key].deals.push(d);}
     });
     const sidoEl=document.getElementById('sido');
@@ -1451,7 +1451,7 @@ function addAptMarkersForDong(deals, dong, sido, sggName){
   deals.forEach(d=>{
     const key=d.aptNm||'기타';
     if(!aptStats[key])aptStats[key]={sum:0,cnt:0,roadNm:d.roadNm||'',roadNmBonbun:d.roadNmBonbun||'',umdNm:d.umdNm||'',jibun:d.jibun||'',aptSeq:d.aptSeq||''};
-    const p=mapDataMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
+    const p=_modalType==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
     if(p>0){aptStats[key].sum+=p;aptStats[key].cnt++;}
   });
 
@@ -1685,7 +1685,7 @@ function renderDongMarkers(forceSido, forceSggName){
   allData.forEach(d=>{
     const key=d.umdNm||'기타';
     if(!dongStats[key])dongStats[key]={sum:0,cnt:0,deals:[]};
-    const p=mapDataMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
+    const p=_modalType==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
     if(p>0){dongStats[key].sum+=p;dongStats[key].cnt++;dongStats[key].deals.push(d);}
   });
 
@@ -1757,7 +1757,7 @@ function renderAptMarkers(deals, dong, sido, sggName){
   deals.forEach(d=>{
     const key=d.aptNm||'기타';
     if(!aptStats[key])aptStats[key]={sum:0,cnt:0,roadNm:d.roadNm||'',roadNmBonbun:d.roadNmBonbun||'',umdNm:d.umdNm||'',jibun:d.jibun||'',aptSeq:d.aptSeq||''};
-    const p=mapDataMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
+    const p=_modalType==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
     if(p>0){aptStats[key].sum+=p;aptStats[key].cnt++;}
   });
 
@@ -2141,7 +2141,7 @@ function renderChart(){
   if(aptQ){
     // ── 스캐터 차트: 아파트명 검색 시 개별 거래 점 ──
     const points=filteredData.map(d=>{
-      const p=mapDataMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
+      const p=_modalType==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
       const dateStr=`${d.dealYear}-${String(d.dealMonth).padStart(2,'0')}-${String(d.dealDay||'01').padStart(2,'0')}`;
       return p>0?{x:dateStr,y:p,floor:d.floor,area:d.excluUseAr}:null;
     }).filter(Boolean).sort((a,b)=>a.x.localeCompare(b.x));
@@ -2190,7 +2190,7 @@ function renderChart(){
     filteredData.forEach(d=>{
       const key=`${d.dealYear}-${String(d.dealMonth).padStart(2,'0')}`;
       if(!byMonth[key])byMonth[key]=[];
-      const p=mapDataMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
+      const p=_modalType==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
       if(p>0)byMonth[key].push(p);
     });
 
