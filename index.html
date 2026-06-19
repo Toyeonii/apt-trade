@@ -1374,13 +1374,13 @@ function onZoomChanged(){
     allData.forEach(d=>{
       const key=d.umdNm||'기타';
       if(!dongStats[key])dongStats[key]={sum:0,cnt:0,deals:[]};
-      const p=_modalType==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
+      const p=mapDataMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
       if(p>0){dongStats[key].sum+=p;dongStats[key].cnt++;dongStats[key].deals.push(d);}
     });
     const sidoEl=document.getElementById('sido');
     const sggEl=document.getElementById('sigungu');
-    const sido=sidoEl.value||'';
-    const sggName=sggEl.options[sggEl.selectedIndex]?.text||'';
+    const sido=window._mapSido||sidoEl.value||'';
+    const sggName=window._mapSggName||sggEl.options[sggEl.selectedIndex]?.text||'';
     const geocoder=new kakao.maps.services.Geocoder();
 
     // 기존 오버레이 제거
@@ -1435,15 +1435,15 @@ const dongCoordCache=loadCache(DONG_CACHE_KEY);
 const aptCoordCache=loadCache(APT_CACHE_KEY);
 
 function onCenterChanged(){
-  // 지도 이동 시 "이 지역 검색" 버튼 표시
+  // 지도 이동 시 "이 지역 검색" 버튼 항상 표시
   const btn=document.getElementById('searchThisAreaBtn');
   if(btn) btn.style.display='block';
-  if(!mainMapInstance||!allData.length)return;
+  if(!mainMapInstance||!allData.length) return;
   const level=mainMapInstance.getLevel();
-  if(level>5)return;
-  // 디바운스 - 이동 멈춘 후 300ms 후에 실행
+  if(level>5) return;
+  // 디바운스 - 이동 멈춘 후 400ms 후에 실행
   clearTimeout(centerChangeTimer);
-  centerChangeTimer=setTimeout(()=>onZoomChanged(), 300);
+  centerChangeTimer=setTimeout(()=>onZoomChanged(), 400);
 }
 
 function addAptMarkersForDong(deals, dong, sido, sggName){
@@ -1685,7 +1685,7 @@ function renderDongMarkers(forceSido, forceSggName){
   allData.forEach(d=>{
     const key=d.umdNm||'기타';
     if(!dongStats[key])dongStats[key]={sum:0,cnt:0,deals:[]};
-    const p=_modalType==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
+    const p=mapDataMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
     if(p>0){dongStats[key].sum+=p;dongStats[key].cnt++;dongStats[key].deals.push(d);}
   });
 
