@@ -45,6 +45,10 @@ html{overflow-x:hidden}
 .btn-search:active{transform:scale(0.98)}
 .btn-search:disabled{background:#B4B2A9;cursor:not-allowed}
 .search-tip{font-size:11px;color:#999;margin-top:7px;text-align:center;line-height:1.5}
+.recent-chip{display:inline-flex;align-items:center;gap:4px;background:#f0f4ff;border:0.5px solid #c5d5f0;border-radius:16px;padding:4px 10px;font-size:12px;color:#185FA5;cursor:pointer;white-space:nowrap}
+.recent-chip:hover{background:#e0eaff}
+.recent-chip-del{color:#aaa;font-size:11px;margin-left:2px;padding:0 2px}
+.recent-chip-del:hover{color:#c00}
 .filter-bar{background:#fff;padding:8px 12px;border-bottom:0.5px solid #e8e8e8;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .filter-bar input{flex:1;min-width:120px;height:36px;border:0.5px solid #ccc;border-radius:8px;padding:0 10px;font-size:16px}
 .filter-bar input:focus{outline:none;border-color:#185FA5}
@@ -244,6 +248,10 @@ body{padding-bottom:64px}
     조회하기
   </button>
   <div class="search-tip" id="tip">시/군/구 → 동(선택) → 기간 선택 후 조회</div>
+  <div id="recentSearchBar" style="display:none;margin-top:8px">
+    <div style="font-size:11px;color:#999;margin-bottom:5px">최근 조회</div>
+    <div id="recentSearchList" style="display:flex;flex-wrap:wrap;gap:5px"></div>
+  </div>
 </section>
 <div id="filterBar" class="filter-bar" style="display:none">
   <input type="text" id="aptFilter" placeholder="아파트명 검색..." oninput="applyFilter()"/>
@@ -450,6 +458,7 @@ function init(){
   document.getElementById('endM').value=ym(now);
   setSort('date');
   switchMode('map');
+  renderRecentSearches();
 }
 
 function switchMode(mode){
@@ -2098,7 +2107,54 @@ function saveLastSearch(){
   const mode=currentMode;
   if(!sggCd)return;
   const sidoShort=sido.replace('특별시','').replace('광역시','').replace('특별자치시','').replace('특별자치도','').replace('도','');
-  localStorage.setItem('apt_last_search',JSON.stringify({sido,sggCd,sggName,sidoShort,startM,endM,mode}));
+  const entry={sido,sggCd,sggName,sidoShort,startM,endM,mode};
+  // 최근 5개 저장
+  let recents=getRecentSearches();
+  recents=recents.filter(r=>r.sggCd!==sggCd); // 중복 제거
+  recents.unshift(entry);
+  recents=recents.slice(0,5);
+  localStorage.setItem('apt_recent_searches',JSON.stringify(recents));
+  localStorage.setItem('apt_last_search',JSON.stringify(entry));
+  renderRecentSearches();
+}
+
+function getRecentSearches(){
+  try{return JSON.parse(localStorage.getItem('apt_recent_searches')||'[]');}catch{return [];}
+}
+
+function renderRecentSearches(){
+  const recents=getRecentSearches();
+  const bar=document.getElementById('recentSearchBar');
+  const list=document.getElementById('recentSearchList');
+  if(!bar||!list)return;
+  if(!recents.length){bar.style.display='none';return;}
+  bar.style.display='block';
+  list.innerHTML=recents.map((r,i)=>
+    `<div class="recent-chip" onclick="applyRecentSearch(${i})">
+      ${r.sidoShort} ${r.sggName}
+      <span class="recent-chip-del" onclick="event.stopPropagation();deleteRecentSearch(${i})">✕</span>
+    </div>`
+  ).join('');
+}
+
+function applyRecentSearch(i){
+  const r=getRecentSearches()[i];
+  if(!r)return;
+  document.getElementById('sido').value=r.sido;
+  loadSgg();
+  setTimeout(()=>{
+    document.getElementById('sigungu').value=r.sggCd;
+    if(r.startM)document.getElementById('startM').value=r.startM;
+    if(r.endM)document.getElementById('endM').value=r.endM;
+    showToast(`${r.sidoShort} ${r.sggName} 불러옴`);
+  },100);
+}
+
+function deleteRecentSearch(i){
+  let recents=getRecentSearches();
+  recents.splice(i,1);
+  localStorage.setItem('apt_recent_searches',JSON.stringify(recents));
+  renderRecentSearches();
 }
 
 function restoreLastSearch(){
