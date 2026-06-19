@@ -412,6 +412,7 @@ const RD={
 };
 
 let allData=[],filteredData=[],rawRentData=[],currentSort='date',currentPage=1,currentMode='map';
+let _modeCache={trade:null,jeonse:null,wolse:null}; // {items,rawRentData,lawdCd,startM,endM}
 const PAGE_SIZE=50;
 
 function setPeriod(months){
@@ -481,19 +482,24 @@ function switchMode(mode){
     return;
   }
 
-  // 전세↔월세 전환 시 rawRentData에서 필터만 적용 (재조회 없음)
-  const isRentSwitch=(mode==='jeonse'||mode==='wolse')&&(prevMode==='jeonse'||prevMode==='wolse')&&rawRentData.length>0;
-  if(isRentSwitch){
+  // 캐시에서 복원 (전세↔월세, 또는 매매↔전세/월세 재전환)
+  const cached=_modeCache[mode];
+  const curLawd=document.getElementById('sigungu').value;
+  const curStart=document.getElementById('startM').value;
+  const curEnd=document.getElementById('endM').value;
+  const cacheValid=cached&&cached.lawdCd===curLawd&&cached.startM===curStart&&cached.endM===curEnd;
+  if(cacheValid){
     currentMode=mode;
     mapDataMode=mode;
-    if(mode==='jeonse') allData=rawRentData.filter(d=>!parsePrice(d.monthlyRent));
-    else allData=rawRentData.filter(d=>parsePrice(d.monthlyRent)>0);
+    allData=cached.items;
+    rawRentData=cached.rawRentData||[];
     filteredData=[...allData];
     const uiMode=mode==='jeonse'?'rent':mode;
     document.getElementById('btnSearch').className=`btn-search ${uiMode}`;
     document.getElementById('summaryStrip').className=`summary-strip ${mode==='wolse'?'wolse':uiMode}`;
     updateSummaryLabels(mode);
     updateModeUI(mode);
+    buildDongList();
     applyFilter();
     document.getElementById('filterBar').style.display='flex';
     document.getElementById('summaryStrip').style.display='grid';
@@ -564,7 +570,7 @@ function loadSgg(){
 function onSggChange(){resetDong();resetFilters();resetResult();resetChart();}
 
 function resetResult(){
-  allData=[];filteredData=[];rawRentData=[];window._mapSearchMode=false;window._mapSido='';window._mapSggName='';
+  allData=[];filteredData=[];rawRentData=[];_modeCache={trade:null,jeonse:null,wolse:null};window._mapSearchMode=false;window._mapSido='';window._mapSggName='';
   document.getElementById('filterBar').style.display='none';
   document.getElementById('summaryStrip').style.display='none';
   document.getElementById('main').innerHTML=`<div class="state-screen"><div class="state-icon">🏢</div><div class="state-title">지역과 기간을 선택하세요</div><div class="state-sub">시/도 → 시/군/구 → 동(선택) → 기간<br>순서로 선택 후 조회하기를 누르세요</div></div>`;
@@ -662,6 +668,8 @@ async function doSearch(){
       const modeLabel={'trade':'매매','jeonse':'전세','wolse':'월세','rent':'전월세'}[currentMode]||'전월세';
       document.getElementById('tip').textContent=`${sido} ${sggName} · ${modeLabel} · ${startM}~${endM} · ${allData.length.toLocaleString()}건`;
       saveLastSearch();
+      // 모드별 캐시 저장
+      _modeCache[currentMode]={items:allData,rawRentData:[...rawRentData],lawdCd,startM,endM};
       applyFilter();
       document.getElementById('filterBar').style.display='flex';
       document.getElementById('summaryStrip').style.display='grid';
