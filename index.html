@@ -1079,11 +1079,8 @@ async function showAptModal(aptNm, roadNm, aptSeq){
 
   document.getElementById('aptModal').classList.add('open');
   document.body.style.overflow='hidden';
-  document.getElementById('modalBody').innerHTML='<div class="state-screen"><div class="state-icon">⏳</div><div class="state-title">조회 중...</div></div>';
+  document.getElementById('modalBody').innerHTML='';
   document.getElementById('modalChartWrap').style.display='none';
-
-  // 한 프레임 양보 후 데이터 로드 (모래시계 표시 보장)
-  await new Promise(r=>setTimeout(r,50));
   loadModalTypeData();
 
   // 단지 정보 비동기 로드
