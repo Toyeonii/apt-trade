@@ -1071,17 +1071,11 @@ function showAptModal(aptNm, roadNm, aptSeq){
     addrEl.textContent=addr.trim();
   }
 
-  // 탭 생성
-  const tabsEl=document.getElementById('modalTabs');
-  const aptAddr=deals[0]?.roadNm||'';
-  tabsEl.innerHTML=modalAreaKeys.map((k,i)=>
-    `<button class="modal-tab ${i===0?'active':''}" onclick="selectModalTab('${k}',this)">${k} (${modalAreaGroups[k].length}건)</button>`
-  ).join('') + `<button class="modal-tab" onclick="selectMapTab(this,'${aptNm.replace(/'/g,"\'")}','${(deals[0]?.roadNm||'').replace(/'/g,"\'")}','${(modalAptSeq||'').replace(/'/g,"\'")}')">🗺️ 지도</button>`;
-
   document.getElementById('aptModal').classList.add('open');
   document.body.style.overflow='hidden';
 
-  selectModalTab(modalAreaKeys[0]);
+  // 거래유형/기간 기반으로 데이터 로드
+  loadModalTypeData();
 
   // 단지 정보 비동기 로드
   loadAptInfo(aptSeq||'', (deals[0]||{}).roadNm||'', (deals[0]||{}).roadNmBonbun||'');
@@ -1108,6 +1102,21 @@ async function loadModalTypeData(){
   const cacheKey=`${_modalType}_${_modalMonths}`;
   if(_modalTypeCache[cacheKey]){
     renderModalWithData(_modalTypeCache[cacheKey], _modalType);
+    return;
+  }
+
+  // 현재 allData가 같은 타입/기간이면 바로 사용
+  const curMode=currentMode==='map'?mapDataMode:currentMode;
+  const curTypeMatch=((_modalType==='trade'&&curMode==='trade')||
+    ((_modalType==='jeonse'||_modalType==='wolse')&&(curMode==='jeonse'||curMode==='wolse'||curMode==='rent')));
+  if(curTypeMatch && allData.length>0){
+    let items=allData;
+    if(curMode==='jeonse'||curMode==='wolse') items=rawRentData.length?rawRentData:allData;
+    if(_modalType==='jeonse') items=items.filter(d=>!parsePrice(d.monthlyRent));
+    else if(_modalType==='wolse') items=items.filter(d=>parsePrice(d.monthlyRent)>0);
+    const deals=items.filter(d=>modalAptSeq?d.aptSeq===modalAptSeq:d.aptNm===modalAptNm);
+    _modalTypeCache[cacheKey]={items, deals};
+    renderModalWithData({items, deals}, _modalType);
     return;
   }
 
