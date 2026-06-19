@@ -741,7 +741,14 @@ async function doSearch(){
   try{
     const apiMode=(currentMode==='jeonse'||currentMode==='wolse')?'rent':currentMode;
     const result=await fetchAll(lawdCd,months,apiMode);
-    const rawItems=result.items||[];
+    // 중복 제거 (거래일+아파트명+면적+금액 기준)
+    const seen=new Set();
+    const rawItems=(result.items||[]).filter(d=>{
+      const key=`${d.dealYear}${d.dealMonth}${d.dealDay}_${d.aptNm}_${d.excluUseAr}_${d.dealAmount||d.deposit}`;
+      if(seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
     if(currentMode==='jeonse'||currentMode==='wolse'){
       rawRentData=rawItems; // 원본 저장
       if(currentMode==='jeonse') allData=rawItems.filter(d=>!parsePrice(d.monthlyRent));
