@@ -1167,15 +1167,15 @@ function renderModalWithData({items, deals}, type){
   // 탭 재생성 (면적 탭)
   const tabsEl=document.getElementById('modalTabs');
   tabsEl.innerHTML=modalAreaKeys.map((k,i)=>
-    `<button class="modal-tab ${i===0?'active':''}" onclick="selectModalTab('${k}',this,${JSON.stringify(items).replace(/'/g,'\'')})">${k} (${modalAreaGroups[k].length}건)</button>`
+    `<button class="modal-tab ${i===0?'active':''}" onclick="selectModalTab('${k}',this)">${k} (${modalAreaGroups[k].length}건)</button>`
   ).join('') + `<button class="modal-tab" onclick="selectMapTab(this,'${modalAptNm.replace(/'/g,"\'")}',' ','${modalAptSeq||''}')">🗺️ 지도</button>`;
 
   // _allDataForModal 임시 저장 (차트용 구 전체 데이터)
   window._allDataForModal=items;
-  selectModalTab(modalAreaKeys[0], null, items);
+  selectModalTab(modalAreaKeys[0]);
 }
 
-function selectModalTab(arKey, btn, overrideAllData){
+function selectModalTab(arKey, btn){
   // 탭 활성화
   document.querySelectorAll('.modal-tab').forEach(t=>t.classList.remove('active'));
   if(btn) btn.classList.add('active');
@@ -1203,7 +1203,7 @@ function selectModalTab(arKey, btn, overrideAllData){
   // 구 전체 동일 면적 월별 평균가 (월 기준으로 통일)
   const arMin=ar*0.95, arMax=ar*1.05;
   const districtByMonth={};
-  const baseData=overrideAllData||window._allDataForModal||allData;
+  const baseData=window._allDataForModal||allData;
   baseData.forEach(d=>{
     const dAr=parseFloat(d.excluUseAr||0);
     if(dAr<arMin||dAr>arMax)return;
