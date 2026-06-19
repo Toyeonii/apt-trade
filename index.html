@@ -36,6 +36,12 @@ html{overflow-x:hidden}
 .btn-search{width:100%;height:44px;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background 0.15s}
 .btn-search.trade{background:#0C447C}.btn-search.trade:hover{background:#042C53}
 .btn-search.rent{background:#0F6E56}.btn-search.rent:hover{background:#085041}
+.btn-search.wolse{background:#8B4513}.btn-search.wolse:hover{background:#6B3410}
+.mode-label{font-size:12px;font-weight:700;padding:3px 10px;border-radius:12px;letter-spacing:0.5px}
+.mode-label-trade{background:rgba(96,212,164,0.25);color:#60D4A4;border:1px solid rgba(96,212,164,0.4)}
+.mode-label-jeonse{background:rgba(96,212,164,0.25);color:#60D4A4;border:1px solid rgba(96,212,164,0.4)}
+.mode-label-wolse{background:rgba(255,180,80,0.25);color:#FAC775;border:1px solid rgba(255,180,80,0.4)}
+.mode-label-map{background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.8);border:1px solid rgba(255,255,255,0.2)}
 .btn-search:active{transform:scale(0.98)}
 .btn-search:disabled{background:#B4B2A9;cursor:not-allowed}
 .search-tip{font-size:11px;color:#999;margin-top:7px;text-align:center;line-height:1.5}
@@ -200,10 +206,12 @@ body{padding-bottom:56px}
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
-<header class="app-header">
-  <h1><span class="dot"></span>아파트 실거래가 조회</h1>
+<header class="app-header" id="appHeader">
+  <div style="display:flex;align-items:center;justify-content:space-between">
+    <h1><span class="dot"></span>아파트 실거래가 조회</h1>
+    <span id="modeLabel" class="mode-label mode-label-map">지도</span>
+  </div>
   <div class="header-sub">국토교통부 실거래가 공개시스템</div>
-
 </header>
 
 <div id="favPanel" class="fav-panel" style="display:none">
@@ -448,6 +456,7 @@ function switchMode(mode){
     document.getElementById('filterBar').style.display='none';
     document.getElementById('summaryStrip').style.display='none';
     document.querySelector('.search-panel').style.display='none';
+    updateModeUI('map');
     setTimeout(()=>initMainMap(), 50);
     return;
   }
@@ -465,6 +474,7 @@ function switchMode(mode){
     btn.className=`btn-search ${uiMode}`;
     document.getElementById('summaryStrip').className=`summary-strip ${uiMode}`;
     updateSummaryLabels(mode);
+    updateModeUI(mode);
     applyFilter();
     document.getElementById('filterBar').style.display='flex';
     document.getElementById('summaryStrip').style.display='grid';
@@ -483,6 +493,7 @@ function switchMode(mode){
     document.getElementById('btnSearch').className=`btn-search ${uiMode}`;
     document.getElementById('summaryStrip').className=`summary-strip ${uiMode}`;
     updateSummaryLabels(mode);
+    updateModeUI(mode);
     applyFilter();
     document.getElementById('filterBar').style.display='flex';
     document.getElementById('summaryStrip').style.display='grid';
@@ -504,6 +515,21 @@ function switchMode(mode){
   btn.className=`btn-search ${uiMode2}`;
   document.getElementById('summaryStrip').className=`summary-strip ${uiMode2}`;
   updateSummaryLabels(mode);
+  updateModeUI(mode);
+}
+
+function updateModeUI(mode){
+  const header=document.getElementById('appHeader');
+  const label=document.getElementById('modeLabel');
+  const labels={'trade':'매매','jeonse':'전세','wolse':'월세','map':'지도'};
+  if(label){ label.textContent=labels[mode]||''; label.className=`mode-label mode-label-${mode}`; }
+  // 헤더 배경색 모드별 변경
+  if(header){
+    if(mode==='wolse') header.style.background='#6B3410';
+    else if(mode==='jeonse') header.style.background='#0F6E56';
+    else if(mode==='map') header.style.background='#1a1a2e';
+    else header.style.background='#0C447C';
+  }
 }
 
 function updateSummaryLabels(mode){
