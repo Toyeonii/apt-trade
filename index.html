@@ -438,6 +438,67 @@ let allData=[],filteredData=[],rawRentData=[],currentSort='date',currentPage=1,c
 let _modeCache={trade:null,jeonse:null,wolse:null}; // {items,rawRentData,lawdCd,startM,endM}
 const PAGE_SIZE=50;
 
+// ── 즐겨찾기 신규 거래 알림 ──
+async function requestNotificationPermission(){
+  if(!('Notification' in window)) return false;
+  if(Notification.permission==='granted') return true;
+  if(Notification.permission==='denied') return false;
+  const perm=await Notification.requestPermission();
+  return perm==='granted';
+}
+
+function showPushNotification(title, body){
+  if(!('Notification' in window)||Notification.permission!=='granted') return;
+  new Notification(title,{body, icon:'/icon.png'});
+}
+
+async function checkFavNewDeals(){
+  const favs=getFavs();
+  if(!favs.length) return;
+
+  // 알림 권한 없으면 요청
+  const hasPermission=await requestNotificationPermission();
+  if(!hasPermission) return;
+
+  const lastChecked=JSON.parse(localStorage.getItem('apt_fav_last_deal')||'{}');
+  const now=new Date();
+  const months=[];
+  for(let i=0;i<2;i++){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    months.push(`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`);
+  }
+  const monthStr=months.join(',');
+
+  for(const fav of favs){
+    try{
+      const res=await fetch(`/api/trade/bulk?LAWD_CD=${fav.sggCd}&months=${monthStr}&mode=trade`).then(r=>r.json());
+      const deals=(res.items||[]).filter(d=>fav.aptSeq?d.aptSeq===fav.aptSeq:d.aptNm===fav.aptNm);
+      if(!deals.length) continue;
+
+      // 최신 거래일
+      const latest=deals.sort((a,b)=>{
+        const da=`${a.dealYear}${String(a.dealMonth).padStart(2,'0')}${String(a.dealDay||'').padStart(2,'0')}`;
+        const db=`${b.dealYear}${String(b.dealMonth).padStart(2,'0')}${String(b.dealDay||'').padStart(2,'0')}`;
+        return db.localeCompare(da);
+      })[0];
+      const latestDate=`${latest.dealYear}${String(latest.dealMonth).padStart(2,'0')}${String(latest.dealDay||'').padStart(2,'0')}`;
+      const prevDate=lastChecked[fav.aptNm]||'';
+
+      if(prevDate && latestDate>prevDate){
+        // 새 거래 발생!
+        const price=parsePrice(latest.dealAmount);
+        showPushNotification(
+          `🏠 ${fav.aptNm} 신규 거래`,
+          `${latest.dealYear}.${latest.dealMonth}.${latest.dealDay} · ${fmtPrice(price)} · ${parseFloat(latest.excluUseAr||0).toFixed(1)}㎡`
+        );
+        showToast(`🔔 ${fav.aptNm} 신규 거래 발생!`);
+      }
+      lastChecked[fav.aptNm]=latestDate;
+    } catch(e){}
+  }
+  localStorage.setItem('apt_fav_last_deal', JSON.stringify(lastChecked));
+}
+
 function setPeriod(months){
   document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
   event.target.classList.add('active');
@@ -459,6 +520,8 @@ function init(){
   setSort('date');
   switchMode('map');
   renderRecentSearches();
+  // 즐겨찾기 신규 거래 체크 (3초 후 - 앱 로드 후)
+  setTimeout(()=>checkFavNewDeals(), 3000);
 }
 
 function switchMode(mode){
@@ -2355,6 +2418,11 @@ function addFav(aptNm, aptSeq, sggCd, sggName, umdNm, sido){
   saveFavs(favs);
   renderFavList();
   showToast(`⭐ ${aptNm} 저장완료`);
+  // 즐겨찾기 추가 시 lastDeal 기준일 초기화 (오늘 이후 거래만 알림)
+  const lastChecked=JSON.parse(localStorage.getItem('apt_fav_last_deal')||'{}');
+  const now=new Date();
+  lastChecked[aptNm]=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+  localStorage.setItem('apt_fav_last_deal', JSON.stringify(lastChecked));
 }
 
 function loadFav(i){
