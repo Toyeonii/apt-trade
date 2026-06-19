@@ -456,6 +456,11 @@ async function checkFavNewDeals(){
   const favs=getFavs();
   if(!favs.length) return;
 
+  // 6시간 이내 체크했으면 스킵
+  const lastCheckTime=parseInt(localStorage.getItem('apt_fav_last_check')||'0');
+  if(Date.now()-lastCheckTime < 6*3600*1000) return;
+  localStorage.setItem('apt_fav_last_check', Date.now().toString());
+
   // 알림 권한 없으면 요청
   const hasPermission=await requestNotificationPermission();
   if(!hasPermission) return;
