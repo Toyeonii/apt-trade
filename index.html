@@ -1202,7 +1202,8 @@ async function loadModalTypeData(){
   document.getElementById('modalChartWrap').style.display='none';
 
   try{
-    const lawdCd=document.getElementById('sigungu').value;
+    const lawdCd=document.getElementById('sigungu').value||window._mapLawdCd||'';
+    if(!lawdCd){document.getElementById('modalBody').innerHTML='<div style="text-align:center;padding:30px;color:#888">지역 정보를 찾을 수 없습니다</div>';return;}
     const now=new Date();
     const months=[];
     for(let i=0;i<_modalMonths;i++){
