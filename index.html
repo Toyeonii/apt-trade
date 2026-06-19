@@ -360,9 +360,13 @@ body{padding-bottom:56px}
     <span class="nav-icon">🏠</span>
     <span class="nav-label">매매</span>
   </button>
-  <button class="nav-btn" id="nav-rent" onclick="switchMode('rent')">
+  <button class="nav-btn" id="nav-jeonse" onclick="switchMode('jeonse')">
+    <span class="nav-icon">🏦</span>
+    <span class="nav-label">전세</span>
+  </button>
+  <button class="nav-btn" id="nav-wolse" onclick="switchMode('wolse')">
     <span class="nav-icon">📋</span>
-    <span class="nav-label">전월세</span>
+    <span class="nav-label">월세</span>
   </button>
   <button class="nav-btn active" id="nav-map" onclick="switchMode('map')">
     <span class="nav-icon">🗺️</span>
@@ -429,12 +433,13 @@ function switchMode(mode){
 
   // ── 탭 버튼 UI ──
   document.getElementById('nav-trade').classList.toggle('active', mode==='trade');
-  document.getElementById('nav-rent').classList.toggle('active', mode==='rent');
+  document.getElementById('nav-jeonse').classList.toggle('active', mode==='jeonse');
+  document.getElementById('nav-wolse').classList.toggle('active', mode==='wolse');
   document.getElementById('nav-map').classList.toggle('active', mode==='map');
 
   // ── 지도 탭 ──
   if(mode==='map'){
-    mapDataMode = (prevMode==='trade'||prevMode==='rent') ? prevMode : mapDataMode;
+    mapDataMode = (prevMode==='trade'||prevMode==='jeonse'||prevMode==='wolse') ? prevMode : mapDataMode;
     currentMode='map';
     resetChart();
     document.getElementById('chartPanel').style.display='none';
@@ -453,11 +458,12 @@ function switchMode(mode){
   document.querySelector('.search-panel').style.display='block';
 
   // 지도 탭에서 같은 모드로 돌아올 때 → 데이터 유지
-  if(prevMode==='map' && mode===mapDataMode && allData.length>0){
+  if(prevMode==='map' && (mode===mapDataMode||(mapDataMode==='rent'&&(mode==='jeonse'||mode==='wolse'))) && allData.length>0){
     currentMode=mode;
     const btn=document.getElementById('btnSearch');
-    btn.className=`btn-search ${mode}`;
-    document.getElementById('summaryStrip').className=`summary-strip ${mode}`;
+    const uiMode=(mode==='jeonse'||mode==='wolse')?'rent':mode;
+    btn.className=`btn-search ${uiMode}`;
+    document.getElementById('summaryStrip').className=`summary-strip ${uiMode}`;
     updateSummaryLabels(mode);
     applyFilter();
     document.getElementById('filterBar').style.display='flex';
@@ -482,6 +488,7 @@ function switchMode(mode){
 }
 
 function updateSummaryLabels(mode){
+  const isRent=(mode==='rent'||mode==='jeonse'||mode==='wolse');
   if(mode==='trade'){
     document.getElementById('s-label-avg').textContent='평균가';
     document.getElementById('s-label-max').textContent='최고가';
@@ -589,8 +596,12 @@ async function doSearch(){
   document.getElementById('summaryStrip').style.display='none';
   showLoading();
   try{
-    const result=await fetchAll(lawdCd,months,currentMode);
-    allData=result.items||[];
+    const apiMode=(currentMode==='jeonse'||currentMode==='wolse')?'rent':currentMode;
+    const result=await fetchAll(lawdCd,months,apiMode);
+    const rawItems=result.items||[];
+    if(currentMode==='jeonse') allData=rawItems.filter(d=>!parsePrice(d.monthlyRent));
+    else if(currentMode==='wolse') allData=rawItems.filter(d=>parsePrice(d.monthlyRent)>0);
+    else allData=rawItems;
     const errors=result.errors||[];
     if(allData.length===0){
       errors.length>0?showError('조회 오류',errors.slice(0,3).join('\n')):showEmpty();
@@ -598,7 +609,8 @@ async function doSearch(){
       buildDongList();
       const sggEl=document.getElementById('sigungu');
       const sggName=sggEl.options[sggEl.selectedIndex]?.text||'';
-      document.getElementById('tip').textContent=`${sido} ${sggName} · ${currentMode==='trade'?'매매':'전월세'} · ${startM}~${endM} · ${allData.length.toLocaleString()}건`;
+      const modeLabel={'trade':'매매','jeonse':'전세','wolse':'월세','rent':'전월세'}[currentMode]||'전월세';
+      document.getElementById('tip').textContent=`${sido} ${sggName} · ${modeLabel} · ${startM}~${endM} · ${allData.length.toLocaleString()}건`;
       saveLastSearch();
       applyFilter();
       document.getElementById('filterBar').style.display='flex';
@@ -640,6 +652,7 @@ function applyFilter(){
 function setSort(type){
   currentSort=type;
   const ac=currentMode==='trade'?'active-trade':'active-rent';
+  const isRentMode=currentMode==='jeonse'||currentMode==='wolse'||currentMode==='rent';
   document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active-trade','active-rent'));
   document.getElementById('sort-'+type)?.classList.add(ac);
   if(filteredData.length>0)sortData();
@@ -901,7 +914,7 @@ function downloadExcel(){
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
   const sggName=document.getElementById('sigungu').options[document.getElementById('sigungu').selectedIndex]?.text||'';
-  a.href=url;a.download=`실거래가_${sggName}_${currentMode==='trade'?'매매':'전월세'}_${filteredData.length}건.csv`;
+  a.href=url;a.download=`실거래가_${sggName}_${{'trade':'매매','jeonse':'전세','wolse':'월세'}[currentMode]||'전월세'}_${filteredData.length}건.csv`;
   a.click();URL.revokeObjectURL(url);
   showToast(`${filteredData.length.toLocaleString()}건 다운로드 완료`);
 }
@@ -1551,7 +1564,7 @@ function renderDongMarkers(forceSido, forceSggName){
   });
 
   document.getElementById('mapInfo').style.display='block';
-  document.getElementById('mapInfo').textContent=`${sggName} · ${Object.keys(dongStats).length}개 동 · ${mapDataMode==='trade'?'매매':'전월세'} · 동 클릭 시 아파트 상세`;
+  document.getElementById('mapInfo').textContent=`${sggName} · ${Object.keys(dongStats).length}개 동 · ${({'trade':'매매','jeonse':'전세','wolse':'월세','rent':'전월세'}[mapDataMode]||'전월세')} · 동 클릭 시 아파트 상세`;
 }
 
 function renderAptMarkers(deals, dong, sido, sggName){
@@ -1707,7 +1720,7 @@ function renderAptMarkers(deals, dong, sido, sggName){
     }
   });
 
-  document.getElementById('mapInfo').textContent=`${dong} · ${Object.keys(aptStats).length}개 아파트 · ${mapDataMode==='trade'?'매매':'전월세'} · 클릭 시 거래이력`;
+  document.getElementById('mapInfo').textContent=`${dong} · ${Object.keys(aptStats).length}개 아파트 · ${({'trade':'매매','jeonse':'전세','wolse':'월세','rent':'전월세'}[mapDataMode]||'전월세')} · 클릭 시 거래이력`;
 }
 
 
