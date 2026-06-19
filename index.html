@@ -2146,7 +2146,7 @@ function applyRecentSearch(i){
     document.getElementById('sigungu').value=r.sggCd;
     if(r.startM)document.getElementById('startM').value=r.startM;
     if(r.endM)document.getElementById('endM').value=r.endM;
-    showToast(`${r.sidoShort} ${r.sggName} 불러옴`);
+    doSearch();
   },100);
 }
 
