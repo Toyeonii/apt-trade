@@ -2573,14 +2573,25 @@ function renderFavAreaDeals(ar, deals, mode){
     return p>0?{x:dateStr,y:p,floor:d.floor}:null;
   }).filter(Boolean).sort((a,b)=>a.x.localeCompare(b.x));
 
-  // 월별 거래량 계산
+  // 월별 거래량 계산 (전체 월 범위 생성 - 거래 없는 달 포함)
   const monthCnt={};
   deals.forEach(d=>{
     const key=`${d.dealYear}-${String(d.dealMonth).padStart(2,'0')}`;
     monthCnt[key]=(monthCnt[key]||0)+1;
   });
-  const monthLabels=Object.keys(monthCnt).sort();
-  const monthData=monthLabels.map(k=>monthCnt[k]);
+  const existKeys=Object.keys(monthCnt).sort();
+  const monthLabels=[];
+  if(existKeys.length>=2){
+    let mc=new Date(existKeys[0]+'-01');
+    const me=new Date(existKeys[existKeys.length-1]+'-01');
+    while(mc<=me){
+      monthLabels.push(`${mc.getFullYear()}-${String(mc.getMonth()+1).padStart(2,'0')}`);
+      mc.setMonth(mc.getMonth()+1);
+    }
+  } else {
+    monthLabels.push(...existKeys);
+  }
+  const monthData=monthLabels.map(k=>monthCnt[k]||0);
 
   if(pts.length>=2){
     chartWrap.style.visibility='hidden';
