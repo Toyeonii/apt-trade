@@ -403,7 +403,7 @@ const RD={
   "제주특별자치도":{"50110":"제주시","50130":"서귀포시"}
 };
 
-let allData=[],filteredData=[],currentSort='date',currentPage=1,currentMode='map';
+let allData=[],filteredData=[],rawRentData=[],currentSort='date',currentPage=1,currentMode='map';
 const PAGE_SIZE=50;
 
 function setPeriod(months){
@@ -471,12 +471,30 @@ function switchMode(mode){
     return;
   }
 
+  // 전세↔월세 전환 시 rawRentData에서 필터만 적용 (재조회 없음)
+  const isRentSwitch=(mode==='jeonse'||mode==='wolse')&&(prevMode==='jeonse'||prevMode==='wolse')&&rawRentData.length>0;
+  if(isRentSwitch){
+    currentMode=mode;
+    mapDataMode=mode;
+    if(mode==='jeonse') allData=rawRentData.filter(d=>!parsePrice(d.monthlyRent));
+    else allData=rawRentData.filter(d=>parsePrice(d.monthlyRent)>0);
+    filteredData=[...allData];
+    const uiMode='rent';
+    document.getElementById('btnSearch').className=`btn-search ${uiMode}`;
+    document.getElementById('summaryStrip').className=`summary-strip ${uiMode}`;
+    updateSummaryLabels(mode);
+    applyFilter();
+    document.getElementById('filterBar').style.display='flex';
+    document.getElementById('summaryStrip').style.display='grid';
+    return;
+  }
+
   // 탭 자체 전환 (매매↔전월세) 또는 지도에서 다른 모드로
   currentMode=mode;
   mapDataMode=mode;
   // 지도 마커 초기화
   if(typeof mainMapOverlays!=='undefined'){mainMapOverlays.forEach(o=>o.setMap(null));mainMapOverlays=[];}
-  allData=[];filteredData=[];
+  allData=[];filteredData=[];rawRentData=[];
   document.getElementById('filterBar').style.display='none';
   document.getElementById('summaryStrip').style.display='none';
   document.getElementById('main').innerHTML=`<div class="state-screen"><div class="state-icon">${mode==='trade'?'🏠':'📋'}</div><div class="state-title">지역과 기간을 선택하세요</div><div class="state-sub">조회하기를 눌러주세요</div></div>`;
@@ -519,7 +537,7 @@ function loadSgg(){
 function onSggChange(){resetDong();resetFilters();resetResult();resetChart();}
 
 function resetResult(){
-  allData=[];filteredData=[];window._mapSearchMode=false;window._mapSido='';window._mapSggName='';
+  allData=[];filteredData=[];rawRentData=[];window._mapSearchMode=false;window._mapSido='';window._mapSggName='';
   document.getElementById('filterBar').style.display='none';
   document.getElementById('summaryStrip').style.display='none';
   document.getElementById('main').innerHTML=`<div class="state-screen"><div class="state-icon">🏢</div><div class="state-title">지역과 기간을 선택하세요</div><div class="state-sub">시/도 → 시/군/구 → 동(선택) → 기간<br>순서로 선택 후 조회하기를 누르세요</div></div>`;
@@ -599,9 +617,14 @@ async function doSearch(){
     const apiMode=(currentMode==='jeonse'||currentMode==='wolse')?'rent':currentMode;
     const result=await fetchAll(lawdCd,months,apiMode);
     const rawItems=result.items||[];
-    if(currentMode==='jeonse') allData=rawItems.filter(d=>!parsePrice(d.monthlyRent));
-    else if(currentMode==='wolse') allData=rawItems.filter(d=>parsePrice(d.monthlyRent)>0);
-    else allData=rawItems;
+    if(currentMode==='jeonse'||currentMode==='wolse'){
+      rawRentData=rawItems; // 원본 저장
+      if(currentMode==='jeonse') allData=rawItems.filter(d=>!parsePrice(d.monthlyRent));
+      else allData=rawItems.filter(d=>parsePrice(d.monthlyRent)>0);
+    } else {
+      rawRentData=[];
+      allData=rawItems;
+    }
     const errors=result.errors||[];
     if(allData.length===0){
       errors.length>0?showError('조회 오류',errors.slice(0,3).join('\n')):showEmpty();
