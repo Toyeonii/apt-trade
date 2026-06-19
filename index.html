@@ -1114,7 +1114,7 @@ async function loadModalTypeData(){
     if(curMode==='jeonse'||curMode==='wolse') items=rawRentData.length?rawRentData:allData;
     if(_modalType==='jeonse') items=items.filter(d=>!parsePrice(d.monthlyRent));
     else if(_modalType==='wolse') items=items.filter(d=>parsePrice(d.monthlyRent)>0);
-    const deals=items.filter(d=>modalAptSeq?d.aptSeq===modalAptSeq:d.aptNm===modalAptNm);
+    const deals=items.filter(d=>modalAptSeq?d.aptSeq===modalAptSeq:d.aptNm===modalAptNm).sort((a,b)=>{const da=`${a.dealYear}${String(a.dealMonth).padStart(2,'0')}${String(a.dealDay||'').padStart(2,'0')}`,db=`${b.dealYear}${String(b.dealMonth).padStart(2,'0')}${String(b.dealDay||'').padStart(2,'0')}`;return db.localeCompare(da);});
     _modalTypeCache[cacheKey]={items, deals};
     renderModalWithData({items, deals}, _modalType);
     return;
@@ -1138,7 +1138,7 @@ async function loadModalTypeData(){
     if(_modalType==='jeonse') items=items.filter(d=>!parsePrice(d.monthlyRent));
     else if(_modalType==='wolse') items=items.filter(d=>parsePrice(d.monthlyRent)>0);
     // 해당 아파트만 필터
-    const deals=items.filter(d=>modalAptSeq?d.aptSeq===modalAptSeq:d.aptNm===modalAptNm);
+    const deals=items.filter(d=>modalAptSeq?d.aptSeq===modalAptSeq:d.aptNm===modalAptNm).sort((a,b)=>{const da=`${a.dealYear}${String(a.dealMonth).padStart(2,'0')}${String(a.dealDay||'').padStart(2,'0')}`,db=`${b.dealYear}${String(b.dealMonth).padStart(2,'0')}${String(b.dealDay||'').padStart(2,'0')}`;return db.localeCompare(da);});
     _modalTypeCache[cacheKey]={items, deals};
     renderModalWithData({items, deals}, _modalType);
   } catch(e){
