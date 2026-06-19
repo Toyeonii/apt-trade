@@ -500,8 +500,9 @@ function switchMode(mode){
   document.getElementById('main').innerHTML=`<div class="state-screen"><div class="state-icon">${mode==='trade'?'🏠':'📋'}</div><div class="state-title">지역과 기간을 선택하세요</div><div class="state-sub">조회하기를 눌러주세요</div></div>`;
   resetChart();
   const btn=document.getElementById('btnSearch');
-  btn.className=`btn-search ${mode}`;
-  document.getElementById('summaryStrip').className=`summary-strip ${mode}`;
+  const uiMode2=(mode==='jeonse'||mode==='wolse')?'rent':mode;
+  btn.className=`btn-search ${uiMode2}`;
+  document.getElementById('summaryStrip').className=`summary-strip ${uiMode2}`;
   updateSummaryLabels(mode);
 }
 
