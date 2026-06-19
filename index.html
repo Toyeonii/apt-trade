@@ -2156,14 +2156,15 @@ function applyRecentSearch(i){
     document.getElementById('sigungu').value=r.sggCd;
     if(r.startM)document.getElementById('startM').value=r.startM;
     if(r.endM)document.getElementById('endM').value=r.endM;
-    // 기간 버튼 active 동기화
-    document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
-    if(r.periodMonths){
-      document.querySelectorAll('.period-btn').forEach(b=>{
-        if(b.textContent.trim()===`${r.periodMonths}개월`) b.classList.add('active');
-      });
-    }
-    doSearch();
+    doSearch().then(()=>{
+      // 조회 완료 후 기간 버튼 active 동기화
+      document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
+      if(r.periodMonths){
+        document.querySelectorAll('.period-btn').forEach(b=>{
+          if(b.textContent.trim()===`${r.periodMonths}개월`) b.classList.add('active');
+        });
+      }
+    });
   },150);
 }
 
