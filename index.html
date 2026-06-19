@@ -36,7 +36,7 @@ html{overflow-x:hidden}
 .btn-search{width:100%;height:44px;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background 0.15s}
 .btn-search.trade{background:#0C447C}.btn-search.trade:hover{background:#042C53}
 .btn-search.rent{background:#0F6E56}.btn-search.rent:hover{background:#085041}
-.btn-search.wolse{background:#8B4513}.btn-search.wolse:hover{background:#6B3410}
+.btn-search.wolse{background:#D4956A}.btn-search.wolse:hover{background:#B87A52}
 .mode-label{font-size:12px;font-weight:700;padding:3px 10px;border-radius:12px;letter-spacing:0.5px}
 .mode-label-trade{background:rgba(96,212,164,0.25);color:#60D4A4;border:1px solid rgba(96,212,164,0.4)}
 .mode-label-jeonse{background:rgba(96,212,164,0.25);color:#60D4A4;border:1px solid rgba(96,212,164,0.4)}
@@ -60,9 +60,9 @@ html{overflow-x:hidden}
 .sum-item{padding:8px 4px;text-align:center;border-right:0.5px solid rgba(0,0,0,0.08)}
 .sum-item:last-child{border-right:none}
 .sum-label{font-size:10px;margin-bottom:2px;font-weight:500}
-.trade .sum-label{color:#185FA5}.rent .sum-label{color:#0F6E56}
+.trade .sum-label{color:#185FA5}.rent .sum-label{color:#0F6E56}.wolse .sum-label{color:#B87A52}
 .sum-value{font-size:12px;font-weight:600}
-.trade .sum-value{color:#042C53}.rent .sum-value{color:#085041}
+.trade .sum-value{color:#042C53}.rent .sum-value{color:#085041}.wolse .sum-value{color:#8B5A35}
 .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;background:#fff}
 table{width:100%;border-collapse:collapse;font-size:13px;min-width:560px}
 thead th{background:#2C2C2A;color:#fff;padding:9px 10px;text-align:left;font-weight:500;font-size:11.5px;white-space:nowrap}
@@ -470,9 +470,9 @@ function switchMode(mode){
   if(prevMode==='map' && (mode===mapDataMode||(mapDataMode==='rent'&&(mode==='jeonse'||mode==='wolse'))) && allData.length>0){
     currentMode=mode;
     const btn=document.getElementById('btnSearch');
-    const uiMode=(mode==='jeonse'||mode==='wolse')?'rent':mode;
+    const uiMode=mode==='jeonse'?'rent':mode;
     btn.className=`btn-search ${uiMode}`;
-    document.getElementById('summaryStrip').className=`summary-strip ${uiMode}`;
+    document.getElementById('summaryStrip').className=`summary-strip ${mode==='wolse'?'wolse':uiMode}`;
     updateSummaryLabels(mode);
     updateModeUI(mode);
     applyFilter();
@@ -489,9 +489,9 @@ function switchMode(mode){
     if(mode==='jeonse') allData=rawRentData.filter(d=>!parsePrice(d.monthlyRent));
     else allData=rawRentData.filter(d=>parsePrice(d.monthlyRent)>0);
     filteredData=[...allData];
-    const uiMode='rent';
+    const uiMode=mode==='jeonse'?'rent':mode;
     document.getElementById('btnSearch').className=`btn-search ${uiMode}`;
-    document.getElementById('summaryStrip').className=`summary-strip ${uiMode}`;
+    document.getElementById('summaryStrip').className=`summary-strip ${mode==='wolse'?'wolse':uiMode}`;
     updateSummaryLabels(mode);
     updateModeUI(mode);
     applyFilter();
@@ -511,7 +511,7 @@ function switchMode(mode){
   document.getElementById('main').innerHTML=`<div class="state-screen"><div class="state-icon">${mode==='trade'?'🏠':'📋'}</div><div class="state-title">지역과 기간을 선택하세요</div><div class="state-sub">조회하기를 눌러주세요</div></div>`;
   resetChart();
   const btn=document.getElementById('btnSearch');
-  const uiMode2=(mode==='jeonse'||mode==='wolse')?'rent':mode;
+  const uiMode2=mode==='jeonse'?'rent':mode;
   btn.className=`btn-search ${uiMode2}`;
   document.getElementById('summaryStrip').className=`summary-strip ${uiMode2}`;
   updateSummaryLabels(mode);
