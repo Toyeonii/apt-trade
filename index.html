@@ -1730,10 +1730,11 @@ function renderDongMarkers(forceSido, forceSggName){
         <div style="font-size:10px;opacity:0.7">${stat.cnt}건</div>
       `;
       el.addEventListener('click',()=>{
-        // 동 클릭 → 줌인 후 아파트 마커 표시
+        // 동 클릭 → 줌인 후 아파트 마커 표시 (allData에서 직접 필터)
         mainMapInstance.setCenter(pos);
         mainMapInstance.setLevel(3);
-        renderAptMarkers(stat.deals, dong, sido, sggName);
+        const dongDeals=allData.filter(d=>(d.umdNm||'기타')===dong);
+        renderAptMarkers(dongDeals, dong, sido, sggName);
       });
 
       const overlay=new kakao.maps.CustomOverlay({position:pos,content:el,yAnchor:1.1});
