@@ -2156,7 +2156,7 @@ function applyRecentSearch(i){
     document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
     if(r.periodMonths){
       document.querySelectorAll('.period-btn').forEach(b=>{
-        if(b.textContent===`${r.periodMonths}개월`) b.classList.add('active');
+        if(b.textContent.trim()===`${r.periodMonths}개월`) b.classList.add('active');
       });
     }
     doSearch();
