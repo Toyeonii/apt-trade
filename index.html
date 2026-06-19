@@ -2107,9 +2107,13 @@ function saveLastSearch(){
   const mode=currentMode;
   if(!sggCd)return;
   const sidoShort=sido.replace('특별시','').replace('광역시','').replace('특별자치시','').replace('특별자치도','').replace('도','');
-  // 기간 버튼 active 상태 저장
-  const activePeriodBtn=document.querySelector('.period-btn.active');
-  const periodMonths=activePeriodBtn?parseInt(activePeriodBtn.textContent):null;
+  // startM/endM으로 직접 months 계산
+  let periodMonths=null;
+  if(startM&&endM){
+    const s=new Date(startM+'-01'), e=new Date(endM+'-01');
+    const diff=Math.round((e.getFullYear()-s.getFullYear())*12+(e.getMonth()-s.getMonth()))+1;
+    if([3,6,12,24].includes(diff)) periodMonths=diff;
+  }
   const entry={sido,sggCd,sggName,sidoShort,startM,endM,mode,periodMonths};
   // 최근 5개 저장
   let recents=getRecentSearches();
