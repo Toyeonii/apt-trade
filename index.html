@@ -2268,21 +2268,12 @@ function renderChart(){
       if(p>0)byMonth[key].push(p);
     });
 
-    // 전체 월 범위 생성 (거래 없는 달 포함)
-    const sortedKeys=Object.keys(byMonth).sort();
-    if(sortedKeys.length<2){resetChart();return;}
-    const startYM=sortedKeys[0], endYM=sortedKeys[sortedKeys.length-1];
-    const labels=[];
-    let cur=new Date(startYM+'-01');
-    const end=new Date(endYM+'-01');
-    while(cur<=end){
-      labels.push(`${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}`);
-      cur.setMonth(cur.getMonth()+1);
-    }
+    const labels=Object.keys(byMonth).sort();
+    if(labels.length<2){resetChart();return;}
 
     const values=labels.map(k=>{
       const arr=byMonth[k];
-      return arr&&arr.length?Math.round(arr.reduce((a,b)=>a+b,0)/arr.length):null;
+      return arr.length?Math.round(arr.reduce((a,b)=>a+b,0)/arr.length):0;
     });
 
     panel.style.display='block';
@@ -2301,9 +2292,7 @@ function renderChart(){
           pointRadius:4,
           pointBackgroundColor:color,
           fill:true,
-          tension:0.3,
-          spanGaps:true,
-          segment:{borderDash:ctx=>ctx.p0.skip||ctx.p1.skip?[4,4]:undefined}
+          tension:0.3
         }]
       },
       options:{
@@ -2573,25 +2562,14 @@ function renderFavAreaDeals(ar, deals, mode){
     return p>0?{x:dateStr,y:p,floor:d.floor}:null;
   }).filter(Boolean).sort((a,b)=>a.x.localeCompare(b.x));
 
-  // 월별 거래량 계산 (전체 월 범위 생성 - 거래 없는 달 포함)
+  // 월별 거래량 계산
   const monthCnt={};
   deals.forEach(d=>{
     const key=`${d.dealYear}-${String(d.dealMonth).padStart(2,'0')}`;
     monthCnt[key]=(monthCnt[key]||0)+1;
   });
-  const existKeys=Object.keys(monthCnt).sort();
-  const monthLabels=[];
-  if(existKeys.length>=2){
-    let mc=new Date(existKeys[0]+'-01');
-    const me=new Date(existKeys[existKeys.length-1]+'-01');
-    while(mc<=me){
-      monthLabels.push(`${mc.getFullYear()}-${String(mc.getMonth()+1).padStart(2,'0')}`);
-      mc.setMonth(mc.getMonth()+1);
-    }
-  } else {
-    monthLabels.push(...existKeys);
-  }
-  const monthData=monthLabels.map(k=>monthCnt[k]||0);
+  const monthLabels=Object.keys(monthCnt).sort();
+  const monthData=monthLabels.map(k=>monthCnt[k]);
 
   if(pts.length>=2){
     chartWrap.style.visibility='hidden';
@@ -2606,7 +2584,7 @@ function renderFavAreaDeals(ar, deals, mode){
           {type:'line',data:monthLabels.map(m=>{
             const mPts=pts.filter(p=>p.x.startsWith(m));
             return mPts.length?Math.round(mPts.reduce((a,b)=>a+b.y,0)/mPts.length):null;
-          }),borderColor:color,backgroundColor:'transparent',borderWidth:2,pointRadius:3,tension:0.3,yAxisID:'y',spanGaps:true,segment:{borderDash:ctx=>ctx.p0.skip||ctx.p1.skip?[4,4]:undefined}},
+          }),borderColor:color,backgroundColor:'transparent',borderWidth:2,pointRadius:3,tension:0.3,yAxisID:'y',},
           {type:'bar',data:monthLabels.map(m=>{
             const mPts=pts.filter(p=>p.x.startsWith(m));
             return mPts.length?Math.max(...mPts.map(p=>p.y)):null;
