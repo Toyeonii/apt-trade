@@ -710,7 +710,7 @@ function applyFilter(){
     const dongOk=!dong||(d.umdNm||'')===dong;
     const ar=parseFloat(d.excluUseAr||0);
     const areaOk=!area||(area==='~60'?ar<60:area==='60~85'?ar>=60&&ar<85:area==='85~135'?ar>=85&&ar<135:area==='135~'?ar>=135:true);
-    const p=_modalType==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
+    const p=getDataMode()==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
     const pm=p/10000;
     const priceOk=!price||(price==='~3'?pm<3:price==='3~6'?pm>=3&&pm<6:price==='6~10'?pm>=6&&pm<10:price==='10~20'?pm>=10&&pm<20:price==='20~'?pm>=20:true);
     const fl=parseInt(d.floor||0);
@@ -1451,7 +1451,7 @@ function addAptMarkersForDong(deals, dong, sido, sggName){
   deals.forEach(d=>{
     const key=d.aptNm||'기타';
     if(!aptStats[key])aptStats[key]={sum:0,cnt:0,roadNm:d.roadNm||'',roadNmBonbun:d.roadNmBonbun||'',umdNm:d.umdNm||'',jibun:d.jibun||'',aptSeq:d.aptSeq||''};
-    const p=_modalType==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
+    const p=mapDataMode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
     if(p>0){aptStats[key].sum+=p;aptStats[key].cnt++;}
   });
 
