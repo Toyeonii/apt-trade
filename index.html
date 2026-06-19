@@ -325,6 +325,21 @@ body{padding-bottom:64px}
         <button class="modal-close" onclick="closeModal()">✕</button>
       </div>
     </div>
+    <div class="modal-header" style="flex-direction:column;align-items:stretch;gap:6px;padding-bottom:8px">
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <span style="font-size:11px;color:#888">거래유형</span>
+        <button class="fav-period-btn active" id="modalTypeTrade" onclick="switchModalType('trade')">🏠 매매</button>
+        <button class="fav-period-btn" id="modalTypeJeonse" onclick="switchModalType('jeonse')">🏦 전세</button>
+        <button class="fav-period-btn" id="modalTypeWolse" onclick="switchModalType('wolse')">📋 월세</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
+        <span style="font-size:11px;color:#888">조회기간</span>
+        <button class="fav-period-btn" onclick="setModalPeriod(3)">3개월</button>
+        <button class="fav-period-btn active" id="modalPeriodBtn6" onclick="setModalPeriod(6)">6개월</button>
+        <button class="fav-period-btn" onclick="setModalPeriod(12)">12개월</button>
+        <button class="fav-period-btn" onclick="setModalPeriod(24)">24개월</button>
+      </div>
+    </div>
     <div class="apt-info-loading" id="aptInfoBar">단지 정보 불러오는 중...</div>
     <div class="modal-tabs" id="modalTabs"></div>
     <div class="modal-chart" id="modalChartWrap">
@@ -1007,6 +1022,7 @@ function showToast(msg){
 let modalChartInstance=null;
 
 let modalAptNm='', modalAreaGroups={}, modalAreaKeys=[], modalAptSeq='';
+let _modalType='trade', _modalMonths=6, _modalRoadNm='', _modalTypeCache={};
 
 function showAptModal(aptNm, roadNm, aptSeq){
   const deals=allData.filter(d=>{
@@ -1022,6 +1038,16 @@ function showAptModal(aptNm, roadNm, aptSeq){
 
   modalAptNm=aptNm;
   modalAptSeq=aptSeq||'';
+  _modalRoadNm=roadNm||'';
+  _modalType=currentMode==='map'?mapDataMode:currentMode;
+  if(_modalType==='jeonse'||_modalType==='wolse') _modalType='trade'; // 지도에서는 기본 매매
+  _modalMonths=6;
+  _modalTypeCache={};
+  // 거래유형 버튼 active 초기화
+  ['trade','jeonse','wolse'].forEach(t=>document.getElementById(`modalType${t.charAt(0).toUpperCase()+t.slice(1)}`)?.classList.toggle('active',t===_modalType));
+  // 기간 버튼 active 초기화
+  document.querySelectorAll('[id^="modalPeriodBtn"]').forEach(b=>b.classList.remove('active'));
+  document.getElementById('modalPeriodBtn6')?.classList.add('active');
   modalAreaGroups={};
   deals.forEach(d=>{
     const ar=parseFloat(d.excluUseAr||0);
@@ -1061,7 +1087,86 @@ function showAptModal(aptNm, roadNm, aptSeq){
   loadAptInfo(aptSeq||'', (deals[0]||{}).roadNm||'', (deals[0]||{}).roadNmBonbun||'');
 }
 
-function selectModalTab(arKey, btn){
+function switchModalType(type){
+  _modalType=type;
+  ['trade','jeonse','wolse'].forEach(t=>{
+    document.getElementById(`modalType${t.charAt(0).toUpperCase()+t.slice(1)}`)?.classList.toggle('active',t===type);
+  });
+  loadModalTypeData();
+}
+
+function setModalPeriod(months){
+  _modalMonths=months;
+  document.querySelectorAll('[onclick^="setModalPeriod"]').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+  // 해당 타입 캐시 무효화
+  delete _modalTypeCache[_modalType];
+  loadModalTypeData();
+}
+
+async function loadModalTypeData(){
+  const cacheKey=`${_modalType}_${_modalMonths}`;
+  if(_modalTypeCache[cacheKey]){
+    renderModalWithData(_modalTypeCache[cacheKey], _modalType);
+    return;
+  }
+
+  // 로딩 표시
+  document.getElementById('modalBody').innerHTML='<div style="text-align:center;padding:30px;color:#888">조회 중...</div>';
+  document.getElementById('modalChartWrap').style.display='none';
+
+  try{
+    const lawdCd=document.getElementById('sigungu').value;
+    const now=new Date();
+    const months=[];
+    for(let i=0;i<_modalMonths;i++){
+      const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+      months.push(`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`);
+    }
+    const apiMode=(_modalType==='jeonse'||_modalType==='wolse')?'rent':'trade';
+    const result=await fetch(`/api/trade/bulk?${new URLSearchParams({LAWD_CD:lawdCd,months:months.join(','),mode:apiMode})}`).then(r=>r.json());
+    let items=result.items||[];
+    if(_modalType==='jeonse') items=items.filter(d=>!parsePrice(d.monthlyRent));
+    else if(_modalType==='wolse') items=items.filter(d=>parsePrice(d.monthlyRent)>0);
+    // 해당 아파트만 필터
+    const deals=items.filter(d=>modalAptSeq?d.aptSeq===modalAptSeq:d.aptNm===modalAptNm);
+    _modalTypeCache[cacheKey]={items, deals};
+    renderModalWithData({items, deals}, _modalType);
+  } catch(e){
+    document.getElementById('modalBody').innerHTML='<div style="text-align:center;padding:30px;color:#c00">조회 오류</div>';
+  }
+}
+
+function renderModalWithData({items, deals}, type){
+  if(!deals.length){
+    document.getElementById('modalBody').innerHTML=`<div style="text-align:center;padding:30px;color:#888">${{'trade':'매매','jeonse':'전세','wolse':'월세'}[type]} 거래 내역이 없습니다</div>`;
+    document.getElementById('modalChartWrap').style.display='none';
+    document.getElementById('modalSub').textContent=`총 0건`;
+    return;
+  }
+  // modalAreaGroups 재구성
+  modalAreaGroups={};
+  deals.forEach(d=>{
+    const ar=parseFloat(d.excluUseAr||0);
+    const arKey=ar>0?`${ar.toFixed(1)}㎡`:'기타';
+    if(!modalAreaGroups[arKey])modalAreaGroups[arKey]=[];
+    modalAreaGroups[arKey].push(d);
+  });
+  modalAreaKeys=Object.keys(modalAreaGroups).sort((a,b)=>parseFloat(a)-parseFloat(b));
+  document.getElementById('modalSub').textContent=`총 ${deals.length}건 거래 이력`;
+
+  // 탭 재생성 (면적 탭)
+  const tabsEl=document.getElementById('modalTabs');
+  tabsEl.innerHTML=modalAreaKeys.map((k,i)=>
+    `<button class="modal-tab ${i===0?'active':''}" onclick="selectModalTab('${k}',this,${JSON.stringify(items).replace(/'/g,'\'')})">${k} (${modalAreaGroups[k].length}건)</button>`
+  ).join('') + `<button class="modal-tab" onclick="selectMapTab(this,'${modalAptNm.replace(/'/g,"\'")}',' ','${modalAptSeq||''}')">🗺️ 지도</button>`;
+
+  // _allDataForModal 임시 저장 (차트용 구 전체 데이터)
+  window._allDataForModal=items;
+  selectModalTab(modalAreaKeys[0], null, items);
+}
+
+function selectModalTab(arKey, btn, overrideAllData){
   // 탭 활성화
   document.querySelectorAll('.modal-tab').forEach(t=>t.classList.remove('active'));
   if(btn) btn.classList.add('active');
@@ -1081,7 +1186,7 @@ function selectModalTab(arKey, btn){
   document.getElementById('modalBody').style.display='block';
 
   const pts=deals.map(d=>{
-    const p=getDataMode()==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
+    const p=_modalType==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
     const dateStr=`${d.dealYear}-${String(d.dealMonth).padStart(2,'0')}-${String(d.dealDay||'01').padStart(2,'0')}`;
     return p>0?{x:dateStr,y:p,floor:d.floor}:null;
   }).filter(Boolean).sort((a,b)=>a.x.localeCompare(b.x));
@@ -1089,10 +1194,11 @@ function selectModalTab(arKey, btn){
   // 구 전체 동일 면적 월별 평균가 (월 기준으로 통일)
   const arMin=ar*0.95, arMax=ar*1.05;
   const districtByMonth={};
-  allData.forEach(d=>{
+  const baseData=overrideAllData||window._allDataForModal||allData;
+  baseData.forEach(d=>{
     const dAr=parseFloat(d.excluUseAr||0);
     if(dAr<arMin||dAr>arMax)return;
-    const p=getDataMode()==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
+    const p=_modalType==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
     if(!p)return;
     const key=`${d.dealYear}-${String(d.dealMonth).padStart(2,'0')}`;
     if(!districtByMonth[key])districtByMonth[key]=[];
