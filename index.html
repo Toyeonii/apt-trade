@@ -777,7 +777,7 @@ function renderTradeTable(){
   const pg=filteredData.slice((currentPage-1)*PAGE_SIZE,currentPage*PAGE_SIZE);
   let html=`<div class="table-wrap"><table><thead><tr>
     <th>아파트명</th><th>전용면적</th><th>층</th>
-    <th class="r">거래금액</th><th class="r">평당가</th><th>계약일</th><th>건축</th><th>법정동</th>
+    <th class="r">거래금액</th><th class="r">평당가</th><th style="min-width:85px">계약일</th><th>건축</th><th>법정동</th>
   </tr></thead><tbody>`;
   pg.forEach(d=>{
     const p=parsePrice(d.dealAmount);
@@ -882,8 +882,8 @@ function renderRentTable(){
   const pg=filteredData.slice((currentPage-1)*PAGE_SIZE,currentPage*PAGE_SIZE);
   let html=`<div class="table-wrap"><table><thead><tr>
     <th>아파트명</th><th>전용면적</th><th>층</th>
-    <th class="r">보증금</th><th class="r">월세</th>
-    <th>계약일</th><th>계약기간</th><th>법정동</th>
+    <th class="r">보증금</th><th class="r" style="min-width:70px">월세</th>
+    <th style="min-width:85px">계약일</th><th>계약기간</th><th>법정동</th>
   </tr></thead><tbody>`;
   pg.forEach(d=>{
     const dep=parsePrice(d.deposit),mon=parsePrice(d.monthlyRent);
