@@ -1030,7 +1030,7 @@ let modalChartInstance=null;
 let modalAptNm='', modalAreaGroups={}, modalAreaKeys=[], modalAptSeq='';
 let _modalType='trade', _modalMonths=6, _modalRoadNm='', _modalTypeCache={};
 
-function showAptModal(aptNm, roadNm, aptSeq){
+async function showAptModal(aptNm, roadNm, aptSeq){
   const deals=allData.filter(d=>{
     if(aptSeq) return d.aptSeq===aptSeq;
     return d.aptNm===aptNm&&(!roadNm||(d.roadNm===roadNm||d.jibun===roadNm));
@@ -1082,7 +1082,8 @@ function showAptModal(aptNm, roadNm, aptSeq){
   document.getElementById('modalBody').innerHTML='<div class="state-screen"><div class="state-icon">⏳</div><div class="state-title">조회 중...</div></div>';
   document.getElementById('modalChartWrap').style.display='none';
 
-  // 거래유형/기간 기반으로 데이터 로드
+  // 한 프레임 양보 후 데이터 로드 (모래시계 표시 보장)
+  await new Promise(r=>setTimeout(r,50));
   loadModalTypeData();
 
   // 단지 정보 비동기 로드
