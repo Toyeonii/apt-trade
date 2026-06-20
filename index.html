@@ -1126,12 +1126,23 @@ function showAptModal(aptNm, roadNm, aptSeq){
   _modalType=currentMode==='map'?mapDataMode:currentMode;
   if(currentMode==='map'&&(_modalType==='jeonse'||_modalType==='wolse')) _modalType='trade'; // 지도에서는 기본 매매
   _modalMonths=6;
+  // 메인 조회기간에서 개월수 계산해서 팝업 기간 동기화
+  try{
+    const sM=document.getElementById('startM').value;
+    const eM=document.getElementById('endM').value;
+    if(sM&&eM){
+      const [sy,sm]=sM.split('-').map(Number);
+      const [ey,em]=eM.split('-').map(Number);
+      const diff=(ey-sy)*12+(em-sm)+1;
+      if([3,6,12,24].includes(diff)) _modalMonths=diff;
+    }
+  }catch(e){}
   _modalTypeCache={};
   // 거래유형 버튼 active 초기화
   ['trade','jeonse','wolse'].forEach(t=>document.getElementById(`modalType${t.charAt(0).toUpperCase()+t.slice(1)}`)?.classList.toggle('active',t===_modalType));
   // 기간 버튼 active 초기화
   document.querySelectorAll('[id^="modalPeriodBtn"]').forEach(b=>b.classList.remove('active'));
-  document.getElementById('modalPeriodBtn6')?.classList.add('active');
+  document.getElementById(`modalPeriodBtn${_modalMonths}`)?.classList.add('active');
   modalAreaGroups={};
   deals.forEach(d=>{
     const ar=parseFloat(d.excluUseAr||0);
