@@ -1162,7 +1162,7 @@ function showAptModal(aptNm, roadNm, aptSeq){
   loadModalTypeData();
 
   // 단지 정보 비동기 로드
-  loadAptInfo(aptSeq||'', (deals[0]||{}).roadNm||'', (deals[0]||{}).roadNmBonbun||'');
+  loadAptInfo(aptSeq||'', (deals[0]||{}).roadNm||'', (deals[0]||{}).roadNmBonbun||'', (deals[0]||{}).buildYear||'');
 }
 
 function switchModalType(type){
@@ -1985,7 +1985,7 @@ function renderAptMarkers(deals, dong, sido, sggName){
 // ── 단지 정보 ──
 const aptInfoCache={};
 
-async function loadAptInfo(aptSeq, roadNm='', roadNmBonbun=''){
+async function loadAptInfo(aptSeq, roadNm='', roadNmBonbun='', buildYear=''){
   const bar=document.getElementById('aptInfoBar');
   bar.style.display='block';
   bar.className='apt-info-loading';
@@ -2007,6 +2007,16 @@ async function loadAptInfo(aptSeq, roadNm='', roadNmBonbun=''){
     const resp=await fetch(`/api/apt-info?${params}`);
     const json=await resp.json();
     if(json.ok&&json.data&&Object.keys(json.data).length>0){
+      // 건축년도 검증: 거래데이터 buildYear vs K-APT kaptUsedate 앞 4자리
+      if(buildYear && json.data.kaptUsedate){
+        const kaptYear=parseInt(json.data.kaptUsedate.toString().substring(0,4)||'0');
+        const txYear=parseInt(buildYear||'0');
+        if(kaptYear>0&&txYear>0&&Math.abs(kaptYear-txYear)>2){
+          // 오매칭으로 판단 → 단지정보 숨김
+          bar.style.display='none';
+          return;
+        }
+      }
       aptInfoCache[cacheKey]=json.data;
       renderAptInfo(json.data);
     } else {

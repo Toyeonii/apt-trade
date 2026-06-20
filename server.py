@@ -194,7 +194,6 @@ def apt_info():
     sgg_cd  = request.args.get('sggCd', '')
     road_nm = request.args.get('roadNm', '')
     road_nm_bonbun = request.args.get('roadNmBonbun', '')
-    apt_seq = request.args.get('aptSeq', '')  # 국토부 단지 고유번호
     if not apt_nm or not sgg_cd:
         return jsonify({'error': 'aptNm, sggCd 필요'}), 400
     if not API_KEY_APT_LIST or not API_KEY_APT_INFO:
@@ -217,49 +216,20 @@ def apt_info():
         simp_nm = simplify(apt_nm)
         kapt_code = ''
 
-        # aptSeq 앞 5자리 = 법정동코드 → bjdCode와 비교해 동일 동 후보만 필터
-        bjd_prefix = apt_seq[:5] if apt_seq and len(apt_seq) >= 5 else ''
-        if bjd_prefix:
-            filtered = [a for a in apt_list if a.get('bjdCode', '')[:5] == bjd_prefix]
-        else:
-            filtered = apt_list
-
-        # 1단계: 동일 동 내 아파트명 완전 일치
-        for apt in filtered:
+        # 1단계: 아파트명 완전 일치
+        for apt in apt_list:
             if normalize(apt['kaptName']) == norm_nm:
                 kapt_code = apt['kaptCode']
                 break
 
-        # 2단계: 동일 동 내 단순화 완전 일치
-        if not kapt_code:
-            for apt in filtered:
-                if simplify(apt['kaptName']) == simp_nm:
-                    kapt_code = apt['kaptCode']
-                    break
-
-        # 3단계: 동일 동 내 부분 포함 매칭
-        if not kapt_code and len(simp_nm) >= 3:
-            for apt in filtered:
-                n = simplify(apt['kaptName'])
-                if simp_nm in n and len(simp_nm) >= len(n) * 0.5:
-                    kapt_code = apt['kaptCode']
-                    break
-
-        # 4단계: bjdCode 필터 없이 전체에서 완전 일치 (fallback)
-        if not kapt_code and bjd_prefix:
-            for apt in apt_list:
-                if normalize(apt['kaptName']) == norm_nm:
-                    kapt_code = apt['kaptCode']
-                    break
-
-        # 5단계: 전체에서 단순화 일치 (fallback)
+        # 2단계: 단순화 완전 일치
         if not kapt_code:
             for apt in apt_list:
                 if simplify(apt['kaptName']) == simp_nm:
                     kapt_code = apt['kaptCode']
                     break
 
-        # 6단계: 전체 부분 포함 (마지막 fallback)
+        # 3단계: 부분 포함 매칭 (최소 3글자 이상)
         if not kapt_code and len(simp_nm) >= 3:
             for apt in apt_list:
                 n = simplify(apt['kaptName'])
