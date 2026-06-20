@@ -342,10 +342,10 @@ body{padding-bottom:64px}
       </div>
       <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
         <span style="font-size:11px;color:#888">조회기간</span>
-        <button class="fav-period-btn" onclick="setModalPeriod(3)">3개월</button>
+        <button class="fav-period-btn" id="modalPeriodBtn3" onclick="setModalPeriod(3)">3개월</button>
         <button class="fav-period-btn active" id="modalPeriodBtn6" onclick="setModalPeriod(6)">6개월</button>
-        <button class="fav-period-btn" onclick="setModalPeriod(12)">12개월</button>
-        <button class="fav-period-btn" onclick="setModalPeriod(24)">24개월</button>
+        <button class="fav-period-btn" id="modalPeriodBtn12" onclick="setModalPeriod(12)">12개월</button>
+        <button class="fav-period-btn" id="modalPeriodBtn24" onclick="setModalPeriod(24)">24개월</button>
       </div>
     </div>
     <div class="apt-info-loading" id="aptInfoBar">단지 정보 불러오는 중...</div>
@@ -1231,6 +1231,13 @@ async function loadModalTypeData(){
     const apiMode=(_modalType==='jeonse'||_modalType==='wolse')?'rent':'trade';
     const result=await fetch(`/api/trade/bulk?${new URLSearchParams({LAWD_CD:lawdCd,months:months.join(','),mode:apiMode})}`).then(r=>r.json());
     let items=result.items||[];
+    // 중복 제거 (거래일+아파트명+면적+금액 기준)
+    const seen=new Set();
+    items=items.filter(d=>{
+      const key=`${d.dealYear}${d.dealMonth}${d.dealDay}_${d.aptNm}_${d.excluUseAr}_${d.dealAmount||d.deposit}`;
+      if(seen.has(key))return false;
+      seen.add(key);return true;
+    });
     if(_modalType==='jeonse') items=items.filter(d=>!parsePrice(d.monthlyRent));
     else if(_modalType==='wolse') items=items.filter(d=>parsePrice(d.monthlyRent)>0);
     // 해당 아파트만 필터
