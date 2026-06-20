@@ -255,7 +255,10 @@ body{padding-bottom:64px}
   </div>
 </section>
 <div id="filterBar" class="filter-bar" style="display:none">
-  <input type="text" id="aptFilter" placeholder="아파트명 검색..." oninput="applyFilter()"/>
+  <div style="flex:1;min-width:120px;position:relative;display:flex;align-items:center">
+    <input type="text" id="aptFilter" placeholder="아파트명 검색..." oninput="applyFilter()" style="width:100%;padding-right:28px"/>
+    <button onclick="document.getElementById('aptFilter').value='';applyFilter()" style="position:absolute;right:6px;border:none;background:none;cursor:pointer;color:#aaa;font-size:16px;line-height:1;padding:0">✕</button>
+  </div>
   <select id="areaFilter" onchange="applyFilter()">
     <option value="">면적 전체</option>
     <option value="~60">~60㎡</option>
@@ -410,7 +413,7 @@ body{padding-bottom:64px}
   </button>
   <button class="nav-btn" id="nav-share" onclick="copyShareUrl()">
     <span class="nav-icon">🔗</span>
-    <span class="nav-label">공유</span>
+    <span class="nav-label">링크복사</span>
   </button>
 </nav>
 <footer class="app-footer">데이터 출처: 국토교통부 아파트 실거래가 공개시스템 · 공공데이터포털 Open API</footer>
