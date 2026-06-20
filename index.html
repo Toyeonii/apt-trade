@@ -1992,7 +1992,7 @@ async function loadAptInfo(aptSeq, roadNm='', roadNmBonbun=''){
   bar.textContent='단지 정보 불러오는 중...';
 
   try{
-    const cacheKey=aptSeq||modalAptNm;
+    const cacheKey=aptSeq||`${modalAptNm}_${roadNm}`;
     if(aptInfoCache[cacheKey]){
       renderAptInfo(aptInfoCache[cacheKey]);
       return;
@@ -2003,7 +2003,7 @@ async function loadAptInfo(aptSeq, roadNm='', roadNmBonbun=''){
     const aptNm=modalAptNm||'';
     if(!aptNm||!sggCd){bar.style.display='none';return;}
 
-    const params=new URLSearchParams({aptNm, sggCd, roadNm, roadNmBonbun});
+    const params=new URLSearchParams({aptNm, sggCd, roadNm, roadNmBonbun, aptSeq: aptSeq||''});
     const resp=await fetch(`/api/apt-info?${params}`);
     const json=await resp.json();
     if(json.ok&&json.data&&Object.keys(json.data).length>0){

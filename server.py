@@ -194,6 +194,7 @@ def apt_info():
     sgg_cd  = request.args.get('sggCd', '')
     road_nm = request.args.get('roadNm', '')
     road_nm_bonbun = request.args.get('roadNmBonbun', '')
+    apt_seq = request.args.get('aptSeq', '')  # 국토부 단지 고유번호
     if not apt_nm or not sgg_cd:
         return jsonify({'error': 'aptNm, sggCd 필요'}), 400
     if not API_KEY_APT_LIST or not API_KEY_APT_INFO:
@@ -202,47 +203,63 @@ def apt_info():
     try:
         # 1단계: 단지 목록에서 kaptCode 찾기
         apt_list = fetch_apt_list(sgg_cd)
-        # 아파트명 정규화 (공백/특수문자 제거 후 비교)
         import re
         def normalize(s):
             return re.sub(r'[ \t\(\)\-_]', '', s).lower()
         def simplify(s):
-            # 숫자단지, 아파트, 동(행정구역) 등 제거
             s = re.sub(r'[0-9]+단지', '', s)
             s = re.sub(r'아파트$', '', s)
-            s = re.sub(r'\([^)]*\)', '', s)  # 괄호 제거
-            s = re.sub(r'동(?=[가-힣])', '', s)  # 동+한글 앞의 '동' 제거 (방화동→방화)
+            s = re.sub(r'\([^)]*\)', '', s)
+            s = re.sub(r'동(?=[가-힣])', '', s)
             return re.sub(r'[ \t\(\)\-_]', '', s).lower()
 
         norm_nm = normalize(apt_nm)
         simp_nm = simplify(apt_nm)
         kapt_code = ''
 
-        # 1단계: 도로명주소 매칭 (가장 정확)
-        if road_nm and road_nm_bonbun:
-            bonbun_num = str(int(road_nm_bonbun)) if road_nm_bonbun else ''
-            road_addr_key = normalize(f"{road_nm}{bonbun_num}")
-            for apt in apt_list:
-                doro = apt.get('doroJuso', '')
-                if doro and road_addr_key and road_addr_key in normalize(doro):
+        # aptSeq 앞 5자리 = 법정동코드 → bjdCode와 비교해 동일 동 후보만 필터
+        bjd_prefix = apt_seq[:5] if apt_seq and len(apt_seq) >= 5 else ''
+        if bjd_prefix:
+            filtered = [a for a in apt_list if a.get('bjdCode', '')[:5] == bjd_prefix]
+        else:
+            filtered = apt_list
+
+        # 1단계: 동일 동 내 아파트명 완전 일치
+        for apt in filtered:
+            if normalize(apt['kaptName']) == norm_nm:
+                kapt_code = apt['kaptCode']
+                break
+
+        # 2단계: 동일 동 내 단순화 완전 일치
+        if not kapt_code:
+            for apt in filtered:
+                if simplify(apt['kaptName']) == simp_nm:
                     kapt_code = apt['kaptCode']
                     break
 
-        # 2단계: 아파트명 완전 일치
-        if not kapt_code:
+        # 3단계: 동일 동 내 부분 포함 매칭
+        if not kapt_code and len(simp_nm) >= 3:
+            for apt in filtered:
+                n = simplify(apt['kaptName'])
+                if simp_nm in n and len(simp_nm) >= len(n) * 0.5:
+                    kapt_code = apt['kaptCode']
+                    break
+
+        # 4단계: bjdCode 필터 없이 전체에서 완전 일치 (fallback)
+        if not kapt_code and bjd_prefix:
             for apt in apt_list:
                 if normalize(apt['kaptName']) == norm_nm:
                     kapt_code = apt['kaptCode']
                     break
 
-        # 3단계: 단순화 완전 일치 (괄호/번지 제거 후)
+        # 5단계: 전체에서 단순화 일치 (fallback)
         if not kapt_code:
             for apt in apt_list:
                 if simplify(apt['kaptName']) == simp_nm:
                     kapt_code = apt['kaptCode']
                     break
 
-        # 4단계: 부분 포함 매칭 (최소 3글자 이상)
+        # 6단계: 전체 부분 포함 (마지막 fallback)
         if not kapt_code and len(simp_nm) >= 3:
             for apt in apt_list:
                 n = simplify(apt['kaptName'])
