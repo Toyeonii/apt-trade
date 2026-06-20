@@ -224,25 +224,20 @@ body{padding-bottom:64px}
   <div class="fav-list" id="favList"><span class="fav-empty">저장된 지역이 없습니다</span></div>
 </div>
 <section class="search-panel">
-  <div class="search-grid">
-    <select id="sido" onchange="loadSgg()"><option value="">시/도 선택</option></select>
-    <select id="sigungu" onchange="onSggChange()"><option value="">시/군/구 선택</option></select>
-  </div>
-  <div class="mb8">
-    <select id="dong" class="full-select" disabled onchange="applyFilter()">
-      <option value="">동 선택 (전체)</option>
+  <div style="display:flex;gap:6px;margin-bottom:6px">
+    <select id="sido" onchange="loadSgg()" style="flex:1;min-width:0;height:38px;border:0.5px solid #ccc;border-radius:8px;padding:0 8px;font-size:14px;background:#fff;appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 6px center"><option value="">시/도</option></select>
+    <select id="sigungu" onchange="onSggChange()" style="flex:1;min-width:0;height:38px;border:0.5px solid #ccc;border-radius:8px;padding:0 8px;font-size:14px;background:#fff;appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 6px center"><option value="">시/군/구</option></select>
+    <select id="dong" style="flex:1;min-width:0;height:38px;border:0.5px solid #ccc;border-radius:8px;padding:0 8px;font-size:14px;background:#fff;appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 6px center" disabled onchange="applyFilter()">
+      <option value="">동 (전체)</option>
     </select>
   </div>
-  <div class="month-label">조회 기간</div>
-  <div style="display:flex;gap:5px;margin-bottom:6px;flex-wrap:wrap">
+  <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center">
     <button class="period-btn" onclick="setPeriod(3)">3개월</button>
     <button class="period-btn active" onclick="setPeriod(6)">6개월</button>
     <button class="period-btn" onclick="setPeriod(12)">12개월</button>
     <button class="period-btn" onclick="setPeriod(24)">24개월</button>
-  </div>
-  <div class="month-row">
-    <input type="month" id="startM"/>
-    <input type="month" id="endM"/>
+    <input type="month" id="startM" style="flex:1;min-width:0;height:32px;border:0.5px solid #ccc;border-radius:8px;padding:0 6px;font-size:13px;background:#fff"/>
+    <input type="month" id="endM" style="flex:1;min-width:0;height:32px;border:0.5px solid #ccc;border-radius:8px;padding:0 6px;font-size:13px;background:#fff"/>
   </div>
   <button class="btn-search trade" id="btnSearch" onclick="doSearch()">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
