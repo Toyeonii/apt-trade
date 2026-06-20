@@ -231,13 +231,15 @@ body{padding-bottom:64px}
       <option value="">동 (전체)</option>
     </select>
   </div>
-  <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center">
+  <div style="display:flex;gap:5px;margin-bottom:6px;flex-wrap:wrap">
     <button class="period-btn" onclick="setPeriod(3)">3개월</button>
     <button class="period-btn active" onclick="setPeriod(6)">6개월</button>
     <button class="period-btn" onclick="setPeriod(12)">12개월</button>
     <button class="period-btn" onclick="setPeriod(24)">24개월</button>
-    <input type="month" id="startM" style="flex:1;min-width:0;height:32px;border:0.5px solid #ccc;border-radius:8px;padding:0 6px;font-size:13px;background:#fff"/>
-    <input type="month" id="endM" style="flex:1;min-width:0;height:32px;border:0.5px solid #ccc;border-radius:8px;padding:0 6px;font-size:13px;background:#fff"/>
+  </div>
+  <div style="display:flex;gap:6px;margin-bottom:8px">
+    <input type="month" id="startM" style="flex:1;height:34px;border:0.5px solid #ccc;border-radius:8px;padding:0 8px;font-size:14px;background:#fff"/>
+    <input type="month" id="endM" style="flex:1;height:34px;border:0.5px solid #ccc;border-radius:8px;padding:0 8px;font-size:14px;background:#fff"/>
   </div>
   <button class="btn-search trade" id="btnSearch" onclick="doSearch()">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
