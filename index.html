@@ -231,15 +231,17 @@ body{padding-bottom:64px}
       <option value="">동 (전체)</option>
     </select>
   </div>
-  <div class="month-label">조회 기간</div>
-  <div style="display:flex;gap:5px;margin-bottom:6px;flex-wrap:wrap">
+  <div style="display:flex;gap:5px;margin-bottom:6px;align-items:center;flex-wrap:wrap">
+    <span class="month-label" style="margin-bottom:0">조회 기간</span>
     <button class="period-btn" onclick="setPeriod(3)">3개월</button>
     <button class="period-btn active" onclick="setPeriod(6)">6개월</button>
     <button class="period-btn" onclick="setPeriod(12)">12개월</button>
     <button class="period-btn" onclick="setPeriod(24)">24개월</button>
   </div>
-  <div style="display:flex;gap:6px;margin-bottom:8px">
+  <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center">
+    <span class="month-label" style="margin-bottom:0;white-space:nowrap">시작</span>
     <input type="month" id="startM" style="flex:1;height:34px;border:0.5px solid #ccc;border-radius:8px;padding:0 8px;font-size:14px;background:#fff"/>
+    <span class="month-label" style="margin-bottom:0;white-space:nowrap">종료</span>
     <input type="month" id="endM" style="flex:1;height:34px;border:0.5px solid #ccc;border-radius:8px;padding:0 8px;font-size:14px;background:#fff"/>
   </div>
   <button class="btn-search trade" id="btnSearch" onclick="doSearch()">
