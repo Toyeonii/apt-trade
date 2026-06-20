@@ -1124,7 +1124,7 @@ function showAptModal(aptNm, roadNm, aptSeq){
   modalAptSeq=aptSeq||'';
   _modalRoadNm=roadNm||'';
   _modalType=currentMode==='map'?mapDataMode:currentMode;
-  if(_modalType==='jeonse'||_modalType==='wolse') _modalType='trade'; // 지도에서는 기본 매매
+  if(currentMode==='map'&&(_modalType==='jeonse'||_modalType==='wolse')) _modalType='trade'; // 지도에서는 기본 매매
   _modalMonths=6;
   _modalTypeCache={};
   // 거래유형 버튼 active 초기화
