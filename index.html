@@ -2261,7 +2261,7 @@ function restoreLastSearch(){
       document.getElementById('sigungu').value=s.sggCd;
       if(s.startM)document.getElementById('startM').value=s.startM;
       if(s.endM)document.getElementById('endM').value=s.endM;
-      if(s.mode&&s.mode!=='trade')switchMode(s.mode);
+      // 항상 지도 탭으로 시작 (모드 복원 안함)
       showToast(`마지막 조회: ${s.sidoShort} ${s.sggName}`);
     },100);
   }catch(e){}
