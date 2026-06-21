@@ -1552,6 +1552,28 @@ function selectModalTab(arKey, btn){
 
 // ── 팝업 공유 ──
 async function shareModal(){
+  // URL 공유 (아파트명+면적+기간 포함)
+  const sggCd=document.getElementById('sigungu').value;
+  const sido=document.getElementById('sido').value;
+  const startM=document.getElementById('startM').value;
+  const endM=document.getElementById('endM').value;
+  const params=new URLSearchParams({
+    sido,sggCd,startM,endM,mode:currentMode,
+    apt:modalAptNm||'',
+    area:_modalSelectedArea||'',
+    months:_modalMonths
+  });
+  const url=`${location.origin}${location.pathname}?${params}`;
+  try{
+    await navigator.clipboard.writeText(url);
+    showToast('아파트 링크 복사됨!');
+  }catch(e){
+    const ta=document.createElement('textarea');
+    ta.value=url;document.body.appendChild(ta);ta.select();
+    document.execCommand('copy');document.body.removeChild(ta);
+    showToast('아파트 링크 복사됨!');
+  }
+  return;
   const sheet=document.querySelector('.modal-sheet');
   const body=document.getElementById('modalBody');
   if(!sheet||!body){showToast('공유할 내용이 없습니다');return;}
@@ -3109,13 +3131,30 @@ function loadFromUrl(){
   const startM=p.get('startM')||'';
   const endM=p.get('endM')||'';
   const mode=p.get('mode')||'trade';
+  const aptNm=p.get('apt')||'';
+  const aptArea=p.get('area')||'';
+  const aptMonths=parseInt(p.get('months')||'6');
   if(sido){document.getElementById('sido').value=sido;loadSgg();}
   setTimeout(()=>{
     if(sggCd)document.getElementById('sigungu').value=sggCd;
     if(startM)document.getElementById('startM').value=startM;
     if(endM)document.getElementById('endM').value=endM;
     if(mode!=='trade')switchMode(mode);
-    if(sggCd&&startM&&endM)doSearch();
+    if(sggCd&&startM&&endM){
+      doSearch().then(()=>{
+        if(aptNm){
+          // 조회 완료 후 해당 아파트 팝업 자동 오픈
+          setTimeout(()=>{
+            const matched=allData.find(d=>d.aptNm===aptNm);
+            if(matched){
+              _modalMonths=aptMonths;
+              _modalSelectedArea=aptArea;
+              showAptModal(aptNm, matched.lawdCd||sggCd, matched.roadNm||'', matched.roadNmBonbun||'', matched.aptSeq||'');
+            }
+          },500);
+        }
+      });
+    }
   },100);
 }
 
