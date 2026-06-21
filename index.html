@@ -1203,7 +1203,7 @@ function onAptFilterInput(){
   const names=[...new Set(allData.map(d=>d.aptNm).filter(n=>n&&n.toLowerCase().includes(q.toLowerCase())))].slice(0,8);
   if(!names.length){list.style.display='none';return;}
   _acIdx=-1;
-  list.innerHTML=names.map(n=>`<div class="autocomplete-item" onclick="selectAc('${n.replace(/'/g,"\\'")}')">${n}</div>`).join('');
+  list.innerHTML=names.map(n=>`<div class="autocomplete-item" onmousedown="selectAc('${n.replace(/'/g,"\\'")}')">${n}</div>`).join('');
   list.style.display='block';
 }
 function selectAc(name){
