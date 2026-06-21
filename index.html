@@ -399,7 +399,7 @@ body{padding-bottom:64px}
     <div class="modal-chart" id="favModalChartWrap">
       <div class="modal-chart-wrap"><canvas id="favModalChart"></canvas></div>
     </div>
-    <div class="modal-body" id="favModalBody"><div class="state-screen"><div class="state-icon">⏳</div><div class="state-title">조회 중...</div></div></div>
+    <div class="modal-body" id="favModalBody"><div class="state-screen"><div class="spinner"></div><div class="state-title">조회 중...</div></div></div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -1292,7 +1292,7 @@ async function loadModalTypeData(){
   }
 
   // 로딩 표시
-  document.getElementById('modalBody').innerHTML='<div class="state-screen" style="width:100%;min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="state-icon">⏳</div><div class="state-title">조회 중...</div></div>';
+  document.getElementById('modalBody').innerHTML='<div class="state-screen" style="width:100%;min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="spinner"></div><div class="state-title">조회 중...</div></div>';
   document.getElementById('modalChartWrap').style.display='none';
 
   try{
@@ -2635,7 +2635,7 @@ async function openFavModal(fav, forceRefresh=false){
     } catch(e){}
   } else {
     document.getElementById('favModalSub').textContent='조회 중...';
-    document.getElementById('favModalBody').innerHTML='<div class="state-screen"><div class="state-icon">⏳</div><div class="state-title">조회 중...</div></div>';
+    document.getElementById('favModalBody').innerHTML='<div class="state-screen"><div class="spinner"></div><div class="state-title">조회 중...</div></div>';
   }
 
   // 캐시 없을 때 전체 조회
