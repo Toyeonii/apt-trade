@@ -1292,7 +1292,7 @@ async function loadModalTypeData(){
   }
 
   // 로딩 표시
-  document.getElementById('modalBody').innerHTML='<div class="state-screen"><div class="state-icon">⏳</div><div class="state-title">조회 중...</div></div>';
+  document.getElementById('modalBody').innerHTML='<div class="state-screen" style="width:100%;min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="state-icon">⏳</div><div class="state-title">조회 중...</div></div>';
   document.getElementById('modalChartWrap').style.display='none';
 
   try{
