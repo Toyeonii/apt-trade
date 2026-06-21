@@ -1182,7 +1182,7 @@ function showToast(msg){
 let modalChartInstance=null;
 
 let modalAptNm='', modalAreaGroups={}, modalAreaKeys=[], modalAptSeq='';
-let _modalType='trade', _modalMonths=6, _modalRoadNm='', _modalTypeCache={};
+let _modalType='trade', _modalMonths=6, _modalRoadNm='', _modalTypeCache={}, _modalSelectedArea='';
 
 function showAptModal(aptNm, roadNm, aptSeq){
   const deals=allData.filter(d=>{
@@ -1214,6 +1214,7 @@ function showAptModal(aptNm, roadNm, aptSeq){
     }
   }catch(e){}
   _modalTypeCache={};
+  _modalSelectedArea=''; // 면적탭 초기화
   // 거래유형 버튼 active 초기화
   ['trade','jeonse','wolse'].forEach(t=>document.getElementById(`modalType${t.charAt(0).toUpperCase()+t.slice(1)}`)?.classList.toggle('active',t===_modalType));
   // 기간 버튼 active 초기화
@@ -1351,10 +1352,17 @@ function renderModalWithData({items, deals}, type){
 
   // _allDataForModal 임시 저장 (차트용 구 전체 데이터)
   window._allDataForModal=items;
-  selectModalTab(modalAreaKeys[0]);
+
+  // 저장된 면적탭 복원 (없으면 첫번째)
+  const restoreKey=_modalSelectedArea&&modalAreaKeys.includes(_modalSelectedArea)?_modalSelectedArea:modalAreaKeys[0];
+  document.getElementById('modalTabs').querySelectorAll('.modal-tab').forEach((btn,i)=>{
+    btn.classList.toggle('active', modalAreaKeys[i]===restoreKey);
+  });
+  selectModalTab(restoreKey);
 }
 
 function selectModalTab(arKey, btn){
+  _modalSelectedArea=arKey; // 선택 탭 저장
   // 탭 활성화
   document.querySelectorAll('.modal-tab').forEach(t=>t.classList.remove('active'));
   if(btn) btn.classList.add('active');
