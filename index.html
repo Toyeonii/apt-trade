@@ -14,10 +14,10 @@
 <link rel="manifest" href="manifest.json">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,'Pretendard','Apple SD Gothic Neo',sans-serif;background:#f5f6f8;color:#1a1a1a;min-height:100vh;overflow-x:hidden}
+body{font-family:-apple-system,'Pretendard','Apple SD Gothic Neo',sans-serif;background:#f5f6f8;color:#1a1a1a;height:100vh;overflow:hidden;display:flex;flex-direction:column}
 html{overflow-x:hidden}
 @media(max-width:480px){html,body{overscroll-behavior:none}}
-.app-header{background:#0C447C;color:#fff;padding:1rem 1.25rem 0.75rem;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.18)}
+.app-header{background:#0C447C;color:#fff;padding:1rem 1.25rem 0.75rem;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.18);flex-shrink:0}
 .app-header h1{font-size:17px;font-weight:600;display:flex;align-items:center;gap:8px}
 .dot{width:8px;height:8px;background:#60D4A4;border-radius:50%;flex-shrink:0;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
@@ -207,7 +207,7 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
 .nav-icon{font-size:35px;line-height:1}
 .nav-label{font-size:11px;font-weight:500}
 .nav-btn.active .nav-label{font-weight:700}
-body{padding-bottom:64px}
+body{padding-bottom:0}
 .app-footer{text-align:center;font-size:11px;color:#888;padding:16px;background:#2C2C2A}
 @media(min-width:481px){.card-list{display:none}}
 @media(max-width:480px){
@@ -345,14 +345,14 @@ body{padding-bottom:64px}
     <canvas id="priceChart"></canvas>
   </div>
 </div>
-<div id="mapView" style="display:none;height:calc(100vh - 96px);position:relative">
+<div id="mapView" style="display:none;height:100%;position:relative">
   <div id="mainMap" style="width:100%;height:100%"></div>
   <button id="myLocationBtn" onclick="moveToMyLocation()" style="position:absolute;bottom:80px;right:14px;width:40px;height:40px;background:#fff;border:none;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.2);cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;z-index:100">📍</button>
   <div id="mapInfo" style="position:absolute;bottom:16px;left:50%;transform:translateX(-50%);background:rgba(12,68,124,0.9);color:#fff;padding:8px 16px;border-radius:20px;font-size:12px;white-space:nowrap;pointer-events:none;display:none"></div>
   <button id="searchThisAreaBtn" onclick="searchThisArea()" style="display:none;position:absolute;top:14px;left:50%;transform:translateX(-50%);background:#fff;color:#0C447C;border:1.5px solid #185FA5;border-radius:20px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.15);z-index:100;white-space:nowrap">🔍 이 지역 검색</button>
   <div id="mapSearching" style="display:none;position:absolute;top:14px;left:50%;transform:translateX(-50%);background:rgba(12,68,124,0.9);color:#fff;border-radius:20px;padding:8px 18px;font-size:13px;z-index:100;white-space:nowrap">조회 중...</div>
 </div>
-<main id="main">
+<main id="main" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch">
   <div class="state-screen">
     <div class="state-icon">🏢</div>
     <div class="state-title">지역과 기간을 선택하세요</div>
