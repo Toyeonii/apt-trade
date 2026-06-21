@@ -278,10 +278,10 @@ body{padding-bottom:64px}
       필터
       <span id="filterBadge" style="display:none;background:#0C447C;color:#fff;border-radius:10px;font-size:10px;padding:1px 5px;font-weight:700"></span>
     </button>
-    <button class="sort-btn" id="sort-date" onclick="setSort('date')" style="flex-shrink:0">최신순</button>
-    <button class="sort-btn" id="sort-price-desc" onclick="setSort('price-desc')" style="flex-shrink:0">고가순</button>
-    <button class="sort-btn" id="sort-price-asc" onclick="setSort('price-asc')" style="flex-shrink:0">저가순</button>
-    <button class="sort-btn" id="sort-area" onclick="setSort('area')" style="flex-shrink:0">면적순</button>
+    <button id="sortToggleBtn" onclick="toggleSortPanel()" style="height:36px;padding:0 10px;border:0.5px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;font-size:13px;color:#555;white-space:nowrap;display:flex;align-items:center;gap:4px;flex-shrink:0">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
+      <span id="sortLabel">최신순</span>
+    </button>
     <button class="sort-btn" id="btn-excel" onclick="downloadExcel()" style="background:#E1F5EE;border-color:#9FE1CB;color:#085041;flex-shrink:0">📥 엑셀</button>
   </div>
   <!-- 필터 패널 (접기/펼치기) -->
@@ -316,6 +316,15 @@ body{padding-bottom:64px}
         <option value="old30">30년 이상</option>
       </select>
       <button onclick="resetFilters()" style="height:36px;padding:0 10px;font-size:12px;border:0.5px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;color:#888">초기화</button>
+    </div>
+  </div>
+  <!-- 정렬 패널 -->
+  <div id="sortPanel" style="display:none;width:100%;margin-top:6px;padding-top:6px;border-top:0.5px solid #eee">
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <button class="sort-btn" id="sort-date" onclick="setSort('date')">최신순</button>
+      <button class="sort-btn" id="sort-price-desc" onclick="setSort('price-desc')">고가순</button>
+      <button class="sort-btn" id="sort-price-asc" onclick="setSort('price-asc')">저가순</button>
+      <button class="sort-btn" id="sort-area" onclick="setSort('area')">면적순</button>
     </div>
   </div>
 </div>
@@ -840,9 +849,11 @@ function applyFilter(){
 function setSort(type){
   currentSort=type;
   const ac=currentMode==='trade'?'active-trade':'active-rent';
-  const isRentMode=currentMode==='jeonse'||currentMode==='wolse'||currentMode==='rent';
   document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active-trade','active-rent'));
   document.getElementById('sort-'+type)?.classList.add(ac);
+  const labels={'date':'최신순','price-desc':'고가순','price-asc':'저가순','area':'면적순'};
+  const sortLabel=document.getElementById('sortLabel');
+  if(sortLabel) sortLabel.textContent=labels[type]||'정렬';
   if(filteredData.length>0)sortData();
 }
 
@@ -1141,6 +1152,15 @@ function showLoading(){
 }
 
 // ── 필터 패널 ──
+function toggleSortPanel(){
+  const panel=document.getElementById('sortPanel');
+  const btn=document.getElementById('sortToggleBtn');
+  const isOpen=panel.style.display==='flex'||panel.style.display==='block';
+  panel.style.display=isOpen?'none':'flex';
+  btn.style.background=isOpen?'#fff':'#E6F1FB';
+  btn.style.borderColor=isOpen?'#ddd':'#185FA5';
+  btn.style.color=isOpen?'#555':'#0C447C';
+}
 function toggleFilterPanel(){
   const panel=document.getElementById('filterPanel');
   const btn=document.getElementById('filterToggleBtn');
