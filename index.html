@@ -1555,28 +1555,6 @@ function selectModalTab(arKey, btn){
 
 // ── 팝업 공유 ──
 async function shareModal(){
-  // URL 공유 (아파트명+면적+기간 포함)
-  const sggCd=document.getElementById('sigungu').value;
-  const sido=document.getElementById('sido').value;
-  const startM=document.getElementById('startM').value;
-  const endM=document.getElementById('endM').value;
-  const params=new URLSearchParams({
-    sido,sggCd,startM,endM,mode:currentMode,
-    apt:modalAptNm||'',
-    area:_modalSelectedArea||'',
-    months:_modalMonths
-  });
-  const url=`${location.origin}${location.pathname}?${params}`;
-  try{
-    await navigator.clipboard.writeText(url);
-    showToast('아파트 링크 복사됨!');
-  }catch(e){
-    const ta=document.createElement('textarea');
-    ta.value=url;document.body.appendChild(ta);ta.select();
-    document.execCommand('copy');document.body.removeChild(ta);
-    showToast('아파트 링크 복사됨!');
-  }
-  return;
   const sheet=document.querySelector('.modal-sheet');
   const body=document.getElementById('modalBody');
   if(!sheet||!body){showToast('공유할 내용이 없습니다');return;}
@@ -3087,25 +3065,54 @@ async function addNearbyTransit(bar, addr=''){
   });
 }
 
-function shareFavModal(){
-  if(!_currentFav){showToast('공유할 내용이 없습니다');return;}
-  const fav=_currentFav;
-  const now=new Date();
-  const end=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  const s=new Date(now.getFullYear(),now.getMonth()-_favMonths+1,1);
-  const start=`${s.getFullYear()}-${String(s.getMonth()+1).padStart(2,'0')}`;
-  const params=new URLSearchParams({
-    sido:fav.sido||'',sggCd:fav.sggCd||'',
-    startM:start,endM:end,mode:'trade',
-    apt:fav.aptNm||'',area:'',months:_favMonths
-  });
-  const url=`${location.origin}${location.pathname}?${params}`;
-  navigator.clipboard.writeText(url).then(()=>showToast('아파트 링크 복사됨!')).catch(()=>{
-    const ta=document.createElement('textarea');
-    ta.value=url;document.body.appendChild(ta);ta.select();
-    document.execCommand('copy');document.body.removeChild(ta);
-    showToast('아파트 링크 복사됨!');
-  });
+async function shareFavModal(){
+  const favModalEl=document.getElementById('favModal');
+  const sheet=favModalEl?.querySelector('.modal-sheet');
+  const body=document.getElementById('favModalBody');
+  if(!sheet||!body){showToast('공유할 내용이 없습니다');return;}
+
+  showToast('이미지 생성 중...');
+  try{
+    const origOverflow=body.style.overflowY;
+    const origHeight=body.style.height;
+    const origMaxH=sheet.style.maxHeight;
+    sheet.style.maxHeight='none';
+    body.style.overflowY='visible';
+    body.style.height='auto';
+
+    await new Promise(r=>setTimeout(r,100));
+
+    const canvas=await html2canvas(sheet,{
+      scale:2,
+      useCORS:true,
+      backgroundColor:'#ffffff',
+      scrollY:0,
+      windowHeight:sheet.scrollHeight+200,
+      ignoreElements:el=>el.classList.contains('modal-close')||el.tagName==='BUTTON'&&el.onclick?.toString().includes('shareFavModal')
+    });
+
+    sheet.style.maxHeight=origMaxH;
+    body.style.overflowY=origOverflow;
+    body.style.height=origHeight;
+
+    canvas.toBlob(async blob=>{
+      if(!blob)return;
+      const aptNm=document.getElementById('favModalTitle')?.textContent||'아파트실거래가';
+      const file=new File([blob],`${aptNm}.png`,{type:'image/png'});
+      if(navigator.share&&navigator.canShare({files:[file]})){
+        await navigator.share({title:aptNm,files:[file]});
+      } else {
+        const url=URL.createObjectURL(blob);
+        const a=document.createElement('a');
+        a.href=url;a.download=`${aptNm}.png`;a.click();
+        URL.revokeObjectURL(url);
+        showToast('이미지 다운로드 완료');
+      }
+    },'image/png');
+  } catch(e){
+    showToast('공유 중 오류가 발생했습니다');
+    console.error(e);
+  }
 }
 
 function closeFavModal(e){
