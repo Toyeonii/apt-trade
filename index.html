@@ -91,7 +91,17 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
 .badge-jeonse{background:#E1F5EE;border:0.5px solid #9FE1CB;color:#085041;display:inline-block;border-radius:4px;padding:1px 6px;font-size:11px}
 .badge-monthly{background:#FAEEDA;border:0.5px solid #FAC775;color:#633806;display:inline-block;border-radius:4px;padding:1px 6px;font-size:11px}
 .badge-renew{background:#EEEDFE;border:0.5px solid #AFA9EC;color:#26215C;font-size:10px;margin-left:3px;display:inline-block;border-radius:4px;padding:1px 5px}
-.state-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3.5rem 2rem;text-align:center;color:#5F5E5A}
+.skeleton{background:#f0f0f0;border-radius:6px;animation:shimmer 1.2s infinite linear;background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);background-size:200% 100%}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skeleton-row{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:0.5px solid #f0f0f0}
+.skeleton-left{display:flex;flex-direction:column;gap:6px}
+.skeleton-card{background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,0.08)}
+.skeleton-card-top{display:flex;justify-content:space-between;margin-bottom:8px}
+/* 자동완성 */
+.autocomplete-list{position:absolute;top:100%;left:0;right:0;background:#fff;border:0.5px solid #ccc;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.12);z-index:500;max-height:200px;overflow-y:auto;display:none}
+.autocomplete-item{padding:8px 12px;font-size:13px;cursor:pointer;border-bottom:0.5px solid #f0f0f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.autocomplete-item:last-child{border-bottom:none}
+.autocomplete-item:hover,.autocomplete-item.selected{background:#f0f7ff;color:#0C447C}
 .state-icon{font-size:44px;margin-bottom:14px}
 .state-title{font-size:15px;font-weight:600;color:#333;margin-bottom:8px}
 .state-sub{font-size:13px;line-height:1.8;color:#888}
@@ -257,8 +267,9 @@ body{padding-bottom:64px}
 </section>
 <div id="filterBar" class="filter-bar" style="display:none">
   <div style="flex:1;min-width:120px;position:relative;display:flex;align-items:center">
-    <input type="text" id="aptFilter" placeholder="아파트명 검색..." oninput="applyFilter()" style="width:100%;padding-right:28px"/>
-    <button onclick="document.getElementById('aptFilter').value='';applyFilter()" style="position:absolute;right:6px;border:none;background:none;cursor:pointer;color:#aaa;font-size:16px;line-height:1;padding:0">✕</button>
+    <input type="text" id="aptFilter" placeholder="아파트명 검색..." oninput="onAptFilterInput()" style="width:100%;padding-right:28px"/>
+    <button onclick="document.getElementById('aptFilter').value='';applyFilter();document.getElementById('autocompleteList').style.display='none'" style="position:absolute;right:6px;border:none;background:none;cursor:pointer;color:#aaa;font-size:16px;line-height:1;padding:0">✕</button>
+    <div class="autocomplete-list" id="autocompleteList"></div>
   </div>
   <select id="areaFilter" onchange="applyFilter()">
     <option value="">면적 전체</option>
@@ -1082,13 +1093,72 @@ function downloadExcel(){
 }
 
 function showLoading(){
-  document.getElementById('main').innerHTML=`<div class="state-screen">
-    <div class="spinner"></div>
-    <div class="prog-wrap"><div class="prog-bar"></div></div>
-    <div class="prog-text">${currentMode==='trade'?'매매':'전월세'} 데이터 조회 중...</div>
-    <div class="prog-sub">잠시만 기다려 주세요</div>
-  </div>`;
+  const isMobile=window.innerWidth<=480;
+  if(isMobile){
+    const cards=Array.from({length:6},()=>`
+      <div class="skeleton-card">
+        <div class="skeleton-card-top">
+          <div class="skeleton" style="width:45%;height:14px;border-radius:4px"></div>
+          <div class="skeleton" style="width:28%;height:16px;border-radius:4px"></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <div class="skeleton" style="width:60px;height:20px;border-radius:4px"></div>
+          <div class="skeleton" style="width:50px;height:20px;border-radius:4px"></div>
+          <div class="skeleton" style="width:55px;height:20px;border-radius:4px"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between">
+          <div class="skeleton" style="width:35%;height:11px;border-radius:4px"></div>
+          <div class="skeleton" style="width:25%;height:11px;border-radius:4px"></div>
+        </div>
+      </div>`).join('');
+    document.getElementById('main').innerHTML=`<div class="card-list">${cards}</div>`;
+  } else {
+    const rows=Array.from({length:10},()=>`
+      <div class="skeleton-row">
+        <div class="skeleton-left">
+          <div class="skeleton" style="width:120px;height:13px;border-radius:4px"></div>
+          <div class="skeleton" style="width:80px;height:11px;border-radius:4px"></div>
+        </div>
+        <div class="skeleton" style="width:90px;height:15px;border-radius:4px"></div>
+      </div>`).join('');
+    document.getElementById('main').innerHTML=`<div style="background:#fff">${rows}</div>`;
+  }
 }
+
+// ── 자동완성 ──
+let _acIdx=-1;
+function onAptFilterInput(){
+  applyFilter();
+  const q=(document.getElementById('aptFilter').value||'').trim();
+  const list=document.getElementById('autocompleteList');
+  if(!q||q.length<1){list.style.display='none';return;}
+  const names=[...new Set(allData.map(d=>d.aptNm).filter(n=>n&&n.toLowerCase().includes(q.toLowerCase())))].slice(0,8);
+  if(!names.length){list.style.display='none';return;}
+  _acIdx=-1;
+  list.innerHTML=names.map(n=>`<div class="autocomplete-item" onclick="selectAc('${n.replace(/'/g,"\\'")}')">${n}</div>`).join('');
+  list.style.display='block';
+}
+function selectAc(name){
+  document.getElementById('aptFilter').value=name;
+  document.getElementById('autocompleteList').style.display='none';
+  applyFilter();
+}
+document.addEventListener('click',e=>{
+  if(!e.target.closest('#aptFilter')&&!e.target.closest('#autocompleteList')){
+    const list=document.getElementById('autocompleteList');
+    if(list) list.style.display='none';
+  }
+});
+document.addEventListener('keydown',e=>{
+  const list=document.getElementById('autocompleteList');
+  if(!list||list.style.display==='none') return;
+  const items=list.querySelectorAll('.autocomplete-item');
+  if(e.key==='ArrowDown'){e.preventDefault();_acIdx=Math.min(_acIdx+1,items.length-1);}
+  else if(e.key==='ArrowUp'){e.preventDefault();_acIdx=Math.max(_acIdx-1,-1);}
+  else if(e.key==='Enter'&&_acIdx>=0){e.preventDefault();selectAc(items[_acIdx].textContent);return;}
+  else if(e.key==='Escape'){list.style.display='none';return;}
+  items.forEach((it,i)=>it.classList.toggle('selected',i===_acIdx));
+});
 
 function showEmpty(){
   document.getElementById('main').innerHTML=`<div class="state-screen"><div class="state-icon">📭</div><div class="state-title">조회된 내역이 없습니다</div><div class="state-sub">해당 지역/기간에 신고된 거래가 없습니다</div></div>`;
