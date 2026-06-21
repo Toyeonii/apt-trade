@@ -407,7 +407,10 @@ body{padding-bottom:0}
           <div class="modal-sub" id="favModalSub"></div>
           <div style="font-size:11px;color:#aaa;margin-top:2px" id="favModalAddr"></div>
         </div>
-        <button class="modal-close" onclick="closeFavModal()">✕</button>
+        <div style="display:flex;gap:6px;align-items:center">
+          <button onclick="shareFavModal()" style="width:32px;height:32px;border-radius:50%;border:none;background:#f0f0f0;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center" title="공유">📤</button>
+          <button class="modal-close" onclick="closeFavModal()">✕</button>
+        </div>
       </div>
       <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
         <span style="font-size:11px;color:#888">조회기간</span>
@@ -3081,6 +3084,27 @@ async function addNearbyTransit(bar, addr=''){
         } catch(e){}
       },{location:new kakao.maps.LatLng(lat,lng), radius:500, sort:kakao.maps.services.SortBy.DISTANCE});
     },{location:new kakao.maps.LatLng(lat,lng), radius:1000, sort:kakao.maps.services.SortBy.DISTANCE});
+  });
+}
+
+function shareFavModal(){
+  if(!_currentFav){showToast('공유할 내용이 없습니다');return;}
+  const fav=_currentFav;
+  const now=new Date();
+  const end=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const s=new Date(now.getFullYear(),now.getMonth()-_favMonths+1,1);
+  const start=`${s.getFullYear()}-${String(s.getMonth()+1).padStart(2,'0')}`;
+  const params=new URLSearchParams({
+    sido:fav.sido||'',sggCd:fav.sggCd||'',
+    startM:start,endM:end,mode:'trade',
+    apt:fav.aptNm||'',area:'',months:_favMonths
+  });
+  const url=`${location.origin}${location.pathname}?${params}`;
+  navigator.clipboard.writeText(url).then(()=>showToast('아파트 링크 복사됨!')).catch(()=>{
+    const ta=document.createElement('textarea');
+    ta.value=url;document.body.appendChild(ta);ta.select();
+    document.execCommand('copy');document.body.removeChild(ta);
+    showToast('아파트 링크 복사됨!');
   });
 }
 
