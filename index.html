@@ -49,7 +49,7 @@ html{overflow-x:hidden}
 .recent-chip:hover{background:#e0eaff}
 .recent-chip-del{color:#aaa;font-size:11px;margin-left:2px;padding:0 2px}
 .recent-chip-del:hover{color:#c00}
-.filter-bar{background:#fff;padding:8px 12px;border-bottom:0.5px solid #e8e8e8;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.filter-bar{background:#fff;padding:8px 12px;border-bottom:0.5px solid #e8e8e8;display:flex;flex-direction:column;gap:0}
 .filter-bar input{flex:1;min-width:120px;height:36px;border:0.5px solid #ccc;border-radius:8px;padding:0 10px;font-size:16px}
 .filter-bar input:focus{outline:none;border-color:#185FA5}
 .filter-bar select{height:36px;border:0.5px solid #ddd;border-radius:8px;padding:0 8px;font-size:14px;background:#fff;cursor:pointer;color:#444;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center;padding-right:22px}
@@ -201,7 +201,7 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
 .apt-info-loading{font-size:11px;color:#aaa;padding:8px 16px;flex-shrink:0}
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;height:64px;background:#fff;border-top:0.5px solid #e0e0e0;display:flex;justify-content:center;z-index:200;box-shadow:0 -2px 8px rgba(0,0,0,0.08);padding:0 8px;padding-bottom:env(safe-area-inset-bottom)}
 .nav-btn{flex:0 0 64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:none;background:transparent;cursor:pointer;color:#888;transition:color 0.15s,background 0.15s;padding:6px 4px;margin:0 4px;border-radius:12px;position:relative}
-@media(max-width:480px){.bottom-nav{padding:0 2px}.nav-btn{margin:0 1px}}
+@media(max-width:480px){.bottom-nav{padding:0 2px}.nav-btn{margin:0 1px}.filter-bar-row{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}.filter-bar-row::-webkit-scrollbar{display:none}}
 .nav-btn.active{color:#0C447C;background:rgba(12,68,124,0.08)}
 .nav-btn.active::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:32px;height:3px;background:#0C447C;border-radius:0 0 3px 3px}
 .nav-icon{font-size:35px;line-height:1}
@@ -267,44 +267,57 @@ body{padding-bottom:64px}
   </div>
 </section>
 <div id="filterBar" class="filter-bar" style="display:none">
-  <div style="flex:1;min-width:120px;position:relative;display:flex;align-items:center">
-    <input type="text" id="aptFilter" placeholder="아파트명 검색..." oninput="onAptFilterInput()" style="width:100%;padding-right:28px"/>
-    <button onclick="document.getElementById('aptFilter').value='';applyFilter();document.getElementById('autocompleteList').style.display='none'" style="position:absolute;right:6px;border:none;background:none;cursor:pointer;color:#aaa;font-size:16px;line-height:1;padding:0">✕</button>
-    <div class="autocomplete-list" id="autocompleteList"></div>
+  <div class="filter-bar-row" style="display:flex;align-items:center;gap:6px;width:100%">
+    <div style="flex:1;position:relative;display:flex;align-items:center">
+      <input type="text" id="aptFilter" placeholder="아파트명 검색..." oninput="onAptFilterInput()" style="width:100%;padding-right:28px"/>
+      <button onclick="document.getElementById('aptFilter').value='';applyFilter();document.getElementById('autocompleteList').style.display='none'" style="position:absolute;right:6px;border:none;background:none;cursor:pointer;color:#aaa;font-size:16px;line-height:1;padding:0">✕</button>
+      <div class="autocomplete-list" id="autocompleteList"></div>
+    </div>
+    <button id="filterToggleBtn" onclick="toggleFilterPanel()" style="height:36px;padding:0 10px;border:0.5px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;font-size:13px;color:#555;white-space:nowrap;display:flex;align-items:center;gap:4px;flex-shrink:0">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+      필터
+      <span id="filterBadge" style="display:none;background:#0C447C;color:#fff;border-radius:10px;font-size:10px;padding:1px 5px;font-weight:700"></span>
+    </button>
+    <button class="sort-btn" id="sort-date" onclick="setSort('date')" style="flex-shrink:0">최신순</button>
+    <button class="sort-btn" id="sort-price-desc" onclick="setSort('price-desc')" style="flex-shrink:0">고가순</button>
+    <button class="sort-btn" id="sort-price-asc" onclick="setSort('price-asc')" style="flex-shrink:0">저가순</button>
+    <button class="sort-btn" id="sort-area" onclick="setSort('area')" style="flex-shrink:0">면적순</button>
+    <button class="sort-btn" id="btn-excel" onclick="downloadExcel()" style="background:#E1F5EE;border-color:#9FE1CB;color:#085041;flex-shrink:0">📥 엑셀</button>
   </div>
-  <select id="areaFilter" onchange="applyFilter()">
-    <option value="">면적 전체</option>
-    <option value="~60">~60㎡</option>
-    <option value="60~85">60~85㎡</option>
-    <option value="85~135">85~135㎡</option>
-    <option value="135~">135㎡~</option>
-  </select>
-  <select id="priceFilter" onchange="applyFilter()">
-    <option value="">금액 전체</option>
-    <option value="~3">~3억</option>
-    <option value="3~6">3~6억</option>
-    <option value="6~10">6~10억</option>
-    <option value="10~20">10~20억</option>
-    <option value="20~">20억~</option>
-  </select>
-  <select id="floorFilter" onchange="applyFilter()">
-    <option value="">층 전체</option>
-    <option value="low">저층(1~5)</option>
-    <option value="mid">중층(6~15)</option>
-    <option value="high">고층(16~)</option>
-  </select>
-  <select id="buildFilter" onchange="applyFilter()">
-    <option value="">건축 전체</option>
-    <option value="new5">5년 이내</option>
-    <option value="new10">10년 이내</option>
-    <option value="old20">20년 이상</option>
-    <option value="old30">30년 이상</option>
-  </select>
-  <button class="sort-btn" id="sort-date" onclick="setSort('date')">최신순</button>
-  <button class="sort-btn" id="sort-price-desc" onclick="setSort('price-desc')">고가순</button>
-  <button class="sort-btn" id="sort-price-asc" onclick="setSort('price-asc')">저가순</button>
-  <button class="sort-btn" id="sort-area" onclick="setSort('area')">면적순</button>
-  <button class="sort-btn" id="btn-excel" onclick="downloadExcel()" style="background:#E1F5EE;border-color:#9FE1CB;color:#085041">📥 엑셀</button>
+  <!-- 필터 패널 (접기/펼치기) -->
+  <div id="filterPanel" style="display:none;width:100%;margin-top:6px;padding-top:6px;border-top:0.5px solid #eee;display:none">
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <select id="areaFilter" onchange="applyFilter();updateFilterBadge()">
+        <option value="">면적 전체</option>
+        <option value="~60">~60㎡</option>
+        <option value="60~85">60~85㎡</option>
+        <option value="85~135">85~135㎡</option>
+        <option value="135~">135㎡~</option>
+      </select>
+      <select id="priceFilter" onchange="applyFilter();updateFilterBadge()">
+        <option value="">금액 전체</option>
+        <option value="~3">~3억</option>
+        <option value="3~6">3~6억</option>
+        <option value="6~10">6~10억</option>
+        <option value="10~20">10~20억</option>
+        <option value="20~">20억~</option>
+      </select>
+      <select id="floorFilter" onchange="applyFilter();updateFilterBadge()">
+        <option value="">층 전체</option>
+        <option value="low">저층(1~5)</option>
+        <option value="mid">중층(6~15)</option>
+        <option value="high">고층(16~)</option>
+      </select>
+      <select id="buildFilter" onchange="applyFilter();updateFilterBadge()">
+        <option value="">건축 전체</option>
+        <option value="new5">5년 이내</option>
+        <option value="new10">10년 이내</option>
+        <option value="old20">20년 이상</option>
+        <option value="old30">30년 이상</option>
+      </select>
+      <button onclick="resetFilters()" style="height:36px;padding:0 10px;font-size:12px;border:0.5px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;color:#888">초기화</button>
+    </div>
+  </div>
 </div>
 <div id="summaryStrip" class="summary-strip trade" style="display:none">
   <div class="sum-item"><div class="sum-label">총 거래</div><div class="sum-value" id="s-total">-</div></div>
@@ -1125,6 +1138,36 @@ function showLoading(){
       </div>`).join('');
     document.getElementById('main').innerHTML=`<div style="background:#fff">${rows}</div>`;
   }
+}
+
+// ── 필터 패널 ──
+function toggleFilterPanel(){
+  const panel=document.getElementById('filterPanel');
+  const btn=document.getElementById('filterToggleBtn');
+  const isOpen=panel.style.display==='flex'||panel.style.display==='block';
+  panel.style.display=isOpen?'none':'flex';
+  btn.style.background=isOpen?'#fff':'#E6F1FB';
+  btn.style.borderColor=isOpen?'#ddd':'#185FA5';
+  btn.style.color=isOpen?'#555':'#0C447C';
+}
+function updateFilterBadge(){
+  const cnt=[
+    document.getElementById('areaFilter')?.value,
+    document.getElementById('priceFilter')?.value,
+    document.getElementById('floorFilter')?.value,
+    document.getElementById('buildFilter')?.value
+  ].filter(v=>v).length;
+  const badge=document.getElementById('filterBadge');
+  if(cnt>0){badge.style.display='inline';badge.textContent=cnt;}
+  else{badge.style.display='none';}
+}
+function resetFilters(){
+  ['areaFilter','priceFilter','floorFilter','buildFilter'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.value='';
+  });
+  updateFilterBadge();
+  applyFilter();
 }
 
 // ── 자동완성 ──
