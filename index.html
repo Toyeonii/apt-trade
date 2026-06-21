@@ -325,6 +325,7 @@ body{padding-bottom:64px}
 </div>
 <div id="mapView" style="display:none;height:calc(100vh - 96px);position:relative">
   <div id="mainMap" style="width:100%;height:100%"></div>
+  <button id="myLocationBtn" onclick="moveToMyLocation()" style="position:absolute;bottom:80px;right:14px;width:40px;height:40px;background:#fff;border:none;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.2);cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;z-index:100">📍</button>
   <div id="mapInfo" style="position:absolute;bottom:16px;left:50%;transform:translateX(-50%);background:rgba(12,68,124,0.9);color:#fff;padding:8px 16px;border-radius:20px;font-size:12px;white-space:nowrap;pointer-events:none;display:none"></div>
   <button id="searchThisAreaBtn" onclick="searchThisArea()" style="display:none;position:absolute;top:14px;left:50%;transform:translateX(-50%);background:#fff;color:#0C447C;border:1.5px solid #185FA5;border-radius:20px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.15);z-index:100;white-space:nowrap">🔍 이 지역 검색</button>
   <div id="mapSearching" style="display:none;position:absolute;top:14px;left:50%;transform:translateX(-50%);background:rgba(12,68,124,0.9);color:#fff;border-radius:20px;padding:8px 18px;font-size:13px;z-index:100;white-space:nowrap">조회 중...</div>
@@ -1823,6 +1824,41 @@ async function searchThisArea(){
       showToast('조회 중 오류가 발생했습니다');
     }
   });
+}
+
+function moveToMyLocation(){
+  if(!mainMapInstance){showToast('지도를 먼저 열어주세요');return;}
+  if(!navigator.geolocation){showToast('이 브라우저는 위치 서비스를 지원하지 않습니다');return;}
+  const btn=document.getElementById('myLocationBtn');
+  btn.textContent='⏳';
+  btn.disabled=true;
+  navigator.geolocation.getCurrentPosition(
+    pos=>{
+      const lat=pos.coords.latitude, lng=pos.coords.longitude;
+      const locPos=new kakao.maps.LatLng(lat,lng);
+      mainMapInstance.setCenter(locPos);
+      mainMapInstance.setLevel(6);
+      // 기존 내 위치 마커 제거
+      if(window._myLocMarker) window._myLocMarker.setMap(null);
+      // 내 위치 마커 표시
+      const marker=new kakao.maps.CustomOverlay({
+        position:locPos,
+        content:'<div style="width:16px;height:16px;background:#185FA5;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 3px rgba(24,95,165,0.3)"></div>',
+        yAnchor:0.5,xAnchor:0.5
+      });
+      marker.setMap(mainMapInstance);
+      window._myLocMarker=marker;
+      btn.textContent='📍';
+      btn.disabled=false;
+      showToast('현재 위치로 이동했습니다');
+    },
+    err=>{
+      btn.textContent='📍';
+      btn.disabled=false;
+      showToast('위치 정보를 가져올 수 없습니다');
+    },
+    {timeout:8000,maximumAge:60000}
+  );
 }
 
 async function initMainMap(){
