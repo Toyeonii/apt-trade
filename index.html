@@ -2827,10 +2827,10 @@ function toggleChart(){
 }
 
 function applyChartFoldSetting(){
-  if(localStorage.getItem('apt_chart_fold')==='1'&&chartVisible){
+  if(localStorage.getItem('apt_chart_fold')==='1'){
     const wrap=document.getElementById('chartWrap');
     const btn=document.querySelector('.chart-fold');
-    if(wrap&&wrap.style.display!=='none'){
+    if(wrap){
       chartVisible=false;
       wrap.style.display='none';
       if(btn) btn.textContent='▼ 펼치기';
