@@ -1737,7 +1737,8 @@ function selectModalTab(arKey, btn){
       pointRadius:4,
       pointHoverRadius:6,
       fill:true,
-      tension:0.3
+      tension:0.3,
+      spanGaps:true
     }];
     if(districtPts.length>=2){
       datasets.push({
@@ -2831,7 +2832,8 @@ function renderChart(){
           pointRadius:4,
           pointBackgroundColor:color,
           fill:true,
-          tension:0.3
+          tension:0.3,
+          spanGaps:true
         }]
       },
       options:{
@@ -3169,7 +3171,7 @@ function renderFavAreaDeals(ar, deals, mode){
           {type:'line',data:monthLabels.map(m=>{
             const mPts=pts.filter(p=>p.x.startsWith(m));
             return mPts.length?Math.round(mPts.reduce((a,b)=>a+b.y,0)/mPts.length):null;
-          }),borderColor:color,backgroundColor:'transparent',borderWidth:2,pointRadius:3,tension:0.3,yAxisID:'y',},
+          }),borderColor:color,backgroundColor:'transparent',borderWidth:2,pointRadius:3,tension:0.3,spanGaps:true,yAxisID:'y',},
           {type:'bar',data:monthLabels.map(m=>{
             const mPts=pts.filter(p=>p.x.startsWith(m));
             return mPts.length?Math.max(...mPts.map(p=>p.y)):null;
