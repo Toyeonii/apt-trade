@@ -282,13 +282,25 @@ body{padding-bottom:0}
     <h1><span class="dot"></span>아파트 실거래가 조회</h1>
     <div style="display:flex;align-items:center;gap:8px">
       <span id="modeLabel" class="mode-label mode-label-map">지도</span>
-      <button id="darkModeBtn" onclick="toggleDarkMode()" style="width:28px;height:28px;border-radius:50%;border:none;background:rgba(255,255,255,0.2);color:#fff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center" title="다크모드">🌙</button>
+      <button id="settingsBtn" onclick="toggleSettings()" style="width:28px;height:28px;border-radius:50%;border:none;background:rgba(255,255,255,0.2);color:#fff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center" title="다크모드">⚙️</button>
       <button id="searchPanelToggleBtn" onclick="toggleSearchPanel()" style="display:none;height:26px;padding:0 8px;border-radius:13px;border:none;background:rgba(255,255,255,0.2);color:#fff;cursor:pointer;font-size:11px;align-items:center;justify-content:center;gap:3px;white-space:nowrap"><span id="searchPanelToggleIcon">▼</span> <span id="searchPanelToggleText">검색접기</span></button>
     </div>
   </div>
   <div class="header-sub">국토교통부 실거래가 공개시스템</div>
 </header>
 
+
+<!-- 설정 패널 -->
+<div id="settingsPanel" style="display:none;position:absolute;top:0;right:0;left:0;z-index:99;background:var(--surface);border-bottom:0.5px solid var(--border);padding:12px 16px;box-shadow:0 4px 12px rgba(0,0,0,0.15)">
+  <div style="display:flex;align-items:center;justify-content:space-between;max-width:400px;margin:0 auto">
+    <span style="font-size:14px;font-weight:600;color:var(--text)">🌙 다크모드</span>
+    <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer">
+      <input type="checkbox" id="darkModeSwitch" onchange="toggleDarkMode()" style="opacity:0;width:0;height:0;position:absolute">
+      <span id="darkModeTrack" style="position:absolute;inset:0;background:#ccc;border-radius:24px;transition:0.3s"></span>
+      <span id="darkModeThumb" style="position:absolute;left:3px;top:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:0.3s;box-shadow:0 1px 3px rgba(0,0,0,0.3)"></span>
+    </label>
+  </div>
+</div>
 <div id="favPanel" class="fav-panel" style="display:none">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
     <div class="fav-title" style="margin-bottom:0">⭐ 즐겨찾기</div>
@@ -3385,6 +3397,24 @@ function showSearchPanelToggle(){
   }
 }
 
+// ── 설정 패널 ──
+function toggleSettings(){
+  const panel=document.getElementById('settingsPanel');
+  const isOpen=panel.style.display!=='none';
+  panel.style.display=isOpen?'none':'block';
+  // 외부 클릭 시 닫기
+  if(!isOpen){
+    setTimeout(()=>{
+      document.addEventListener('click',function closeSettings(e){
+        if(!panel.contains(e.target)&&e.target.id!=='settingsBtn'){
+          panel.style.display='none';
+          document.removeEventListener('click',closeSettings);
+        }
+      });
+    },10);
+  }
+}
+
 // ── 다크모드 ──
 function toggleDarkMode(){
   const isDark=document.documentElement.getAttribute('data-theme')==='dark';
@@ -3393,7 +3423,13 @@ function toggleDarkMode(){
 function setDarkMode(dark){
   document.documentElement.setAttribute('data-theme', dark?'dark':'light');
   localStorage.setItem('apt_dark_mode', dark?'1':'0');
-  document.getElementById('darkModeBtn').textContent=dark?'☀️':'🌙';
+  // 토글 스위치 상태 업데이트
+  const sw=document.getElementById('darkModeSwitch');
+  const track=document.getElementById('darkModeTrack');
+  const thumb=document.getElementById('darkModeThumb');
+  if(sw) sw.checked=dark;
+  if(track) track.style.background=dark?'#4A90D9':'#ccc';
+  if(thumb) thumb.style.transform=dark?'translateX(20px)':'translateX(0)';
 }
 // 시스템 다크모드 + 저장된 설정 적용
 (function(){
