@@ -483,7 +483,7 @@ const RD={
 
 let allData=[],filteredData=[],rawRentData=[],currentSort='date',currentPage=1,currentMode='map';
 let _modeCache={trade:null,jeonse:null,wolse:null}; // {items,rawRentData,lawdCd,startM,endM}
-const PAGE_SIZE=50;
+const PAGE_SIZE=30;
 
 // ── 즐겨찾기 신규 거래 알림 ──
 async function requestNotificationPermission(){
@@ -1082,18 +1082,93 @@ function renderRentTable(){
     bindLongPress(el, el.dataset.apt, el.dataset.road||'', el.dataset.seq||'');
   });
   renderChart();
+  setTimeout(setupInfiniteScroll, 100);
 }
 
 function buildPagination(tp,total){
-  if(tp<=1)return '';
-  let html='<div class="pagination">';
-  html+=`<button class="pg-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
-  let ps=Math.max(1,currentPage-3),pe=Math.min(tp,currentPage+3);
-  if(ps>1)html+=`<button class="pg-btn" onclick="goPage(1)">1</button>${ps>2?'<span class="pg-info">…</span>':''}`;
-  for(let p=ps;p<=pe;p++)html+=`<button class="pg-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
-  if(pe<tp)html+=`${pe<tp-1?'<span class="pg-info">…</span>':''}<button class="pg-btn" onclick="goPage(${tp})">${tp}</button>`;
-  html+=`<span class="pg-info">${currentPage}/${tp}페이지 · 총 ${total.toLocaleString()}건</span></div>`;
-  return html;
+  if(currentPage>=tp) return `<div style="text-align:center;padding:16px;font-size:12px;color:#aaa">총 ${total.toLocaleString()}건 · 전체 표시</div>`;
+  return `<div id="infinitesentinel" style="height:60px;display:flex;align-items:center;justify-content:center"><div class="spinner" style="width:24px;height:24px;border-width:2px;margin:0"></div></div>`;
+}
+
+// ── 무한 스크롤 ──
+let _infiniteObserver=null;
+function setupInfiniteScroll(){
+  if(_infiniteObserver) _infiniteObserver.disconnect();
+  const sentinel=document.getElementById('infinitesentinel');
+  if(!sentinel) return;
+  _infiniteObserver=new IntersectionObserver(entries=>{
+    if(entries[0].isIntersecting) loadMoreData();
+  },{threshold:0.1});
+  _infiniteObserver.observe(sentinel);
+}
+function loadMoreData(){
+  const tp=Math.ceil(filteredData.length/PAGE_SIZE)||1;
+  if(currentPage>=tp) return;
+  currentPage++;
+  appendNextPage();
+}
+function appendNextPage(){
+  const tp=Math.ceil(filteredData.length/PAGE_SIZE)||1;
+  const pg=filteredData.slice((currentPage-1)*PAGE_SIZE,currentPage*PAGE_SIZE);
+  const sentinel=document.getElementById('infinitesentinel');
+  if(!sentinel) return;
+  const isMobile=window.innerWidth<=480;
+  let newHtml='';
+  if(isMobile){
+    // 카드 추가
+    const cardList=document.querySelector('.card-list');
+    if(cardList){
+      pg.forEach(d=>{
+        const p=parsePrice(d.dealAmount),dep=parsePrice(d.deposit),mon=parsePrice(d.monthlyRent);
+        const isJeonse=!mon;
+        const isRenew=(d.contractType||'').includes('갱신');
+        const dt=d.dealYear&&d.dealMonth?`${d.dealYear}.${String(d.dealMonth).padStart(2,'0')}.${String(d.dealDay||'').padStart(2,'0')}`:'-';
+        const div=document.createElement('div');
+        div.className='card';
+        div.dataset.seq=d.aptSeq||'';
+        div.dataset.road=d.jibun||d.roadNm||'';
+        div.dataset.apt=(d.aptNm||'').replace(/"/g,'&quot;');
+        if(currentMode==='trade'){
+          const ar=parseFloat(d.excluUseAr||0);
+          const pyung=p>0&&ar>0?Math.round(p/(ar/3.3058)):0;
+          div.innerHTML=`<div class="card-top"><span class="card-name">${d.aptNm||'-'}</span><span class="card-price">${fmtPrice(p)}</span></div><div class="card-mid"><span class="card-tag">${fmtArea(d.excluUseAr)}</span><span class="card-tag">${d.floor||'-'}층</span><span class="card-tag">${d.buildYear||'-'}년</span>${pyung?`<span class="card-tag">${pyung.toLocaleString()}만/평</span>`:''}</div><div class="card-bot"><span>${d.umdNm||'-'}</span><span>${dt}</span></div>`;
+        } else {
+          div.innerHTML=`<div class="card-top"><span class="card-name">${d.aptNm||'-'}${isRenew?'<span class="card-renew">갱신</span>':''}</span><span class="card-price deposit">${fmtPrice(dep)}</span></div><div class="card-mid"><span class="card-tag ${isJeonse?'jeonse-tag':'rent-tag'}">${isJeonse?'전세':`월세 ${fmtPrice(mon)}`}</span><span class="card-tag">${fmtArea(d.excluUseAr)}</span><span class="card-tag">${d.floor||'-'}층</span></div><div class="card-bot"><span>${d.umdNm||'-'} · ${d.contractTerm||'-'}</span><span>${dt}</span></div>`;
+        }
+        bindLongPress(div, d.aptNm||'', d.jibun||d.roadNm||'', d.aptSeq||'');
+        cardList.appendChild(div);
+      });
+    }
+  } else {
+    // 테이블 tbody에 행 추가
+    const tbody=document.querySelector('tbody');
+    if(tbody){
+      pg.forEach(d=>{
+        const tr=document.createElement('tr');
+        tr.style.cursor='pointer';
+        tr.dataset.seq=d.aptSeq||'';
+        tr.dataset.road=d.jibun||d.roadNm||'';
+        tr.dataset.apt=(d.aptNm||'').replace(/"/g,'&quot;');
+        if(currentMode==='trade'){
+          const p=parsePrice(d.dealAmount),ar=parseFloat(d.excluUseAr||0);
+          const pyung=p>0&&ar>0?Math.round(p/(ar/3.3058)):0;
+          tr.innerHTML=`<td style="font-weight:500">${d.aptNm||'-'}<div style="font-size:11px;color:#aaa">${d.roadNm||d.umdNm||''}</div></td><td style="color:#555;font-size:12px">${fmtArea(d.excluUseAr)}</td><td><span class="badge">${d.floor||'-'}층</span></td><td class="price">${fmtPrice(p)}</td><td style="text-align:right;font-size:12px;color:#888">${pyung?pyung.toLocaleString()+'만/평':'-'}</td><td style="color:#666;font-size:12px">${d.dealYear||''}.${String(d.dealMonth||'').padStart(2,'0')}.${String(d.dealDay||'').padStart(2,'0')}</td><td style="color:#888;font-size:12px">${d.buildYear||'-'}</td><td style="color:#888;font-size:12px">${d.umdNm||'-'}</td>`;
+        } else {
+          const dep=parsePrice(d.deposit),mon=parsePrice(d.monthlyRent);
+          const isRenew=(d.contractType||'').includes('갱신');
+          tr.innerHTML=`<td style="font-weight:500">${d.aptNm||'-'}${isRenew?'<span class="badge-renew">갱신</span>':''}<div style="font-size:11px;color:#aaa">${d.roadNm||d.umdNm||''}</div></td><td style="color:#555;font-size:12px">${fmtArea(d.excluUseAr)}</td><td><span class="badge">${d.floor||'-'}층</span></td><td class="deposit">${fmtPrice(dep)}</td><td style="text-align:right;font-size:12px">${!mon?'<span class="badge-jeonse">전세</span>':`<span class="badge-monthly">${fmtPrice(mon)}</span>`}</td><td style="color:#666;font-size:12px">${d.dealYear||''}.${String(d.dealMonth||'').padStart(2,'0')}.${String(d.dealDay||'').padStart(2,'0')}</td><td style="color:#888;font-size:12px">${d.contractTerm||'-'}</td><td style="color:#888;font-size:12px">${d.umdNm||'-'}</td>`;
+        }
+        bindLongPress(tr, d.aptNm||'', d.jibun||d.roadNm||'', d.aptSeq||'');
+        tbody.appendChild(tr);
+      });
+    }
+  }
+  // sentinel 업데이트
+  if(currentPage>=tp){
+    sentinel.outerHTML=`<div style="text-align:center;padding:16px;font-size:12px;color:#aaa">총 ${filteredData.length.toLocaleString()}건 · 전체 표시</div>`;
+  } else {
+    setupInfiniteScroll();
+  }
 }
 
 function goPage(p){
