@@ -3204,10 +3204,10 @@ function loadFromUrl(){
     const y=document.getElementById('main').scrollTop;
     if(!ticking){
       requestAnimationFrame(()=>{
-        if(y>lastY && y>30 && !searchHidden){
+        if(y>lastY && y>80 && !searchHidden){
           panel.classList.add('hidden');
           searchHidden=true;
-        } else if(y<lastY-10 && searchHidden){
+        } else if(y<lastY-40 && searchHidden){
           panel.classList.remove('hidden');
           searchHidden=false;
         }
