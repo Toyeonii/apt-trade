@@ -2692,8 +2692,7 @@ function restoreLastSearch(){
     loadSgg();
     setTimeout(()=>{
       document.getElementById('sigungu').value=s.sggCd;
-      if(s.startM)document.getElementById('startM').value=s.startM;
-      if(s.endM)document.getElementById('endM').value=s.endM;
+      // 날짜는 기본 조회기간 설정값 유지 (덮어쓰지 않음)
       // 항상 지도 탭으로 시작 (모드 복원 안함)
       showToast(`마지막 조회: ${s.sidoShort} ${s.sggName}`);
     },100);
