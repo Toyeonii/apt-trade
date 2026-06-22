@@ -661,7 +661,14 @@ async function checkFavNewDeals(){
 
 function setPeriod(months){
   document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
-  event.target.classList.add('active');
+  if(typeof event!=='undefined'&&event?.target?.classList?.contains('period-btn')){
+    event.target.classList.add('active');
+  } else {
+    // 코드에서 직접 호출 시 months로 버튼 찾아서 active
+    document.querySelectorAll('.period-btn').forEach(b=>{
+      if(b.textContent.trim()===months+'개월') b.classList.add('active');
+    });
+  }
   const now=new Date();
   const end=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   const s=new Date(now.getFullYear(),now.getMonth()-months+1,1);
@@ -671,21 +678,17 @@ function setPeriod(months){
 }
 
 function init(){
-  initSettings();
-  // 기본 탭 적용
   const defTab=localStorage.getItem('apt_def_tab')||'map';
-  // 기본 조회기간 적용
   const defPeriod=parseInt(localStorage.getItem('apt_def_period')||'6');
-  setPeriod(defPeriod);
   const s=document.getElementById('sido');
   Object.keys(RD).forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;s.appendChild(o);});
-  const now=new Date();
-  const ym=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-  document.getElementById('startM').value=ym(new Date(now.getFullYear(),now.getMonth()-2,1));
-  document.getElementById('endM').value=ym(now);
+  // 기본 조회기간 적용 (DOM 준비 후)
+  setPeriod(defPeriod);
   setSort('date');
   switchMode(defTab);
   renderRecentSearches();
+  // 설정 UI 초기화 (DOM 준비 후)
+  initSettings();
   // 즐겨찾기 신규 거래 체크 (3초 후 - 앱 로드 후)
   setTimeout(()=>checkFavNewDeals(), 3000);
 }
