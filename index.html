@@ -118,7 +118,12 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
 .skeleton-card-top{display:flex;justify-content:space-between;margin-bottom:8px}
 /* 자동완성 */
 .autocomplete-list{position:absolute;top:100%;left:0;right:0;background:var(--surface);border:0.5px solid var(--border);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.12);z-index:500;max-height:200px;overflow-y:auto;display:none}
+[data-theme='dark'] .summary-strip.trade td.price,
+[data-theme='dark'] .summary-strip.trade .card-price{color:var(--price-color) !important}
 [data-theme='dark'] td.price,[data-theme='dark'] .card-price{color:var(--price-color) !important}
+[data-theme='dark'] .mode-wolse td.price,[data-theme='dark'] .mode-wolse .card-price{color:#F0A875 !important}
+[data-theme='dark'] .mode-wolse td.deposit,[data-theme='dark'] .mode-wolse .card-price.deposit{color:#F0A875 !important}
+[data-theme='dark'] .mode-jeonse td.deposit,[data-theme='dark'] .mode-jeonse .card-price.deposit{color:#4DD4A0 !important}
 [data-theme='dark'] td.deposit,[data-theme='dark'] .card-price.deposit{color:#4DD4A0 !important}
 .state-screen{width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3.5rem 2rem;text-align:center;color:var(--text2)}
 .autocomplete-item{padding:8px 12px;font-size:13px;cursor:pointer;border-bottom:0.5px solid #f0f0f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -599,6 +604,9 @@ function init(){
 
 function switchMode(mode){
   const prevMode=currentMode;
+  // body에 모드 클래스 추가 (다크모드 색상 분기용)
+  document.body.classList.remove('mode-trade','mode-jeonse','mode-wolse','mode-map');
+  document.body.classList.add(`mode-${mode}`);
 
   // ── 탭 버튼 UI ──
   document.getElementById('nav-trade').classList.toggle('active', mode==='trade');
