@@ -301,14 +301,7 @@ body{padding-bottom:0}
         <span id="darkModeThumb" style="position:absolute;left:3px;top:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:0.3s;box-shadow:0 1px 3px rgba(0,0,0,0.3)"></span>
       </label>
     </div>
-    <div style="display:flex;align-items:center;justify-content:space-between">
-      <span style="font-size:14px;font-weight:600;color:var(--text)">🔤 글자 크기</span>
-      <div style="display:flex;gap:6px">
-        <button id="fontSmall" onclick="setFontSize('small')" style="height:28px;padding:0 10px;font-size:12px;border:0.5px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;color:#555">작게</button>
-        <button id="fontNormal" onclick="setFontSize('normal')" style="height:28px;padding:0 10px;font-size:12px;border:0.5px solid #185FA5;border-radius:8px;background:#E6F1FB;cursor:pointer;color:#0C447C;font-weight:600">보통</button>
-        <button id="fontLarge" onclick="setFontSize('large')" style="height:28px;padding:0 10px;font-size:12px;border:0.5px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;color:#555">크게</button>
-      </div>
-    </div>
+
   </div>
 </div>
 <div id="favPanel" class="fav-panel" style="display:none">
@@ -3406,24 +3399,6 @@ function showSearchPanelToggle(){
     btn.style.display='flex';
   }
 }
-
-// ── 폰트 크기 ──
-function setFontSize(size){
-  const sizes={'small':'13px','normal':'16px','large':'19px'};
-  document.documentElement.style.fontSize=sizes[size]||'16px';
-  localStorage.setItem('apt_font_size',size);
-  ['small','normal','large'].forEach(s=>{
-    const btn=document.getElementById('font'+s.charAt(0).toUpperCase()+s.slice(1));
-    if(!btn)return;
-    if(s===size){btn.style.borderColor='#185FA5';btn.style.background='#E6F1FB';btn.style.color='#0C447C';btn.style.fontWeight='600';}
-    else{btn.style.borderColor='#ddd';btn.style.background='#fff';btn.style.color='#555';btn.style.fontWeight='400';}
-  });
-}
-// 저장된 폰트 크기 적용
-(function(){
-  const saved=localStorage.getItem('apt_font_size');
-  if(saved) setFontSize(saved);
-})();
 
 // ── 설정 패널 ──
 function toggleSettings(){
