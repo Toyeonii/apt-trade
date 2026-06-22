@@ -3493,6 +3493,9 @@ function setChartFold(fold){
   const thumb=document.getElementById('chartFoldThumb');
   if(track) track.style.background=fold?'#185FA5':'#ccc';
   if(thumb) thumb.style.transform=fold?'translateX(20px)':'translateX(0)';
+  // 즉시 차트 접기/펼치기 적용
+  if(fold && chartVisible) toggleChart();
+  else if(!fold && !chartVisible) toggleChart();
 }
 
 // 설정 초기값 적용
