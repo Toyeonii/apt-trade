@@ -2935,7 +2935,11 @@ function renderFavTabs(tradeDeals, rentDeals){
 function selectFavTab(idx, btn){
   document.querySelectorAll('#favModalTabs .modal-tab').forEach(t=>t.classList.remove('active'));
   btn.classList.add('active');
-  renderFavTab(idx, window._favTabData[idx]);
+  const tab=window._favTabData[idx];
+  // body에 mode 클래스 적용 (다크모드 색상 분기용)
+  document.body.classList.remove('mode-trade','mode-jeonse','mode-wolse');
+  document.body.classList.add(`mode-${tab.mode}`);
+  renderFavTab(idx, tab);
 }
 
 function renderFavTab(idx, tab){
