@@ -23,8 +23,8 @@ html{overflow-x:hidden}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
 .header-sub{font-size:11px;color:rgba(255,255,255,0.6);margin-top:2px}
 
-.search-panel{background:#fff;border-bottom:0.5px solid #e0e0e0;padding:1rem;max-height:600px;overflow:hidden;transition:max-height 0.35s ease,opacity 0.35s ease,padding 0.35s ease}
-.search-panel.hidden{max-height:0;opacity:0;pointer-events:none;padding-top:0;padding-bottom:0}
+.search-panel{background:#fff;border-bottom:0.5px solid #e0e0e0;padding:1rem;overflow:hidden;max-height:600px;transition:max-height 0.35s ease,opacity 0.35s ease,padding 0.35s ease}
+.search-panel.collapsed{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-events:none;border-bottom:none}
 .search-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
 .search-grid select,.full-select{height:38px;border:0.5px solid #ccc;border-radius:8px;padding:0 8px;font-size:14px;background:#fff;width:100%;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
 .search-grid select:focus,.full-select:focus{outline:none;border-color:#185FA5}
@@ -227,7 +227,10 @@ body{padding-bottom:0}
 <header class="app-header" id="appHeader">
   <div style="display:flex;align-items:center;justify-content:space-between">
     <h1><span class="dot"></span>아파트 실거래가 조회</h1>
-    <span id="modeLabel" class="mode-label mode-label-map">지도</span>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span id="modeLabel" class="mode-label mode-label-map">지도</span>
+      <button id="searchPanelToggleBtn" onclick="toggleSearchPanel()" style="display:none;width:28px;height:28px;border-radius:50%;border:none;background:rgba(255,255,255,0.2);color:#fff;cursor:pointer;font-size:14px;align-items:center;justify-content:center">▼</button>
+    </div>
   </div>
   <div class="header-sub">국토교통부 실거래가 공개시스템</div>
 </header>
@@ -871,6 +874,7 @@ function sortData(){
   else if(currentSort==='area')       filteredData.sort((a,b)=>gA(b)-gA(a));
   currentPage=1;
   renderTable();
+  showSearchPanelToggle();
 }
 
 function renderTable(){
@@ -3190,38 +3194,22 @@ function loadFromUrl(){
   },100);
 }
 
-// ── 모바일 검색패널 자동 숨김 ──
-(function(){
-  let lastY=0, ticking=false, searchHidden=false;
-  function onScroll(){
-    if(window.innerWidth>480) return; // 모바일만
-    const panel=document.querySelector('.search-panel');
-    if(!panel||panel.style.display==='none') return;
-    // 조회 결과 없으면 숨기지 않음
-    const summaryStrip=document.getElementById('summaryStrip');
-    if(!summaryStrip||summaryStrip.style.display==='none') return;
-
-    const y=document.getElementById('main').scrollTop;
-    if(!ticking){
-      requestAnimationFrame(()=>{
-        if(y>lastY && y>80 && !searchHidden){
-          panel.classList.add('hidden');
-          searchHidden=true;
-        } else if(y<lastY-40 && searchHidden){
-          panel.classList.remove('hidden');
-          searchHidden=false;
-        }
-        lastY=y;
-        ticking=false;
-      });
-      ticking=true;
-    }
+// ── 검색패널 접기/펼치기 ──
+let _searchPanelCollapsed=false;
+function toggleSearchPanel(){
+  const panel=document.querySelector('.search-panel');
+  const btn=document.getElementById('searchPanelToggleBtn');
+  _searchPanelCollapsed=!_searchPanelCollapsed;
+  panel.classList.toggle('collapsed', _searchPanelCollapsed);
+  btn.textContent=_searchPanelCollapsed?'▲':'▼';
+}
+// 조회 완료 후 모바일에서 버튼 표시
+function showSearchPanelToggle(){
+  const btn=document.getElementById('searchPanelToggleBtn');
+  if(btn&&window.innerWidth<=480){
+    btn.style.display='flex';
   }
-  document.addEventListener('DOMContentLoaded',()=>{
-    const main=document.getElementById('main');
-    if(main) main.addEventListener('scroll', onScroll, {passive:true});
-  });
-})();
+}
 
 document.addEventListener('DOMContentLoaded',()=>{init();loadFromUrl();});
 </script>
