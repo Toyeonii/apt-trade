@@ -1760,6 +1760,7 @@ function selectModalTab(arKey, btn){
       options:{
         responsive:true,
         maintainAspectRatio:false,
+        spanGaps:true,
         parsing:{xAxisKey:'x',yAxisKey:'y'},
         plugins:{
           legend:{display:districtPts.length>=2,position:'top',labels:{font:{size:10},boxWidth:12,padding:8}},
@@ -2781,6 +2782,7 @@ function renderChart(){
       options:{
         responsive:true,
         maintainAspectRatio:false,
+        spanGaps:true,
         plugins:{
           legend:{display:false},
           tooltip:{callbacks:{
@@ -2839,6 +2841,7 @@ function renderChart(){
       options:{
         responsive:true,
         maintainAspectRatio:false,
+        spanGaps:true,
         plugins:{
           legend:{display:false},
           tooltip:{callbacks:{label:ctx=>`${fmtPrice(ctx.raw)}`}}
