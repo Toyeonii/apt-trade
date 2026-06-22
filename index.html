@@ -1605,11 +1605,14 @@ function selectModalTab(arKey, btn){
   if(pts.length>=2){
     chartWrap.style.display='block';
     const ctx=document.getElementById('modalChart').getContext('2d');
+    const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+    const modalColor=_modalType==='trade'?(isDark?'#89C4F4':'#185FA5'):_modalType==='wolse'?(isDark?'#E8A87C':'#D4956A'):(isDark?'#4DD4A0':'#0F6E56');
+    const modalBgColor=_modalType==='trade'?(isDark?'rgba(137,196,244,0.08)':'rgba(24,95,165,0.08)'):_modalType==='wolse'?(isDark?'rgba(232,168,124,0.08)':'rgba(212,149,106,0.08)'):(isDark?'rgba(77,212,160,0.08)':'rgba(15,110,86,0.08)');
     const datasets=[{
       label:modalAptNm,
       data:pts,
-      borderColor:'#185FA5',
-      backgroundColor:'rgba(24,95,165,0.08)',
+      borderColor:modalColor,
+      backgroundColor:modalBgColor,
       borderWidth:2,
       pointRadius:4,
       pointHoverRadius:6,
