@@ -286,7 +286,13 @@ body{padding-bottom:0}
 </header>
 
 <div id="favPanel" class="fav-panel" style="display:none">
-  <div class="fav-title">⭐ 즐겨찾기</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+    <div class="fav-title" style="margin-bottom:0">⭐ 즐겨찾기</div>
+    <div style="display:flex;gap:4px">
+      <button id="favSortName" onclick="setFavSort('name')" style="height:22px;padding:0 8px;font-size:11px;border:0.5px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;color:#888">이름순</button>
+      <button id="favSortRecent" onclick="setFavSort('recent')" style="height:22px;padding:0 8px;font-size:11px;border:0.5px solid #185FA5;border-radius:6px;background:#E6F1FB;cursor:pointer;color:#0C447C;font-weight:600">최근순</button>
+    </div>
+  </div>
   <div class="fav-list" id="favList"><span class="fav-empty">저장된 지역이 없습니다</span></div>
 </div>
 <section class="search-panel">
@@ -2756,20 +2762,34 @@ function toggleChart(){
 // ── 즐겨찾기 ──
 let _currentFav=null, _favMonths=6;
 
+let _favSort='recent';
+function setFavSort(sort){
+  _favSort=sort;
+  ['name','recent'].forEach(s=>{
+    const btn=document.getElementById('favSort'+s.charAt(0).toUpperCase()+s.slice(1));
+    if(!btn)return;
+    if(s===sort){btn.style.borderColor='#185FA5';btn.style.background='#E6F1FB';btn.style.color='#0C447C';btn.style.fontWeight='600';}
+    else{btn.style.borderColor='#ddd';btn.style.background='#fff';btn.style.color='#888';btn.style.fontWeight='400';}
+  });
+  renderFavList();
+}
 function getFavs(){try{return JSON.parse(localStorage.getItem('apt_favs_v2')||'[]');}catch{return [];}}
 function saveFavs(f){localStorage.setItem('apt_favs_v2',JSON.stringify(f));}
 
 function renderFavList(){
   const list=document.getElementById('favList');
-  const favs=getFavs();
+  let favs=getFavs();
   if(!favs.length){list.innerHTML='<span class="fav-empty">저장된 아파트가 없습니다</span>';return;}
-  list.innerHTML=favs.map((f,i)=>`
-    <div class="fav-chip" onclick="loadFav(${i})" style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;margin-bottom:6px;background:#f8faff;border-radius:8px;cursor:pointer;border:1px solid #e0e8f0">
+  // 정렬
+  const indexed=favs.map((f,i)=>({...f,_origIdx:i}));
+  if(_favSort==='name') indexed.sort((a,b)=>a.aptNm.localeCompare(b.aptNm,'ko'));
+  list.innerHTML=indexed.map((f)=>`
+    <div class="fav-chip" onclick="loadFav(${f._origIdx})" style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;margin-bottom:6px;background:#f8faff;border-radius:8px;cursor:pointer;border:1px solid #e0e8f0">
       <div>
         <div style="font-weight:600;font-size:13px">${f.aptNm}</div>
         <div style="font-size:11px;color:#888;margin-top:2px">${f.sidoShort} ${f.sggName} ${f.umdNm||''}</div>
       </div>
-      <span class="fav-del" onclick="event.stopPropagation();deleteFav(${i})" style="color:#aaa;font-size:18px;padding:0 4px">×</span>
+      <span class="fav-del" onclick="event.stopPropagation();deleteFav(${f._origIdx})" style="color:#aaa;font-size:18px;padding:0 4px">×</span>
     </div>`).join('');
 }
 
