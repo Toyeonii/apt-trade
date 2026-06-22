@@ -3401,6 +3401,10 @@ function showSearchPanelToggle(){
 function toggleSettings(){
   const panel=document.getElementById('settingsPanel');
   const isOpen=panel.style.display!=='none';
+  if(!isOpen){
+    const header=document.getElementById('appHeader');
+    panel.style.top=(header?header.offsetHeight:60)+'px';
+  }
   panel.style.display=isOpen?'none':'block';
   // 외부 클릭 시 닫기
   if(!isOpen){
