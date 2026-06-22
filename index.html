@@ -2923,8 +2923,8 @@ function renderFavTabs(tradeDeals, rentDeals){
   const wolseDeals=rentDeals.filter(d=>parsePrice(d.monthlyRent)>0);
   const tabs=[
     {label:`매매 (${tradeDeals.length}건)`, deals:tradeDeals, mode:'trade'},
-    {label:`전세 (${jeonseDeals.length}건)`, deals:jeonseDeals, mode:'rent'},
-    {label:`월세 (${wolseDeals.length}건)`, deals:wolseDeals, mode:'rent'},
+    {label:`전세 (${jeonseDeals.length}건)`, deals:jeonseDeals, mode:'jeonse'},
+    {label:`월세 (${wolseDeals.length}건)`, deals:wolseDeals, mode:'wolse'},
   ];
   const tabsEl=document.getElementById('favModalTabs');
   tabsEl.innerHTML=tabs.map((t,i)=>`<button class="modal-tab ${i===0?'active':''}" onclick="selectFavTab(${i},this)">${t.label}</button>`).join('');
