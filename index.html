@@ -1209,18 +1209,7 @@ function renderRentTable(){
   });
   chartVisible=true;
   renderChart();
-  // 차트 기본 접힘 설정 적용 (DOM 렌더링 후 적용)
-  setTimeout(()=>{
-    if(localStorage.getItem('apt_chart_fold')==='1'){
-      const wrap=document.getElementById('chartWrap');
-      const btn=document.querySelector('.chart-fold');
-      if(wrap&&chartVisible){
-        chartVisible=false;
-        wrap.style.display='none';
-        if(btn) btn.textContent='▼ 펼치기';
-      }
-    }
-  }, 50);
+  applyChartFoldSetting();
   setTimeout(setupInfiniteScroll, 100);
 }
 
@@ -2835,6 +2824,18 @@ function toggleChart(){
   chartVisible=!chartVisible;
   wrap.style.display=chartVisible?'block':'none';
   btn.textContent=chartVisible?'▲ 접기':'▼ 펼치기';
+}
+
+function applyChartFoldSetting(){
+  if(localStorage.getItem('apt_chart_fold')==='1'&&chartVisible){
+    const wrap=document.getElementById('chartWrap');
+    const btn=document.querySelector('.chart-fold');
+    if(wrap&&wrap.style.display!=='none'){
+      chartVisible=false;
+      wrap.style.display='none';
+      if(btn) btn.textContent='▼ 펼치기';
+    }
+  }
 }
 
 // ── 즐겨찾기 ──
