@@ -1482,6 +1482,9 @@ function showAptModal(aptNm, roadNm, aptSeq){
   _modalRoadNm=roadNm||'';
   _modalType=currentMode==='map'?mapDataMode:currentMode;
   if(currentMode==='map'&&(_modalType==='jeonse'||_modalType==='wolse')) _modalType='trade'; // 지도에서는 기본 매매
+  // 팝업 열릴 때 body mode 클래스 설정 (다크모드 테마 적용)
+  document.body.classList.remove('mode-trade','mode-jeonse','mode-wolse','mode-map');
+  document.body.classList.add(`mode-${_modalType}`);
   _modalMonths=6;
   // 메인 조회기간에서 개월수 계산해서 팝업 기간 동기화
   try{
@@ -1536,6 +1539,8 @@ function showAptModal(aptNm, roadNm, aptSeq){
 
 function switchModalType(type){
   _modalType=type;
+  document.body.classList.remove('mode-trade','mode-jeonse','mode-wolse');
+  document.body.classList.add(`mode-${type}`);
   ['trade','jeonse','wolse'].forEach(t=>{
     document.getElementById(`modalType${t.charAt(0).toUpperCase()+t.slice(1)}`)?.classList.toggle('active',t===type);
   });
@@ -2583,6 +2588,9 @@ async function selectMapTab(btn, aptNm, roadNm='', aptSeq=''){
 }
 
 function closeModal(e){
+  // 팝업 닫을 때 body mode 클래스 currentMode로 복원
+  document.body.classList.remove('mode-trade','mode-jeonse','mode-wolse','mode-map');
+  document.body.classList.add(`mode-${currentMode}`);
   if(e&&e.target!==document.getElementById('aptModal')&&e.type==='click')return;
   document.getElementById('aptModal').classList.remove('open');
   document.body.style.overflow='';
