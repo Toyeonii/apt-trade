@@ -80,6 +80,8 @@ html{overflow-x:hidden}
 .summary-strip{display:grid;grid-template-columns:repeat(6,1fr);border-bottom:0.5px solid #c8d8f0;position:sticky;top:0;z-index:99}
 .summary-strip.trade{background:var(--primary-bg);border-color:var(--primary-border)}
 .summary-strip.rent{background:var(--rent-bg);border-color:var(--rent-border)}
+.summary-strip.wolse{background:#FAEEDA;border-color:#FAC775}
+[data-theme='dark'] .summary-strip.wolse{background:#2a1f10;border-color:#5a3f20}
 .sum-item{padding:8px 4px;text-align:center;border-right:0.5px solid rgba(0,0,0,0.08)}
 .sum-item:last-child{border-right:none}
 .sum-label{font-size:10px;margin-bottom:2px;font-weight:500;color:var(--text2)}
@@ -2611,8 +2613,9 @@ function renderChart(){
   if(!filteredData.length){resetChart();return;}
 
   const aptQ=(document.getElementById('aptFilter')?.value||'').trim();
-  const color=getDataMode()==='trade'?'#185FA5':'#0F6E56';
-  const bgColor=getDataMode()==='trade'?'rgba(24,95,165,0.15)':'rgba(15,110,86,0.15)';
+  const dm=getDataMode();
+  const color=dm==='trade'?'#185FA5':dm==='wolse'?'#D4956A':'#0F6E56';
+  const bgColor=dm==='trade'?'rgba(24,95,165,0.15)':dm==='wolse'?'rgba(212,149,106,0.15)':'rgba(15,110,86,0.15)';
   const modeLabel=getDataMode()==='trade'?'거래가':'보증금';
   const ctx=document.getElementById('priceChart').getContext('2d');
   if(chartInstance){chartInstance.destroy();chartInstance=null;}
