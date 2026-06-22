@@ -2997,7 +2997,8 @@ function renderFavAreaDeals(ar, deals, mode){
     chartWrap.style.visibility='hidden';
     chartWrap.style.display='block';
     const ctx=document.getElementById('favModalChart').getContext('2d');
-    const color=mode==='trade'?'#185FA5':'#0F6E56';
+    const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+    const color=mode==='trade'?(isDark?'#89C4F4':'#185FA5'):mode==='wolse'?(isDark?'#E8A87C':'#D4956A'):(isDark?'#4DD4A0':'#0F6E56');
     window._favChart=new Chart(ctx,{
       type:'bar',
       data:{
