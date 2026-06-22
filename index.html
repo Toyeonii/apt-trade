@@ -294,14 +294,47 @@ body{padding-bottom:0}
 <div id="settingsPanel" style="display:none;position:fixed;top:0;right:0;left:0;z-index:999;background:var(--surface);border-bottom:0.5px solid var(--border);padding:12px 16px;box-shadow:0 4px 12px rgba(0,0,0,0.15)">
   <div style="display:flex;flex-direction:column;gap:12px;max-width:400px;margin:0 auto;width:100%">
     <div style="display:flex;align-items:center;justify-content:space-between">
-      <span style="font-size:14px;font-weight:600;color:var(--text)">🌙 다크모드</span>
+      <span style="font-size:13px;font-weight:600;color:var(--text)">🌙 다크모드</span>
       <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer">
         <input type="checkbox" id="darkModeSwitch" onchange="toggleDarkMode()" style="opacity:0;width:0;height:0;position:absolute">
         <span id="darkModeTrack" style="position:absolute;inset:0;background:#ccc;border-radius:24px;transition:0.3s"></span>
         <span id="darkModeThumb" style="position:absolute;left:3px;top:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:0.3s;box-shadow:0 1px 3px rgba(0,0,0,0.3)"></span>
       </label>
     </div>
-
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:13px;font-weight:600;color:var(--text)">📅 기본 조회기간</span>
+      <div style="display:flex;gap:5px">
+        <button id="defPeriod3" onclick="setDefPeriod(3)" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">3개월</button>
+        <button id="defPeriod6" onclick="setDefPeriod(6)" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">6개월</button>
+        <button id="defPeriod12" onclick="setDefPeriod(12)" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">12개월</button>
+        <button id="defPeriod24" onclick="setDefPeriod(24)" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">24개월</button>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:13px;font-weight:600;color:var(--text)">🏠 기본 탭</span>
+      <div style="display:flex;gap:5px">
+        <button id="defTabMap" onclick="setDefTab('map')" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">지도</button>
+        <button id="defTabTrade" onclick="setDefTab('trade')" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">매매</button>
+        <button id="defTabJeonse" onclick="setDefTab('jeonse')" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">전세</button>
+        <button id="defTabWolse" onclick="setDefTab('wolse')" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">월세</button>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:13px;font-weight:600;color:var(--text)">📐 면적 표기</span>
+      <div style="display:flex;gap:5px">
+        <button id="areaM2" onclick="setAreaDisplay('m2')" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">㎡</button>
+        <button id="areaPyung" onclick="setAreaDisplay('pyung')" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">평</button>
+        <button id="areaBoth" onclick="setAreaDisplay('both')" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">둘다</button>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:13px;font-weight:600;color:var(--text)">📊 차트 기본 접힘</span>
+      <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer">
+        <input type="checkbox" id="chartFoldSwitch" onchange="setChartFold(this.checked)" style="opacity:0;width:0;height:0;position:absolute">
+        <span id="chartFoldTrack" style="position:absolute;inset:0;background:#ccc;border-radius:24px;transition:0.3s"></span>
+        <span id="chartFoldThumb" style="position:absolute;left:3px;top:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:0.3s;box-shadow:0 1px 3px rgba(0,0,0,0.3)"></span>
+      </label>
+    </div>
   </div>
 </div>
 <div id="favPanel" class="fav-panel" style="display:none">
@@ -638,6 +671,12 @@ function setPeriod(months){
 }
 
 function init(){
+  initSettings();
+  // 기본 탭 적용
+  const defTab=localStorage.getItem('apt_def_tab')||'map';
+  // 기본 조회기간 적용
+  const defPeriod=parseInt(localStorage.getItem('apt_def_period')||'6');
+  setPeriod(defPeriod);
   const s=document.getElementById('sido');
   Object.keys(RD).forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;s.appendChild(o);});
   const now=new Date();
@@ -645,7 +684,7 @@ function init(){
   document.getElementById('startM').value=ym(new Date(now.getFullYear(),now.getMonth()-2,1));
   document.getElementById('endM').value=ym(now);
   setSort('date');
-  switchMode('map');
+  switchMode(defTab);
   renderRecentSearches();
   // 즐겨찾기 신규 거래 체크 (3초 후 - 앱 로드 후)
   setTimeout(()=>checkFavNewDeals(), 3000);
@@ -836,7 +875,14 @@ function fmtPrice(v){
   return `${v.toLocaleString()}만`;
 }
 
-function fmtArea(a){const n=parseFloat(a);if(!n)return '-';return `${n.toFixed(1)}㎡(${(n/3.3058).toFixed(1)}평)`;}
+function fmtArea(a){
+  const n=parseFloat(a);if(!n)return '-';
+  const m2=`${n.toFixed(1)}㎡`;
+  const py=`${(n/3.3058).toFixed(1)}평`;
+  if(_areaDisplay==='m2') return m2;
+  if(_areaDisplay==='pyung') return py;
+  return `${m2}(${py})`;
+}
 
 async function fetchAll(lawdCd,months,mode){
   const params=new URLSearchParams({LAWD_CD:lawdCd,months:months.join(','),mode});
@@ -1161,6 +1207,10 @@ function renderRentTable(){
     bindLongPress(el, el.dataset.apt, el.dataset.road||'', el.dataset.seq||'');
   });
   renderChart();
+  // 차트 기본 접힘 설정 적용
+  if(localStorage.getItem('apt_chart_fold')==='1'&&chartVisible){
+    toggleChart();
+  }
   setTimeout(setupInfiniteScroll, 100);
 }
 
@@ -3398,6 +3448,65 @@ function showSearchPanelToggle(){
   if(btn&&window.innerWidth<=480){
     btn.style.display='flex';
   }
+}
+
+// ── 설정 기능 ──
+function setSettingBtn(prefix, val){
+  document.querySelectorAll(`[id^="${prefix}"]`).forEach(btn=>{
+    const active=btn.id===`${prefix}${val}`;
+    btn.style.borderColor=active?'#185FA5':'#ddd';
+    btn.style.background=active?'#E6F1FB':'var(--surface)';
+    btn.style.color=active?'#0C447C':'var(--text2)';
+    btn.style.fontWeight=active?'600':'400';
+  });
+}
+
+// 기본 조회기간
+function setDefPeriod(months){
+  localStorage.setItem('apt_def_period', months);
+  setSettingBtn('defPeriod', months);
+}
+
+// 기본 탭
+function setDefTab(tab){
+  localStorage.setItem('apt_def_tab', tab);
+  setSettingBtn('defTab', tab.charAt(0).toUpperCase()+tab.slice(1));
+}
+
+// 면적 표기
+let _areaDisplay=localStorage.getItem('apt_area_display')||'both';
+function setAreaDisplay(type){
+  _areaDisplay=type;
+  localStorage.setItem('apt_area_display', type);
+  setSettingBtn('area', type==='m2'?'M2':type==='pyung'?'Pyung':'Both');
+  applyFilter();
+}
+
+// 차트 기본 접힘
+function setChartFold(fold){
+  localStorage.setItem('apt_chart_fold', fold?'1':'0');
+  const track=document.getElementById('chartFoldTrack');
+  const thumb=document.getElementById('chartFoldThumb');
+  if(track) track.style.background=fold?'#185FA5':'#ccc';
+  if(thumb) thumb.style.transform=fold?'translateX(20px)':'translateX(0)';
+}
+
+// 설정 초기값 적용
+function initSettings(){
+  const defPeriod=localStorage.getItem('apt_def_period')||'6';
+  setSettingBtn('defPeriod', defPeriod);
+  const defTab=localStorage.getItem('apt_def_tab')||'map';
+  setSettingBtn('defTab', defTab.charAt(0).toUpperCase()+defTab.slice(1));
+  const areaDisp=localStorage.getItem('apt_area_display')||'both';
+  _areaDisplay=areaDisp;
+  setSettingBtn('area', areaDisp==='m2'?'M2':areaDisp==='pyung'?'Pyung':'Both');
+  const chartFold=localStorage.getItem('apt_chart_fold')==='1';
+  const track=document.getElementById('chartFoldTrack');
+  const thumb=document.getElementById('chartFoldThumb');
+  const sw=document.getElementById('chartFoldSwitch');
+  if(sw) sw.checked=chartFold;
+  if(track) track.style.background=chartFold?'#185FA5':'#ccc';
+  if(thumb) thumb.style.transform=chartFold?'translateX(20px)':'translateX(0)';
 }
 
 // ── 설정 패널 ──
