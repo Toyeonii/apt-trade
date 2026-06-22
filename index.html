@@ -866,6 +866,7 @@ async function doSearch(){
       const sggName=sggEl.options[sggEl.selectedIndex]?.text||'';
       const modeLabel={'trade':'매매','jeonse':'전세','wolse':'월세','rent':'전월세'}[currentMode]||'전월세';
       document.getElementById('tip').textContent=`${sido} ${sggName} · ${modeLabel} · ${startM}~${endM} · ${allData.length.toLocaleString()}건`;
+      document.title=`${sggName} ${modeLabel} · 실거래가`;
       saveLastSearch();
       // 모드별 캐시 저장
       _modeCache[currentMode]={items:allData,rawRentData:[...rawRentData],lawdCd,startM,endM};
