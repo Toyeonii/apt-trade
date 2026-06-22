@@ -682,12 +682,18 @@ function init(){
   const defPeriod=parseInt(localStorage.getItem('apt_def_period')||'6');
   const s=document.getElementById('sido');
   Object.keys(RD).forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;s.appendChild(o);});
-  // 기본 조회기간 적용 (DOM 준비 후)
-  setPeriod(defPeriod);
+  // 기본 조회기간 적용 - setPeriod가 날짜도 설정하므로 바로 호출
+  const now=new Date();
+  const sc=new Date(now.getFullYear(),now.getMonth()-defPeriod+1,1);
+  document.getElementById('startM').value=`${sc.getFullYear()}-${String(sc.getMonth()+1).padStart(2,'0')}`;
+  document.getElementById('endM').value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  // 기간 버튼 active
+  document.querySelectorAll('.period-btn').forEach(b=>{
+    b.classList.toggle('active', b.textContent.trim()===defPeriod+'개월');
+  });
   setSort('date');
   switchMode(defTab);
   renderRecentSearches();
-  // 설정 UI 초기화 (DOM 준비 후)
   initSettings();
   // 즐겨찾기 신규 거래 체크 (3초 후 - 앱 로드 후)
   setTimeout(()=>checkFavNewDeals(), 3000);
