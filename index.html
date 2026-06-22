@@ -2815,6 +2815,11 @@ function renderChart(){
         }
       }
     });
+    // 차트 기본 접힘 설정 적용
+    if(localStorage.getItem('apt_chart_fold')==='1'){
+      const wrap=document.getElementById('chartWrap');
+      if(wrap){chartVisible=false;wrap.style.display='none';const btn=document.querySelector('.chart-fold');if(btn)btn.textContent='▼ 펼치기';}
+    }
   }
 }
 
