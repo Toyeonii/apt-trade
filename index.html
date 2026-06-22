@@ -126,9 +126,9 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
 [data-theme='dark'] .mode-wolse td.price,[data-theme='dark'] .mode-wolse .card-price{color:#E8A87C !important}
 [data-theme='dark'] .mode-wolse td.deposit,[data-theme='dark'] .mode-wolse .card-price.deposit{color:#E8A87C !important}
 [data-theme='dark'] .mode-jeonse td.deposit,[data-theme='dark'] .mode-jeonse .card-price.deposit{color:#4DD4A0 !important}
-[data-theme='dark'] .mode-jeonse .modal-item-price{color:#4DD4A0 !important}
-[data-theme='dark'] .mode-wolse .modal-item-price{color:#E8A87C !important}
-[data-theme='dark'] .mode-trade .modal-item-price{color:#89C4F4 !important}
+[data-theme='dark'] .modal-sheet.type-jeonse .modal-item-price{color:#4DD4A0 !important}
+[data-theme='dark'] .modal-sheet.type-wolse .modal-item-price{color:#E8A87C !important}
+[data-theme='dark'] .modal-sheet.type-trade .modal-item-price{color:#89C4F4 !important}
 [data-theme='dark'] td.deposit,[data-theme='dark'] .card-price.deposit{color:#4DD4A0 !important}
 .state-screen{width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3.5rem 2rem;text-align:center;color:var(--text2)}
 .autocomplete-item{padding:8px 12px;font-size:13px;cursor:pointer;border-bottom:0.5px solid #f0f0f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -229,16 +229,16 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
 .modal-tab.active{color:#0C447C;border-bottom-color:#0C447C;font-weight:600}
 .modal-tab:hover{background:#f5f5f5}
 [data-theme='dark'] .modal-tab{color:#aaa}
-[data-theme='dark'] .mode-trade .modal-tab.active{color:#89C4F4;border-bottom-color:#89C4F4}
-[data-theme='dark'] .mode-jeonse .modal-tab.active{color:#4DD4A0;border-bottom-color:#4DD4A0}
-[data-theme='dark'] .mode-wolse .modal-tab.active{color:#E8A87C;border-bottom-color:#E8A87C}
+[data-theme='dark'] .modal-sheet.type-trade .modal-tab.active{color:#89C4F4;border-bottom-color:#89C4F4}
+[data-theme='dark'] .modal-sheet.type-jeonse .modal-tab.active{color:#4DD4A0;border-bottom-color:#4DD4A0}
+[data-theme='dark'] .modal-sheet.type-wolse .modal-tab.active{color:#E8A87C;border-bottom-color:#E8A87C}
 [data-theme='dark'] .modal-tab:hover{background:#2a2a2a}
 [data-theme='dark'] .modal-tabs{border-bottom-color:#333}
 [data-theme='dark'] .modal-body{background:var(--surface)}
 [data-theme='dark'] .modal-list-item{border-bottom-color:#2a2a2a}
-[data-theme='dark'] .mode-trade .modal-list-item:hover{background:#1e2a3a}
-[data-theme='dark'] .mode-jeonse .modal-list-item:hover{background:#1a2e25}
-[data-theme='dark'] .mode-wolse .modal-list-item:hover{background:#2e1f10}
+[data-theme='dark'] .modal-sheet.type-trade .modal-list-item:hover{background:#1e2a3a}
+[data-theme='dark'] .modal-sheet.type-jeonse .modal-list-item:hover{background:#1a2e25}
+[data-theme='dark'] .modal-sheet.type-wolse .modal-list-item:hover{background:#2e1f10}
 [data-theme='dark'] .modal-item-date{color:#ccc}
 [data-theme='dark'] .modal-item-detail{color:#777}
 
@@ -1485,6 +1485,10 @@ function showAptModal(aptNm, roadNm, aptSeq){
   // 팝업 열릴 때 body mode 클래스 설정 (다크모드 테마 적용)
   document.body.classList.remove('mode-trade','mode-jeonse','mode-wolse','mode-map');
   document.body.classList.add(`mode-${_modalType}`);
+  setTimeout(()=>{
+    const sheet=document.querySelector('#aptModal .modal-sheet');
+    if(sheet){sheet.classList.remove('type-trade','type-jeonse','type-wolse');sheet.classList.add(`type-${_modalType}`);}
+  },0);
   _modalMonths=6;
   // 메인 조회기간에서 개월수 계산해서 팝업 기간 동기화
   try{
@@ -1541,6 +1545,8 @@ function switchModalType(type){
   _modalType=type;
   document.body.classList.remove('mode-trade','mode-jeonse','mode-wolse');
   document.body.classList.add(`mode-${type}`);
+  const sheet=document.querySelector('#aptModal .modal-sheet');
+  if(sheet){sheet.classList.remove('type-trade','type-jeonse','type-wolse');sheet.classList.add(`type-${type}`);}
   ['trade','jeonse','wolse'].forEach(t=>{
     document.getElementById(`modalType${t.charAt(0).toUpperCase()+t.slice(1)}`)?.classList.toggle('active',t===type);
   });
