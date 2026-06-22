@@ -1091,15 +1091,23 @@ function buildPagination(tp,total){
 }
 
 // ── 무한 스크롤 ──
-let _infiniteObserver=null;
+let _infiniteLoading=false;
 function setupInfiniteScroll(){
-  if(_infiniteObserver) _infiniteObserver.disconnect();
-  const sentinel=document.getElementById('infinitesentinel');
-  if(!sentinel) return;
-  _infiniteObserver=new IntersectionObserver(entries=>{
-    if(entries[0].isIntersecting) loadMoreData();
-  },{threshold:0.1});
-  _infiniteObserver.observe(sentinel);
+  const main=document.getElementById('main');
+  if(!main) return;
+  main.onscroll=null;
+  main.onscroll=function(){
+    if(_infiniteLoading) return;
+    const sentinel=document.getElementById('infinitesentinel');
+    if(!sentinel) return;
+    const mainRect=main.getBoundingClientRect();
+    const sentinelRect=sentinel.getBoundingClientRect();
+    if(sentinelRect.top<=mainRect.bottom+100){
+      _infiniteLoading=true;
+      loadMoreData();
+      setTimeout(()=>{_infiniteLoading=false;},300);
+    }
+  };
 }
 function loadMoreData(){
   const tp=Math.ceil(filteredData.length/PAGE_SIZE)||1;
