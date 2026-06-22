@@ -1098,14 +1098,12 @@ function setupInfiniteScroll(){
   main.onscroll=null;
   main.onscroll=function(){
     if(_infiniteLoading) return;
-    const sentinel=document.getElementById('infinitesentinel');
-    if(!sentinel) return;
-    const mainRect=main.getBoundingClientRect();
-    const sentinelRect=sentinel.getBoundingClientRect();
-    if(sentinelRect.top<=mainRect.bottom+100){
+    // 스크롤 하단 300px 전에 미리 로드
+    const remaining=main.scrollHeight-main.scrollTop-main.clientHeight;
+    if(remaining<300){
       _infiniteLoading=true;
       loadMoreData();
-      setTimeout(()=>{_infiniteLoading=false;},300);
+      setTimeout(()=>{_infiniteLoading=false;},200);
     }
   };
 }
