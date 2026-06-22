@@ -3465,12 +3465,16 @@ function setSettingBtn(prefix, val){
 function setDefPeriod(months){
   localStorage.setItem('apt_def_period', months);
   setSettingBtn('defPeriod', months);
+  // 즉시 메인 기간 버튼에 반영
+  setPeriod(months);
 }
 
 // 기본 탭
 function setDefTab(tab){
   localStorage.setItem('apt_def_tab', tab);
   setSettingBtn('defTab', tab.charAt(0).toUpperCase()+tab.slice(1));
+  // 즉시 탭 전환
+  switchMode(tab);
 }
 
 // 면적 표기
@@ -3494,7 +3498,7 @@ function setChartFold(fold){
 // 설정 초기값 적용
 function initSettings(){
   const defPeriod=localStorage.getItem('apt_def_period')||'6';
-  setSettingBtn('defPeriod', defPeriod);
+  setSettingBtn('defPeriod', parseInt(defPeriod));
   const defTab=localStorage.getItem('apt_def_tab')||'map';
   setSettingBtn('defTab', defTab.charAt(0).toUpperCase()+defTab.slice(1));
   const areaDisp=localStorage.getItem('apt_area_display')||'both';
