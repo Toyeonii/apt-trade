@@ -2970,6 +2970,9 @@ function renderFavTabs(tradeDeals, rentDeals){
   const tabsEl=document.getElementById('favModalTabs');
   tabsEl.innerHTML=tabs.map((t,i)=>`<button class="modal-tab ${i===0?'active':''}" onclick="selectFavTab(${i},this)">${t.label}</button>`).join('');
   window._favTabData=tabs;
+  // 초기 탭 body 클래스 설정
+  document.body.classList.remove('mode-trade','mode-jeonse','mode-wolse');
+  document.body.classList.add('mode-trade');
   renderFavTab(0, tabs[0]);
 }
 
@@ -3004,7 +3007,7 @@ function renderFavTab(idx, tab){
 
   // 면적 탭 생성
   const areaTabsHtml=arKeys.map((ar,i)=>`<button class="modal-tab ${i===0?'active':''}" style="font-size:11px;padding:6px 10px" onclick="selectFavAreaTab('${ar}',this,${idx})">${fmtArea(ar)} (${arGroups[ar].length}건)</button>`).join('');
-  body.innerHTML=`<div class="modal-tabs" style="border-bottom:1px solid #eee;overflow-x:auto;white-space:nowrap">${areaTabsHtml}</div><div id="favAreaBody"></div>`;
+  body.innerHTML=`<div class="modal-tabs" style="overflow-x:auto;white-space:nowrap">${areaTabsHtml}</div><div id="favAreaBody"></div>`;
 
   window._favArGroups=arGroups;
   renderFavAreaDeals(arKeys[0], deals.filter(d=>parseFloat(d.excluUseAr||0).toFixed(1)===arKeys[0]), mode);
