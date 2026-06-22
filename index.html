@@ -23,7 +23,7 @@ html{overflow-x:hidden}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
 .header-sub{font-size:11px;color:rgba(255,255,255,0.6);margin-top:2px}
 
-.search-panel{background:#fff;border-bottom:0.5px solid #e0e0e0;padding:1rem;overflow:hidden;max-height:600px;transition:max-height 0.35s ease,opacity 0.35s ease,padding 0.35s ease}
+.search-panel{background:#fff;border-bottom:0.5px solid #e0e0e0;padding:1rem;overflow:hidden;max-height:600px;transition:max-height 0.5s cubic-bezier(0.4,0,0.2,1),opacity 0.5s ease,padding 0.5s ease}
 .search-panel.collapsed{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-events:none;border-bottom:none}
 .search-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
 .search-grid select,.full-select{height:38px;border:0.5px solid #ccc;border-radius:8px;padding:0 8px;font-size:14px;background:#fff;width:100%;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
@@ -229,7 +229,7 @@ body{padding-bottom:0}
     <h1><span class="dot"></span>아파트 실거래가 조회</h1>
     <div style="display:flex;align-items:center;gap:8px">
       <span id="modeLabel" class="mode-label mode-label-map">지도</span>
-      <button id="searchPanelToggleBtn" onclick="toggleSearchPanel()" style="display:none;width:28px;height:28px;border-radius:50%;border:none;background:rgba(255,255,255,0.2);color:#fff;cursor:pointer;font-size:14px;align-items:center;justify-content:center">▼</button>
+      <button id="searchPanelToggleBtn" onclick="toggleSearchPanel()" style="display:none;height:26px;padding:0 8px;border-radius:13px;border:none;background:rgba(255,255,255,0.2);color:#fff;cursor:pointer;font-size:11px;align-items:center;justify-content:center;gap:3px;white-space:nowrap"><span id="searchPanelToggleIcon">▼</span> <span id="searchPanelToggleText">검색접기</span></button>
     </div>
   </div>
   <div class="header-sub">국토교통부 실거래가 공개시스템</div>
@@ -3201,7 +3201,8 @@ function toggleSearchPanel(){
   const btn=document.getElementById('searchPanelToggleBtn');
   _searchPanelCollapsed=!_searchPanelCollapsed;
   panel.classList.toggle('collapsed', _searchPanelCollapsed);
-  btn.textContent=_searchPanelCollapsed?'▲':'▼';
+  document.getElementById('searchPanelToggleIcon').textContent=_searchPanelCollapsed?'▲':'▼';
+  document.getElementById('searchPanelToggleText').textContent=_searchPanelCollapsed?'검색펼치기':'검색접기';
 }
 // 조회 완료 후 모바일에서 버튼 표시
 function showSearchPanelToggle(){
