@@ -1559,6 +1559,8 @@ function setModalPeriod(months){
 async function loadModalTypeData(){
   const cacheKey=`${_modalType}_${_modalMonths}`;
   if(_modalTypeCache[cacheKey]){
+    document.body.classList.remove('mode-trade','mode-jeonse','mode-wolse');
+    document.body.classList.add(`mode-${_modalType}`);
     renderModalWithData(_modalTypeCache[cacheKey], _modalType);
     return;
   }
