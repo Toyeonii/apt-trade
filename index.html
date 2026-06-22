@@ -1207,10 +1207,15 @@ function renderRentTable(){
   document.querySelectorAll('[data-apt]').forEach(el=>{
     bindLongPress(el, el.dataset.apt, el.dataset.road||'', el.dataset.seq||'');
   });
+  chartVisible=true; // renderChart 후 항상 visible 초기화
   renderChart();
   // 차트 기본 접힘 설정 적용
-  if(localStorage.getItem('apt_chart_fold')==='1'&&chartVisible){
-    toggleChart();
+  if(localStorage.getItem('apt_chart_fold')==='1'){
+    const wrap=document.getElementById('chartWrap');
+    const btn=document.querySelector('.chart-fold');
+    chartVisible=false;
+    if(wrap) wrap.style.display='none';
+    if(btn) btn.textContent='▼ 펼치기';
   }
   setTimeout(setupInfiniteScroll, 100);
 }
