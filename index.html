@@ -23,7 +23,8 @@ html{overflow-x:hidden}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
 .header-sub{font-size:11px;color:rgba(255,255,255,0.6);margin-top:2px}
 
-.search-panel{background:#fff;border-bottom:0.5px solid #e0e0e0;padding:1rem}
+.search-panel{background:#fff;border-bottom:0.5px solid #e0e0e0;padding:1rem;transition:transform 0.25s ease,opacity 0.25s ease}
+.search-panel.hidden{transform:translateY(-100%);opacity:0;pointer-events:none;position:absolute;width:100%;z-index:-1}
 .search-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
 .search-grid select,.full-select{height:38px;border:0.5px solid #ccc;border-radius:8px;padding:0 8px;font-size:14px;background:#fff;width:100%;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
 .search-grid select:focus,.full-select:focus{outline:none;border-color:#185FA5}
@@ -3188,6 +3189,39 @@ function loadFromUrl(){
     }
   },100);
 }
+
+// ── 모바일 검색패널 자동 숨김 ──
+(function(){
+  let lastY=0, ticking=false, searchHidden=false;
+  function onScroll(){
+    if(window.innerWidth>480) return; // 모바일만
+    const panel=document.querySelector('.search-panel');
+    if(!panel||panel.style.display==='none') return;
+    // 조회 결과 없으면 숨기지 않음
+    const summaryStrip=document.getElementById('summaryStrip');
+    if(!summaryStrip||summaryStrip.style.display==='none') return;
+
+    const y=document.getElementById('main').scrollTop;
+    if(!ticking){
+      requestAnimationFrame(()=>{
+        if(y>lastY && y>30 && !searchHidden){
+          panel.classList.add('hidden');
+          searchHidden=true;
+        } else if(y<lastY-10 && searchHidden){
+          panel.classList.remove('hidden');
+          searchHidden=false;
+        }
+        lastY=y;
+        ticking=false;
+      });
+      ticking=true;
+    }
+  }
+  document.addEventListener('DOMContentLoaded',()=>{
+    const main=document.getElementById('main');
+    if(main) main.addEventListener('scroll', onScroll, {passive:true});
+  });
+})();
 
 document.addEventListener('DOMContentLoaded',()=>{init();loadFromUrl();});
 </script>
