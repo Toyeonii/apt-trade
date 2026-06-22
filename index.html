@@ -1240,12 +1240,14 @@ function setupInfiniteScroll(){
   main.onscroll=null;
   main.onscroll=function(){
     if(_infiniteLoading) return;
-    // 스크롤 하단 300px 전에 미리 로드
+    const tp=Math.ceil(filteredData.length/PAGE_SIZE)||1;
+    if(currentPage>=tp) return; // 이미 전체 로드됨
     const remaining=main.scrollHeight-main.scrollTop-main.clientHeight;
     if(remaining<300){
       _infiniteLoading=true;
       loadMoreData();
-      setTimeout(()=>{_infiniteLoading=false;},200);
+      // 최대 1초 후 강제 해제 (뱅글뱅글 고착 방지)
+      setTimeout(()=>{_infiniteLoading=false;},1000);
     }
   };
 }
