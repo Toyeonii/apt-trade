@@ -232,6 +232,9 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
 [data-theme='dark'] .modal-sheet.type-trade .modal-tab.active{color:#89C4F4;border-bottom-color:#89C4F4}
 [data-theme='dark'] .modal-sheet.type-jeonse .modal-tab.active{color:#4DD4A0;border-bottom-color:#4DD4A0}
 [data-theme='dark'] .modal-sheet.type-wolse .modal-tab.active{color:#E8A87C;border-bottom-color:#E8A87C}
+[data-theme='dark'] .modal-sheet.type-trade .modal-item-price{color:#89C4F4 !important}
+[data-theme='dark'] .modal-sheet.type-jeonse .modal-item-price{color:#4DD4A0 !important}
+[data-theme='dark'] .modal-sheet.type-wolse .modal-item-price{color:#E8A87C !important}
 [data-theme='dark'] .modal-tab:hover{background:#2a2a2a}
 [data-theme='dark'] .modal-tabs{border-bottom-color:#333}
 [data-theme='dark'] .modal-body{background:var(--surface)}
@@ -3066,9 +3069,10 @@ function renderFavTabs(tradeDeals, rentDeals){
   const tabsEl=document.getElementById('favModalTabs');
   tabsEl.innerHTML=tabs.map((t,i)=>`<button class="modal-tab ${i===0?'active':''}" onclick="selectFavTab(${i},this)">${t.label}</button>`).join('');
   window._favTabData=tabs;
-  // 초기 탭 body 클래스 설정
   document.body.classList.remove('mode-trade','mode-jeonse','mode-wolse');
   document.body.classList.add('mode-trade');
+  const favSheet=document.querySelector('#favModal .modal-sheet');
+  if(favSheet){favSheet.classList.remove('type-trade','type-jeonse','type-wolse');favSheet.classList.add('type-trade');}
   renderFavTab(0, tabs[0]);
 }
 
@@ -3076,9 +3080,10 @@ function selectFavTab(idx, btn){
   document.querySelectorAll('#favModalTabs .modal-tab').forEach(t=>t.classList.remove('active'));
   btn.classList.add('active');
   const tab=window._favTabData[idx];
-  // body에 mode 클래스 적용 (다크모드 색상 분기용)
   document.body.classList.remove('mode-trade','mode-jeonse','mode-wolse');
   document.body.classList.add(`mode-${tab.mode}`);
+  const favSheet=document.querySelector('#favModal .modal-sheet');
+  if(favSheet){favSheet.classList.remove('type-trade','type-jeonse','type-wolse');favSheet.classList.add(`type-${tab.mode}`);}
   renderFavTab(idx, tab);
 }
 
