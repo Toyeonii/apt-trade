@@ -231,6 +231,9 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
 .nav-btn{flex:0 0 64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:none;background:transparent;cursor:pointer;color:#888;transition:color 0.15s,background 0.15s;padding:6px 4px;margin:0 4px;border-radius:12px;position:relative}
 @media(max-width:480px){.bottom-nav{padding:0 2px}.nav-btn{margin:0 1px}.filter-bar-row{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}.filter-bar-row::-webkit-scrollbar{display:none}}
 .nav-btn.active{color:#0C447C;background:rgba(12,68,124,0.08)}
+[data-theme='dark'] .nav-btn.active{color:#6AAFEE;background:rgba(106,175,238,0.15)}
+[data-theme='dark'] .nav-btn.active::before{background:#6AAFEE}
+[data-theme='dark'] .nav-btn.active .nav-label{color:#6AAFEE}
 .nav-btn.active::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:32px;height:3px;background:#0C447C;border-radius:0 0 3px 3px}
 .nav-icon{font-size:35px;line-height:1}
 .nav-label{font-size:11px;font-weight:500}
