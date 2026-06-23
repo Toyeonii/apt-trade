@@ -338,9 +338,9 @@ body{padding-bottom:0}
     <div style="display:flex;align-items:center;justify-content:space-between">
       <span style="font-size:13px;font-weight:600;color:var(--text)">📐 면적 표기</span>
       <div style="display:flex;gap:5px">
-        <button id="areaM2" onclick="setAreaDisplay('m2')" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">㎡</button>
-        <button id="areaPyung" onclick="setAreaDisplay('pyung')" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">평</button>
-        <button id="areaBoth" onclick="setAreaDisplay('both')" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">둘다</button>
+        <button id="dispAreaM2" onclick="setAreaDisplay('m2')" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">㎡</button>
+        <button id="dispAreaPyung" onclick="setAreaDisplay('pyung')" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">평</button>
+        <button id="dispAreaBoth" onclick="setAreaDisplay('both')" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">둘다</button>
       </div>
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between">
@@ -3620,7 +3620,7 @@ let _areaDisplay=localStorage.getItem('apt_area_display')||'both';
 function setAreaDisplay(type){
   _areaDisplay=type;
   localStorage.setItem('apt_area_display', type);
-  setSettingBtn('area', type==='m2'?'M2':type==='pyung'?'Pyung':'Both');
+  setSettingBtn('dispArea', type==='m2'?'M2':type==='pyung'?'Pyung':'Both');
   applyFilter();
 }
 
@@ -3646,7 +3646,7 @@ function initSettings(){
   setSettingBtn('defTab', defTab.charAt(0).toUpperCase()+defTab.slice(1));
   const areaDisp=localStorage.getItem('apt_area_display')||'both';
   _areaDisplay=areaDisp;
-  setSettingBtn('area', areaDisp==='m2'?'M2':areaDisp==='pyung'?'Pyung':'Both');
+  setSettingBtn('dispArea', areaDisp==='m2'?'M2':areaDisp==='pyung'?'Pyung':'Both');
   const chartFold=localStorage.getItem('apt_chart_fold')==='1';
   const track=document.getElementById('chartFoldTrack');
   const thumb=document.getElementById('chartFoldThumb');
