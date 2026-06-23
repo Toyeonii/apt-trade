@@ -1720,6 +1720,19 @@ function selectModalTab(arKey, btn){
     return aptPt?{x:aptPt.x, y:Math.round(prices.reduce((a,b)=>a+b,0)/prices.length)}:null;
   }).filter(Boolean);
 
+  // 월별 평균 계산 (아파트)
+  const aptByMonth={};
+  pts.forEach(p=>{const m=p.x.substring(0,7);if(!aptByMonth[m])aptByMonth[m]=[];aptByMonth[m].push(p.y);});
+  const allMonths=[...new Set([...Object.keys(aptByMonth),...Object.keys(districtByMonth)])].sort();
+  const aptAvgPts=allMonths.map(m=>{
+    const prices=aptByMonth[m];
+    return {x:m,y:prices?Math.round(prices.reduce((a,b)=>a+b,0)/prices.length):null};
+  });
+  const distAvgPts=allMonths.map(m=>{
+    const prices=districtByMonth[m];
+    return {x:m,y:prices?Math.round(prices.reduce((a,b)=>a+b,0)/prices.length):null};
+  });
+
   const chartWrap=document.getElementById('modalChartWrap');
   if(pts.length>=2){
     chartWrap.style.display='block';
@@ -1727,22 +1740,37 @@ function selectModalTab(arKey, btn){
     const isDark=document.documentElement.getAttribute('data-theme')==='dark';
     const modalColor=_modalType==='trade'?(isDark?'#89C4F4':'#185FA5'):_modalType==='wolse'?(isDark?'#E8A87C':'#D4956A'):(isDark?'#4DD4A0':'#0F6E56');
     const modalBgColor=_modalType==='trade'?(isDark?'rgba(137,196,244,0.08)':'rgba(24,95,165,0.08)'):_modalType==='wolse'?(isDark?'rgba(232,168,124,0.08)':'rgba(212,149,106,0.08)'):(isDark?'rgba(77,212,160,0.08)':'rgba(15,110,86,0.08)');
-    const datasets=[{
-      label:modalAptNm,
-      data:pts,
-      borderColor:modalColor,
-      backgroundColor:modalBgColor,
-      borderWidth:2,
-      pointRadius:4,
-      pointHoverRadius:6,
-      fill:true,
-      tension:0.3,
-      spanGaps:true
-    }];
-    if(districtPts.length>=2){
+    const datasets=[
+      // 개별 거래 scatter
+      {
+        label:modalAptNm,
+        data:pts.map(p=>({x:p.x,y:p.y,floor:p.floor})),
+        type:'scatter',
+        borderColor:modalColor,
+        backgroundColor:modalColor,
+        pointRadius:4,
+        pointHoverRadius:6,
+        showLine:false,
+      },
+      // 월별 평균 라인
+      {
+        label:modalAptNm+' 평균',
+        data:aptAvgPts,
+        type:'line',
+        borderColor:modalColor,
+        backgroundColor:modalBgColor,
+        borderWidth:2,
+        pointRadius:2,
+        fill:true,
+        tension:0.3,
+        spanGaps:true
+      }
+    ];
+    if(distAvgPts.some(p=>p.y)){
       datasets.push({
         label:'구 전체 평균',
-        data:districtPts,
+        data:distAvgPts,
+        type:'line',
         borderColor:'#999',
         backgroundColor:'transparent',
         borderWidth:1.5,
@@ -1750,21 +1778,21 @@ function selectModalTab(arKey, btn){
         pointHoverRadius:4,
         fill:false,
         tension:0.3,
+        spanGaps:true,
         borderDash:[4,3]
       });
     }
     modalChartInstance=new Chart(ctx,{
-      type:'line',
+      type:'scatter',
       data:{datasets},
       options:{
         responsive:true,
         maintainAspectRatio:false,
-        spanGaps:true,
         parsing:{xAxisKey:'x',yAxisKey:'y'},
         plugins:{
-          legend:{display:districtPts.length>=2,position:'top',labels:{font:{size:10},boxWidth:12,padding:8}},
+          legend:{display:true,position:'top',labels:{font:{size:10},boxWidth:12,padding:8,filter:item=>item.text!==modalAptNm+' 평균'}},
           tooltip:{callbacks:{
-            label:ctx=>ctx.dataset.label==='구 전체 평균'?`구 평균: ${fmtPrice(ctx.raw.y)}`:`${fmtPrice(ctx.raw.y)}${ctx.raw.floor?' · '+ctx.raw.floor+'층':''}`
+            label:ctx=>ctx.dataset.label==='구 전체 평균'?`구 평균: ${fmtPrice(ctx.raw.y)}`:ctx.dataset.label.endsWith(' 평균')?`월평균: ${fmtPrice(ctx.raw.y)}`:`${fmtPrice(ctx.raw.y)}${ctx.raw.floor?' · '+ctx.raw.floor+'층':''}`
           }}
         },
         scales:{
