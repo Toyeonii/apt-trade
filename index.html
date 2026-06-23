@@ -3710,6 +3710,8 @@ function toggleSettings(){
   if(!isOpen){
     const header=document.getElementById('appHeader');
     panel.style.top=(header?header.offsetHeight:60)+'px';
+    // 열 때마다 설정 UI 최신화
+    initSettings();
   }
   panel.style.display=isOpen?'none':'block';
   // 외부 클릭 시 닫기
