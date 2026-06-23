@@ -2326,11 +2326,11 @@ function renderDongMarkers(forceSido, forceSggName){
   const maxAvg=Math.max(...allAvgs), minAvg=Math.min(...allAvgs);
   function getPriceColor(avg){
     if(allAvgs.length<2) return {bg:'rgba(12,68,124,0.92)',border:'rgba(96,212,164,0.6)'};
-    const ratio=(avg-minAvg)/(maxAvg-minAvg||1);
-    if(ratio<0.25) return {bg:'rgba(30,136,229,0.92)',border:'rgba(100,180,255,0.6)'};
-    if(ratio<0.5)  return {bg:'rgba(67,160,71,0.92)',border:'rgba(120,220,120,0.6)'};
-    if(ratio<0.75) return {bg:'rgba(251,140,0,0.92)',border:'rgba(255,190,80,0.6)'};
-    return {bg:'rgba(229,57,53,0.92)',border:'rgba(255,120,100,0.6)'};
+    const ratio=(avg-minAvg)/(maxAvg-minAvg||1); // 0=최저, 1=최고
+    if(ratio<=0.25) return {bg:'rgba(30,136,229,0.92)',border:'rgba(100,180,255,0.6)'}; // 파랑=저렴
+    if(ratio<=0.5)  return {bg:'rgba(67,160,71,0.92)',border:'rgba(120,220,120,0.6)'};  // 초록=중간
+    if(ratio<=0.75) return {bg:'rgba(251,140,0,0.92)',border:'rgba(255,190,80,0.6)'};   // 주황=높음
+    return {bg:'rgba(229,57,53,0.92)',border:'rgba(255,120,100,0.6)'};                   // 빨강=최고
   }
 
   Object.entries(dongStats).forEach(([dong,stat])=>{
