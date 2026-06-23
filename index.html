@@ -1741,16 +1741,17 @@ function selectModalTab(arKey, btn){
     const modalColor=_modalType==='trade'?(isDark?'#89C4F4':'#185FA5'):_modalType==='wolse'?(isDark?'#E8A87C':'#D4956A'):(isDark?'#4DD4A0':'#0F6E56');
     const modalBgColor=_modalType==='trade'?(isDark?'rgba(137,196,244,0.08)':'rgba(24,95,165,0.08)'):_modalType==='wolse'?(isDark?'rgba(232,168,124,0.08)':'rgba(212,149,106,0.08)'):(isDark?'rgba(77,212,160,0.08)':'rgba(15,110,86,0.08)');
     const datasets=[
-      // 개별 거래 scatter
+      // 개별 거래 scatter (x축 월 기준으로 통일)
       {
         label:modalAptNm,
-        data:pts.map(p=>({x:p.x,y:p.y,floor:p.floor})),
+        data:pts.map(p=>({x:p.x.substring(0,7),y:p.y,floor:p.floor,date:p.x})),
         type:'scatter',
         borderColor:modalColor,
         backgroundColor:modalColor,
         pointRadius:4,
         pointHoverRadius:6,
         showLine:false,
+        order:2
       },
       // 월별 평균 라인
       {
@@ -1760,10 +1761,11 @@ function selectModalTab(arKey, btn){
         borderColor:modalColor,
         backgroundColor:modalBgColor,
         borderWidth:2,
-        pointRadius:2,
+        pointRadius:0,
         fill:true,
         tension:0.3,
-        spanGaps:true
+        spanGaps:true,
+        order:1
       }
     ];
     if(distAvgPts.some(p=>p.y)){
@@ -1792,7 +1794,7 @@ function selectModalTab(arKey, btn){
         plugins:{
           legend:{display:true,position:'top',labels:{font:{size:10},boxWidth:12,padding:8,filter:item=>item.text!==modalAptNm+' 평균'}},
           tooltip:{callbacks:{
-            label:ctx=>ctx.dataset.label==='구 전체 평균'?`구 평균: ${fmtPrice(ctx.raw.y)}`:ctx.dataset.label.endsWith(' 평균')?`월평균: ${fmtPrice(ctx.raw.y)}`:`${fmtPrice(ctx.raw.y)}${ctx.raw.floor?' · '+ctx.raw.floor+'층':''}`
+            label:ctx=>ctx.dataset.label==='구 전체 평균'?`구 평균: ${fmtPrice(ctx.raw.y)}`:ctx.dataset.label.endsWith(' 평균')?`월평균: ${fmtPrice(ctx.raw.y)}`:`${ctx.raw.date||ctx.raw.x} ${fmtPrice(ctx.raw.y)}${ctx.raw.floor?' · '+ctx.raw.floor+'층':''}`
           }}
         },
         scales:{
