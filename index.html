@@ -1842,7 +1842,8 @@ function selectModalTab(arKey, btn){
               const m=ctx[0]?.raw?.x;
               if(!m) return [];
               const arr=aptByMonth[m];
-              if(!arr||arr.length<2) return [];
+              if(!arr) return [];
+              if(arr.length===1) return [`거래: 1건`];
               return [`최고: ${fmtPrice(Math.max(...arr))}`,`최저: ${fmtPrice(Math.min(...arr))}`,`거래: ${arr.length}건`];
             }
           }}
@@ -2938,7 +2939,8 @@ function renderChart(){
               const m=ctx[0]?.label;
               if(!m) return [];
               const arr=byMonth[m];
-              if(!arr||arr.length<2) return [];
+              if(!arr) return [];
+              if(arr.length===1) return [`거래: 1건`];
               return [`최고: ${fmtPrice(Math.max(...arr))}`,`최저: ${fmtPrice(Math.min(...arr))}`,`거래: ${arr.length}건`];
             }
           }}
