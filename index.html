@@ -3654,6 +3654,11 @@ function initSettings(){
   if(sw) sw.checked=chartFold;
   if(track) track.style.background=chartFold?'#185FA5':'#ccc';
   if(thumb) thumb.style.transform=chartFold?'translateX(20px)':'translateX(0)';
+  // 면적 필터 방식 버튼 active 직접 설정
+  ['default','all','step5'].forEach(m=>{
+    const btn=document.getElementById(`areaFilterMode_${m}`);
+    if(btn) btn.classList.toggle('active', m===_areaFilterMode);
+  });
 }
 
 // ── 면적 필터 방식 ──
