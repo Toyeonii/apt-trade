@@ -1843,7 +1843,7 @@ function selectModalTab(arKey, btn){
               if(!m) return [];
               const arr=aptByMonth[m];
               if(!arr||arr.length<2) return [];
-              return [`최고: ${fmtPrice(Math.max(...arr))}`,`최저: ${fmtPrice(Math.min(...arr))}`];
+              return [`최고: ${fmtPrice(Math.max(...arr))}`,`최저: ${fmtPrice(Math.min(...arr))}`,`거래: ${arr.length}건`];
             }
           }}
         },
