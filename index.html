@@ -1836,7 +1836,7 @@ function selectModalTab(arKey, btn){
               const arr=aptByMonth[m];
               if(!arr) return null;
               const avg=Math.round(arr.reduce((a,b)=>a+b,0)/arr.length);
-              return `평균: ${fmtPrice(avg)} (${arr.length}건)`;
+              return `평균: ${fmtPrice(avg)}`;
             },
             afterBody:ctx=>{
               const m=ctx[0]?.raw?.x;
