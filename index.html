@@ -2321,19 +2321,32 @@ function renderDongMarkers(forceSido, forceSggName){
   const sidoEl=document.getElementById('sido');
   const sido=forceSido||sidoEl.value||'서울특별시';
 
+  // 가격대별 색상
+  const allAvgs=Object.values(dongStats).map(s=>Math.round(s.sum/s.cnt)).filter(Boolean);
+  const maxAvg=Math.max(...allAvgs), minAvg=Math.min(...allAvgs);
+  function getPriceColor(avg){
+    if(allAvgs.length<2) return {bg:'rgba(12,68,124,0.92)',border:'rgba(96,212,164,0.6)'};
+    const ratio=(avg-minAvg)/(maxAvg-minAvg||1);
+    if(ratio<0.25) return {bg:'rgba(30,136,229,0.92)',border:'rgba(100,180,255,0.6)'};
+    if(ratio<0.5)  return {bg:'rgba(67,160,71,0.92)',border:'rgba(120,220,120,0.6)'};
+    if(ratio<0.75) return {bg:'rgba(251,140,0,0.92)',border:'rgba(255,190,80,0.6)'};
+    return {bg:'rgba(229,57,53,0.92)',border:'rgba(255,120,100,0.6)'};
+  }
+
   Object.entries(dongStats).forEach(([dong,stat])=>{
     const avg=Math.round(stat.sum/stat.cnt);
+    const {bg,border}=getPriceColor(avg);
     geocoder.addressSearch(`${sido} ${sggName} ${dong}`,(result,status)=>{
       if(status!==kakao.maps.services.Status.OK)return;
       const pos=new kakao.maps.LatLng(result[0].y,result[0].x);
       const el=document.createElement('div');
       el.style.cssText=`
-        background:rgba(12,68,124,0.92);color:#fff;
+        background:${bg};color:#fff;
         padding:6px 10px;border-radius:8px;
         font-size:12px;font-weight:600;
         white-space:nowrap;cursor:pointer;
         box-shadow:0 2px 6px rgba(0,0,0,0.3);
-        border:1.5px solid rgba(96,212,164,0.6)
+        border:1.5px solid ${border}
       `;
       el.innerHTML=`
         <div style="font-size:10px;opacity:0.8;margin-bottom:2px">${dong}</div>
