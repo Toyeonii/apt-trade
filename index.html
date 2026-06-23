@@ -415,10 +415,6 @@ body{padding-bottom:0}
     <div style="display:flex;gap:6px;flex-wrap:wrap">
       <select id="areaFilter" onchange="applyFilter();updateFilterBadge()">
         <option value="">면적 전체</option>
-        <option value="~60">~60㎡</option>
-        <option value="60~85">60~85㎡</option>
-        <option value="85~135">85~135㎡</option>
-        <option value="135~">135㎡~</option>
       </select>
       <select id="priceFilter" onchange="applyFilter();updateFilterBadge()">
         <option value="">금액 전체</option>
@@ -956,6 +952,7 @@ async function doSearch(){
       saveLastSearch();
       // 모드별 캐시 저장
       _modeCache[currentMode]={items:allData,rawRentData:[...rawRentData],lawdCd,startM,endM};
+      updateAreaFilter();
       applyFilter();
       document.getElementById('filterBar').style.display='flex';
       document.getElementById('summaryStrip').style.display='grid';
@@ -966,6 +963,33 @@ async function doSearch(){
   } finally{
     btn.disabled=false;
   }
+}
+
+function updateAreaFilter(){
+  const sel=document.getElementById('areaFilter');
+  if(!sel||!allData.length) return;
+  const curVal=sel.value;
+  // 면적별 건수 집계
+  const areaMap={};
+  allData.forEach(d=>{
+    const ar=parseFloat(d.excluUseAr||0);
+    if(!ar) return;
+    const key=ar.toFixed(1);
+    areaMap[key]=(areaMap[key]||0)+1;
+  });
+  // 면적 정렬
+  const areas=Object.keys(areaMap).sort((a,b)=>parseFloat(a)-parseFloat(b));
+  sel.innerHTML='<option value="">면적 전체</option>';
+  areas.forEach(ar=>{
+    const cnt=areaMap[ar];
+    const pyung=(parseFloat(ar)/3.3058).toFixed(1);
+    const opt=document.createElement('option');
+    opt.value=ar;
+    opt.textContent=`${ar}㎡(${pyung}평) ${cnt}건`;
+    sel.appendChild(opt);
+  });
+  // 이전 선택값 복원
+  if(curVal) sel.value=curVal;
 }
 
 function applyFilter(){
@@ -980,7 +1004,7 @@ function applyFilter(){
     const nameOk=!q||(d.aptNm||'').toLowerCase().includes(q);
     const dongOk=!dong||(d.umdNm||'')===dong;
     const ar=parseFloat(d.excluUseAr||0);
-    const areaOk=!area||(area==='~60'?ar<60:area==='60~85'?ar>=60&&ar<85:area==='85~135'?ar>=85&&ar<135:area==='135~'?ar>=135:true);
+    const areaOk=!area||Math.abs(ar-parseFloat(area))<0.1;
     const p=getDataMode()==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
     const pm=p/10000;
     const priceOk=!price||(price==='~3'?pm<3:price==='3~6'?pm>=3&&pm<6:price==='6~10'?pm>=6&&pm<10:price==='10~20'?pm>=10&&pm<20:price==='20~'?pm>=20:true);
