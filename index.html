@@ -344,9 +344,9 @@ body{padding-bottom:0}
     <div style="display:flex;align-items:center;justify-content:space-between">
       <span style="font-size:13px;font-weight:600;color:var(--text)">📐 면적 필터 방식</span>
       <div style="display:flex;gap:5px">
-        <button id="areaFilterDefault" onclick="setAreaFilterMode('default')" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">기본</button>
-        <button id="areaFilterAll" onclick="setAreaFilterMode('all')" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">전체</button>
-        <button id="areaFilterStep5" onclick="setAreaFilterMode('step5')" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">5㎡단위</button>
+        <button id="areaFilterMode_default" onclick="setAreaFilterMode('default')" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">기본</button>
+        <button id="areaFilterMode_all" onclick="setAreaFilterMode('all')" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">전체</button>
+        <button id="areaFilterMode_step5" onclick="setAreaFilterMode('step5')" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">5㎡단위</button>
       </div>
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between">
@@ -3633,7 +3633,7 @@ function setChartFold(fold){
 // 설정 초기값 적용
 function initSettings(){
   _areaFilterMode=localStorage.getItem('apt_area_filter_mode')||'default';
-  setSettingBtn('areaFilter', _areaFilterMode==='default'?'Default':_areaFilterMode==='all'?'All':'Step5');
+  setSettingBtn('areaFilterM', _areaFilterMode==='default'?'ode_default':_areaFilterMode==='all'?'ode_all':'ode_step5');
   const defPeriod=localStorage.getItem('apt_def_period')||'6';
   setSettingBtn('defPeriod', parseInt(defPeriod));
   const defTab=localStorage.getItem('apt_def_tab')||'map';
@@ -3656,7 +3656,7 @@ let _areaFilterMode=localStorage.getItem('apt_area_filter_mode')||'default';
 function setAreaFilterMode(mode){
   _areaFilterMode=mode;
   localStorage.setItem('apt_area_filter_mode', mode);
-  setSettingBtn('areaFilter', mode==='default'?'Default':mode==='all'?'All':'Step5');
+  setSettingBtn('areaFilterM', mode==='default'?'ode_default':mode==='all'?'ode_all':'ode_step5');
   rebuildAreaFilter();
   applyFilter();
 }
