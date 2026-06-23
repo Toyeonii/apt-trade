@@ -3261,33 +3261,34 @@ function renderFavAreaDeals(ar, deals, mode){
   const monthLabels=Object.keys(monthCnt).sort();
   const monthData=monthLabels.map(k=>monthCnt[k]);
 
-  if(pts.length>=2){
+  if(pts.length>=1){
     chartWrap.style.visibility='hidden';
     chartWrap.style.display='block';
     const ctx=document.getElementById('favModalChart').getContext('2d');
     const isDark=document.documentElement.getAttribute('data-theme')==='dark';
     const color=mode==='trade'?(isDark?'#89C4F4':'#185FA5'):mode==='wolse'?(isDark?'#E8A87C':'#D4956A'):(isDark?'#4DD4A0':'#0F6E56');
+    const shadowColor=mode==='trade'?(isDark?'rgba(137,196,244,0.2)':'rgba(24,95,165,0.12)'):mode==='wolse'?(isDark?'rgba(232,168,124,0.2)':'rgba(212,149,106,0.12)'):(isDark?'rgba(77,212,160,0.2)':'rgba(15,110,86,0.12)');
+
+    const avgData=monthLabels.map(m=>{const mPts=pts.filter(p=>p.x.startsWith(m));return mPts.length?Math.round(mPts.reduce((a,b)=>a+b.y,0)/mPts.length):null;});
+    const maxData=monthLabels.map(m=>{const mPts=pts.filter(p=>p.x.startsWith(m));return mPts.length?Math.max(...mPts.map(p=>p.y)):null;});
+    const minData=monthLabels.map(m=>{const mPts=pts.filter(p=>p.x.startsWith(m));return mPts.length?Math.min(...mPts.map(p=>p.y)):null;});
+
     window._favChart=new Chart(ctx,{
-      type:'bar',
+      type:'line',
       data:{
         labels:monthLabels,
         datasets:[
-          {type:'line',data:monthLabels.map(m=>{
-            const mPts=pts.filter(p=>p.x.startsWith(m));
-            return mPts.length?Math.round(mPts.reduce((a,b)=>a+b.y,0)/mPts.length):null;
-          }),borderColor:color,backgroundColor:'transparent',borderWidth:2,pointRadius:3,tension:0.3,spanGaps:true,yAxisID:'y',},
-          {type:'bar',data:monthLabels.map(m=>{
-            const mPts=pts.filter(p=>p.x.startsWith(m));
-            return mPts.length?Math.max(...mPts.map(p=>p.y)):null;
-          }),backgroundColor:isDark?color+'66':color+'33',yAxisID:'y',borderRadius:3},
+          {label:'_max',data:maxData,borderColor:'transparent',backgroundColor:shadowColor,borderWidth:0,pointRadius:0,fill:'+1',tension:0.3,spanGaps:true},
+          {label:'_min',data:minData,borderColor:'transparent',backgroundColor:shadowColor,borderWidth:0,pointRadius:0,fill:false,tension:0.3,spanGaps:true},
+          {label:'평균',data:avgData,borderColor:color,backgroundColor:'transparent',borderWidth:2,pointRadius:3,pointBackgroundColor:color,tension:0.3,spanGaps:true,fill:false},
         ]
       },
       options:{
-        responsive:true,maintainAspectRatio:false,
+        responsive:true,maintainAspectRatio:false,spanGaps:true,
         plugins:{legend:{display:false},tooltip:{callbacks:{
           label:c=>{
-            if(c.datasetIndex===0) return `평균: ${fmtPrice(c.raw)}`;
-            return null;
+            if(c.dataset.label.startsWith('_')) return null;
+            return `평균: ${fmtPrice(c.raw)}`;
           },
           afterBody:ctx=>{
             const m=ctx[0]?.label;
