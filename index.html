@@ -3710,10 +3710,12 @@ function toggleSettings(){
   if(!isOpen){
     const header=document.getElementById('appHeader');
     panel.style.top=(header?header.offsetHeight:60)+'px';
-    // 열 때마다 설정 UI 최신화
-    initSettings();
+    panel.style.display='block';
+    // 렌더링 후 설정 UI 최신화
+    setTimeout(initSettings, 30);
+  } else {
+    panel.style.display='none';
   }
-  panel.style.display=isOpen?'none':'block';
   // 외부 클릭 시 닫기
   if(!isOpen){
     setTimeout(()=>{
