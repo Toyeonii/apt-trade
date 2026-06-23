@@ -224,6 +224,8 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
 
 .fav-period-btn{height:24px;padding:0 9px;font-size:11px;border:0.5px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;color:#555;white-space:nowrap}
 .fav-period-btn.active{background:#E6F1FB;border-color:#185FA5;color:#0C447C;font-weight:600}
+.setting-btn{height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)}
+.setting-btn.active{border-color:#185FA5 !important;background:#E6F1FB !important;color:#0C447C !important;font-weight:600 !important}
 .modal-tabs{display:flex;gap:0;border-bottom:0.5px solid #eee;overflow-x:auto;flex-shrink:0}
 .modal-tab{height:36px;padding:0 14px;border:none;background:transparent;font-size:13px;color:#888;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;flex-shrink:0}
 .modal-tab.active{color:#0C447C;border-bottom-color:#0C447C;font-weight:600}
@@ -344,9 +346,9 @@ body{padding-bottom:0}
     <div style="display:flex;align-items:center;justify-content:space-between">
       <span style="font-size:13px;font-weight:600;color:var(--text)">📐 면적 필터 방식</span>
       <div style="display:flex;gap:5px">
-        <button id="areaFilterMode_default" onclick="setAreaFilterMode('default')" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">기본</button>
-        <button id="areaFilterMode_all" onclick="setAreaFilterMode('all')" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">전체</button>
-        <button id="areaFilterMode_step5" onclick="setAreaFilterMode('step5')" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">5㎡단위</button>
+        <button id="areaFilterMode_default" class="setting-btn" onclick="setAreaFilterMode('default')">기본</button>
+        <button id="areaFilterMode_all" class="setting-btn" onclick="setAreaFilterMode('all')">전체</button>
+        <button id="areaFilterMode_step5" class="setting-btn" onclick="setAreaFilterMode('step5')">5㎡단위</button>
       </div>
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between">
@@ -3586,10 +3588,14 @@ function showSearchPanelToggle(){
 function setSettingBtn(prefix, val){
   document.querySelectorAll(`[id^="${prefix}"]`).forEach(btn=>{
     const active=btn.id===`${prefix}${val}`;
-    btn.style.borderColor=active?'#185FA5':'#ddd';
-    btn.style.background=active?'#E6F1FB':'var(--surface)';
-    btn.style.color=active?'#0C447C':'var(--text2)';
-    btn.style.fontWeight=active?'600':'400';
+    if(btn.classList.contains('setting-btn')){
+      btn.classList.toggle('active', active);
+    } else {
+      btn.style.borderColor=active?'#185FA5':'#ddd';
+      btn.style.background=active?'#E6F1FB':'var(--surface)';
+      btn.style.color=active?'#0C447C':'var(--text2)';
+      btn.style.fontWeight=active?'600':'400';
+    }
   });
 }
 
