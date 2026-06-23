@@ -1711,15 +1711,13 @@ function selectModalTab(arKey, btn){
     districtByMonth[key].push(p);
   });
 
-  // 구 전체 거래 있는 달 기준으로 x축 생성 (끊김 방지)
+  // 아파트 거래 달 기준으로 구 전체 평균 계산 (범위 내로 제한)
   const aptMonths=[...new Set(pts.map(p=>p.x.substring(0,7)))].sort();
-  const allMonths=[...new Set([...aptMonths,...Object.keys(districtByMonth)])].sort();
-  const districtPts=allMonths.map(month=>{
+  const districtPts=aptMonths.map(month=>{
     const prices=districtByMonth[month];
     if(!prices||!prices.length)return null;
     const aptPt=pts.find(p=>p.x.startsWith(month));
-    const x=aptPt?aptPt.x:month+'-15';
-    return {x, y:Math.round(prices.reduce((a,b)=>a+b,0)/prices.length)};
+    return aptPt?{x:aptPt.x, y:Math.round(prices.reduce((a,b)=>a+b,0)/prices.length)}:null;
   }).filter(Boolean);
 
   const chartWrap=document.getElementById('modalChartWrap');
