@@ -1836,7 +1836,14 @@ function selectModalTab(arKey, btn){
               const arr=aptByMonth[m];
               if(!arr) return null;
               const avg=Math.round(arr.reduce((a,b)=>a+b,0)/arr.length);
-              return arr.length===1?`${fmtPrice(avg)} (1건)`:`평균 ${fmtPrice(avg)} · 최고 ${fmtPrice(Math.max(...arr))} · 최저 ${fmtPrice(Math.min(...arr))} (${arr.length}건)`;
+              return `평균: ${fmtPrice(avg)} (${arr.length}건)`;
+            },
+            afterBody:ctx=>{
+              const m=ctx[0]?.raw?.x;
+              if(!m) return [];
+              const arr=aptByMonth[m];
+              if(!arr||arr.length<2) return [];
+              return [`최고: ${fmtPrice(Math.max(...arr))}`,`최저: ${fmtPrice(Math.min(...arr))}`];
             }
           }}
         },
