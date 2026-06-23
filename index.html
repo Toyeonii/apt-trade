@@ -2832,7 +2832,7 @@ function renderChart(){
         maintainAspectRatio:false,
         spanGaps:true,
         plugins:{
-          legend:{display:false},
+          legend:{display:false,labels:{filter:item=>!item.text.startsWith('_')}},
           tooltip:{callbacks:{
             label:ctx=>{
               const d=ctx.raw;
@@ -2865,6 +2865,9 @@ function renderChart(){
       const arr=byMonth[k];
       return arr.length?Math.round(arr.reduce((a,b)=>a+b,0)/arr.length):0;
     });
+    const maxValues=labels.map(k=>{const arr=byMonth[k];return arr.length?Math.max(...arr):null;});
+    const minValues=labels.map(k=>{const arr=byMonth[k];return arr.length?Math.min(...arr):null;});
+    const shadowColor=dm==='trade'?'rgba(24,95,165,0.08)':dm==='wolse'?'rgba(212,149,106,0.08)':'rgba(15,110,86,0.08)';
 
     panel.style.display='block';
     document.getElementById('chartTitle').textContent=`월별 평균 ${modeLabel} 추이`;
@@ -2873,15 +2876,18 @@ function renderChart(){
       type:'line',
       data:{
         labels,
-        datasets:[{
+        datasets:[
+          {label:'_max',data:maxValues,borderColor:'transparent',backgroundColor:shadowColor,borderWidth:0,pointRadius:0,fill:'+1',tension:0.3,spanGaps:true},
+          {label:'_min',data:minValues,borderColor:'transparent',backgroundColor:shadowColor,borderWidth:0,pointRadius:0,fill:false,tension:0.3,spanGaps:true},
+          {
           label:`평균 ${modeLabel}`,
           data:values,
           borderColor:color,
-          backgroundColor:bgColor,
+          backgroundColor:'transparent',
           borderWidth:2,
           pointRadius:4,
           pointBackgroundColor:color,
-          fill:true,
+          fill:false,
           tension:0.3,
           spanGaps:true
         }]
