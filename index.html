@@ -1720,60 +1720,70 @@ function selectModalTab(arKey, btn){
     return aptPt?{x:aptPt.x, y:Math.round(prices.reduce((a,b)=>a+b,0)/prices.length)}:null;
   }).filter(Boolean);
 
-  // 월별 평균 계산 (아파트)
+  // 월별 평균/최고/최저 계산
   const aptByMonth={};
   pts.forEach(p=>{const m=p.x.substring(0,7);if(!aptByMonth[m])aptByMonth[m]=[];aptByMonth[m].push(p.y);});
   const allMonths=[...new Set([...Object.keys(aptByMonth),...Object.keys(districtByMonth)])].sort();
-  const aptAvgPts=allMonths.map(m=>{
-    const prices=aptByMonth[m];
-    return {x:m,y:prices?Math.round(prices.reduce((a,b)=>a+b,0)/prices.length):null};
-  });
-  const distAvgPts=allMonths.map(m=>{
-    const prices=districtByMonth[m];
-    return {x:m,y:prices?Math.round(prices.reduce((a,b)=>a+b,0)/prices.length):null};
-  });
+
+  const avgPts=allMonths.map(m=>{const arr=aptByMonth[m];return{x:m,y:arr?Math.round(arr.reduce((a,b)=>a+b,0)/arr.length):null};});
+  const maxPts=allMonths.map(m=>{const arr=aptByMonth[m];return{x:m,y:arr?Math.max(...arr):null};});
+  const minPts=allMonths.map(m=>{const arr=aptByMonth[m];return{x:m,y:arr?Math.min(...arr):null};});
+  const distAvgPts=allMonths.map(m=>{const arr=districtByMonth[m];return{x:m,y:arr?Math.round(arr.reduce((a,b)=>a+b,0)/arr.length):null};});
 
   const chartWrap=document.getElementById('modalChartWrap');
-  if(pts.length>=2){
+  if(pts.length>=1){
     chartWrap.style.display='block';
     const ctx=document.getElementById('modalChart').getContext('2d');
     const isDark=document.documentElement.getAttribute('data-theme')==='dark';
     const modalColor=_modalType==='trade'?(isDark?'#89C4F4':'#185FA5'):_modalType==='wolse'?(isDark?'#E8A87C':'#D4956A'):(isDark?'#4DD4A0':'#0F6E56');
-    const modalBgColor=_modalType==='trade'?(isDark?'rgba(137,196,244,0.08)':'rgba(24,95,165,0.08)'):_modalType==='wolse'?(isDark?'rgba(232,168,124,0.08)':'rgba(212,149,106,0.08)'):(isDark?'rgba(77,212,160,0.08)':'rgba(15,110,86,0.08)');
+    const modalBgColor=_modalType==='trade'?(isDark?'rgba(137,196,244,0.15)':'rgba(24,95,165,0.1)'):_modalType==='wolse'?(isDark?'rgba(232,168,124,0.15)':'rgba(212,149,106,0.1)'):(isDark?'rgba(77,212,160,0.15)':'rgba(15,110,86,0.1)');
+    const shadowColor=_modalType==='trade'?(isDark?'rgba(137,196,244,0.08)':'rgba(24,95,165,0.06)'):_modalType==='wolse'?(isDark?'rgba(232,168,124,0.08)':'rgba(212,149,106,0.06)'):(isDark?'rgba(77,212,160,0.08)':'rgba(15,110,86,0.06)');
+
     const datasets=[
-      // 개별 거래 scatter (x축 월 기준으로 통일)
+      // 최고가 (음영 위쪽 경계)
       {
-        label:modalAptNm,
-        data:pts.map(p=>({x:p.x.substring(0,7),y:p.y,floor:p.floor,date:p.x})),
-        type:'scatter',
-        borderColor:modalColor,
-        backgroundColor:modalColor,
-        pointRadius:4,
-        pointHoverRadius:6,
-        showLine:false,
-        order:2
+        label:'_max',
+        data:maxPts,
+        borderColor:'transparent',
+        backgroundColor:shadowColor,
+        borderWidth:0,
+        pointRadius:0,
+        fill:'+1',
+        tension:0.3,
+        spanGaps:true,
+      },
+      // 최저가 (음영 아래쪽 경계)
+      {
+        label:'_min',
+        data:minPts,
+        borderColor:'transparent',
+        backgroundColor:shadowColor,
+        borderWidth:0,
+        pointRadius:0,
+        fill:false,
+        tension:0.3,
+        spanGaps:true,
       },
       // 월별 평균 라인
       {
-        label:modalAptNm+' 평균',
-        data:aptAvgPts,
-        type:'line',
+        label:modalAptNm,
+        data:avgPts,
         borderColor:modalColor,
-        backgroundColor:modalBgColor,
-        borderWidth:2,
-        pointRadius:0,
-        fill:true,
+        backgroundColor:'transparent',
+        borderWidth:2.5,
+        pointRadius:3,
+        pointBackgroundColor:modalColor,
+        pointHoverRadius:5,
+        fill:false,
         tension:0.3,
         spanGaps:true,
-        order:1
       }
     ];
     if(distAvgPts.some(p=>p.y)){
       datasets.push({
         label:'구 전체 평균',
         data:distAvgPts,
-        type:'line',
-        borderColor:'#999',
+        borderColor:isDark?'#777':'#aaa',
         backgroundColor:'transparent',
         borderWidth:1.5,
         pointRadius:2,
@@ -1785,16 +1795,25 @@ function selectModalTab(arKey, btn){
       });
     }
     modalChartInstance=new Chart(ctx,{
-      type:'scatter',
+      type:'line',
       data:{datasets},
       options:{
         responsive:true,
         maintainAspectRatio:false,
+        spanGaps:true,
         parsing:{xAxisKey:'x',yAxisKey:'y'},
         plugins:{
-          legend:{display:true,position:'top',labels:{font:{size:10},boxWidth:12,padding:8,filter:item=>item.text!==modalAptNm+' 평균'}},
+          legend:{display:distAvgPts.some(p=>p.y),position:'top',labels:{font:{size:10},boxWidth:12,padding:8,filter:item=>!item.text.startsWith('_')}},
           tooltip:{callbacks:{
-            label:ctx=>ctx.dataset.label==='구 전체 평균'?`구 평균: ${fmtPrice(ctx.raw.y)}`:ctx.dataset.label.endsWith(' 평균')?`월평균: ${fmtPrice(ctx.raw.y)}`:`${ctx.raw.date||ctx.raw.x} ${fmtPrice(ctx.raw.y)}${ctx.raw.floor?' · '+ctx.raw.floor+'층':''}`
+            label:ctx=>{
+              if(ctx.dataset.label.startsWith('_')) return null;
+              if(ctx.dataset.label==='구 전체 평균') return `구 평균: ${fmtPrice(ctx.raw.y)}`;
+              const m=ctx.raw.x;
+              const arr=aptByMonth[m];
+              if(!arr) return null;
+              const avg=Math.round(arr.reduce((a,b)=>a+b,0)/arr.length);
+              return arr.length===1?`${fmtPrice(avg)} (1건)`:`평균 ${fmtPrice(avg)} (${arr.length}건, 최고 ${fmtPrice(Math.max(...arr))})`;
+            }
           }}
         },
         scales:{
