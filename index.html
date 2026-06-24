@@ -3307,7 +3307,8 @@ async function selectFavMapTab(btn){
   const roadNm=_currentFav?.roadNm||'';
   const aptNm=_currentFav?.aptNm||'';
 
-  await loadKakaoMap();
+  const kakaoKey=await getKakaoKey();
+  await loadKakaoScript(kakaoKey);
   const mapContainer=document.getElementById('favKakaoMap');
   const mapOption={center:new kakao.maps.LatLng(37.5665,126.9780),level:3};
   const favMap=new kakao.maps.Map(mapContainer, mapOption);
