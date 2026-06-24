@@ -1682,7 +1682,7 @@ function renderModalWithData({items, deals}, type){
   const tabsEl=document.getElementById('modalTabs');
   tabsEl.innerHTML=modalAreaKeys.map((k,i)=>
     `<button class="modal-tab ${i===0?'active':''}" onclick="selectModalTab('${k}',this)">${k} (${modalAreaGroups[k].length}건)</button>`
-  ).join('') + `<button class="modal-tab" onclick="selectMapTab(this,'${modalAptNm.replace(/'/g,"\'")}',' ','${modalAptSeq||''}')">🗺️ 지도</button><button class="modal-tab" onclick="selectAgentTab(this)">🏢 중개사</button>`;
+  ).join('') + `<button class="modal-tab" onclick="selectMapTab(this,'${modalAptNm.replace(/'/g,"\'")}',' ','${modalAptSeq||''}')">🗺️ 지도</button>`;
 
   // _allDataForModal 임시 저장 (차트용 구 전체 데이터)
   window._allDataForModal=items;
@@ -3275,7 +3275,7 @@ function renderFavTabs(tradeDeals, rentDeals){
     {label:`월세 (${wolseDeals.length}건)`, deals:wolseDeals, mode:'wolse'},
   ];
   const tabsEl=document.getElementById('favModalTabs');
-  tabsEl.innerHTML=tabs.map((t,i)=>`<button class="modal-tab ${i===0?'active':''}" onclick="selectFavTab(${i},this)">${t.label}</button>`).join('')+`<button class="modal-tab" onclick="selectFavAgentTab(this)">🏢 중개사</button>`;
+  tabsEl.innerHTML=tabs.map((t,i)=>`<button class="modal-tab ${i===0?'active':''}" onclick="selectFavTab(${i},this)">${t.label}</button>`).join('');
   window._favTabData=tabs;
   document.body.classList.remove('mode-trade','mode-jeonse','mode-wolse');
   document.body.classList.add('mode-trade');
