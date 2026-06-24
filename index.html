@@ -1276,12 +1276,17 @@ function setupInfiniteScroll(){
   main.onscroll=function(){
     if(_infiniteLoading) return;
     const tp=Math.ceil(filteredData.length/PAGE_SIZE)||1;
-    if(currentPage>=tp) return; // 이미 전체 로드됨
+    if(currentPage>=tp){
+      // 모두 로드됨 - sentinel 제거
+      const s=document.getElementById('infinitesentinel');
+      if(s) s.outerHTML=`<div style="text-align:center;padding:16px;font-size:12px;color:#aaa">총 ${filteredData.length.toLocaleString()}건 · 전체 표시</div>`;
+      return;
+    }
     const remaining=main.scrollHeight-main.scrollTop-main.clientHeight;
     if(remaining<300){
       _infiniteLoading=true;
-      loadMoreData();
-      // 완료 후 즉시 해제
+      currentPage++;
+      appendNextPage();
       _infiniteLoading=false;
     }
   };
