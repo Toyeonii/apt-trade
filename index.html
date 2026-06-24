@@ -2606,40 +2606,10 @@ async function selectAgentTab(btn){
   body.style.display='block';
   body.innerHTML='<div class="state-screen"><div class="spinner"></div><div class="state-title">주변 중개사 검색 중...</div></div>';
 
-  // 아파트 좌표 가져오기
+  // 서버에서 좌표 검색 + 공인중개사 검색
   try{
-    // 카카오 키 로드
-    const kakaoKey=await getKakaoKey();
-    if(!kakaoKey){
-      body.innerHTML='<div class="state-screen"><div class="state-icon">⚠️</div><div class="state-title">카카오 키 로드 실패</div></div>';
-      return;
-    }
-    // 주소로 먼저 검색, 안되면 키워드로 검색
-    let x='', y='';
-    const tryAddr=async(query)=>{
-      const r=await fetch(`https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(query)}`,{headers:{'Authorization':`KakaoAK ${kakaoKey}`}});
-      const d=await r.json();
-      return d.documents||[];
-    };
-    const tryKeyword=async(query)=>{
-      const r=await fetch(`https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(query)}`,{headers:{'Authorization':`KakaoAK ${kakaoKey}`}});
-      const d=await r.json();
-      return d.documents||[];
-    };
-    let docs=[];
-    if(_modalRoadNm) docs=await tryAddr(_modalRoadNm);
-    if(!docs.length) docs=await tryKeyword(modalAptNm);
-    if(!docs.length){
-      body.innerHTML='<div class="state-screen"><div class="state-icon">📍</div><div class="state-title">위치를 찾을 수 없습니다</div></div>';
-      return;
-    }
-    x=docs[0].x||docs[0].road_address?.x||docs[0].address?.x||'';
-    y=docs[0].y||docs[0].road_address?.y||docs[0].address?.y||'';
-    if(!x||!y){
-      body.innerHTML='<div class="state-screen"><div class="state-icon">📍</div><div class="state-title">위치를 찾을 수 없습니다</div></div>';
-      return;
-    }
-    const resp=await fetch(`/api/nearby-agents?x=${x}&y=${y}&radius=200`);
+    const params=new URLSearchParams({addr:_modalRoadNm||'', apt_nm:modalAptNm, radius:200});
+    const resp=await fetch(`/api/nearby-agents?${params}`);
     const data=await resp.json();
     if(!data.ok||!data.items.length){
       body.innerHTML='<div class="state-screen"><div class="state-icon">🏢</div><div class="state-title">반경 200m 내 중개사 없음</div></div>';

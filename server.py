@@ -294,29 +294,46 @@ def apt_info():
 def nearby_agents():
     x = request.args.get('x', '')
     y = request.args.get('y', '')
+    addr = request.args.get('addr', '')
+    apt_nm = request.args.get('apt_nm', '')
     radius = request.args.get('radius', '200')
     kakao_rest_key = os.environ.get('KAKAO_REST_KEY', '')
     if not kakao_rest_key:
         return jsonify({'error': 'KAKAO_REST_KEY 미설정'}), 500
+    headers = {'Authorization': f'KakaoAK {kakao_rest_key}'}
     try:
-        url = f"https://dapi.kakao.com/v2/local/search/keyword.json"
-        params = {
-            'query': '공인중개사',
-            'x': x,
-            'y': y,
-            'radius': radius,
-            'sort': 'distance'
-        }
-        headers = {'Authorization': f'KakaoAK {kakao_rest_key}'}
-        resp = requests.get(url, params=params, headers=headers, timeout=5)
-        data = resp.json()
-        places = data.get('documents', [])
+        # 좌표가 없으면 주소/아파트명으로 검색
+        if not x or not y:
+            for query in [addr, apt_nm]:
+                if not query: continue
+                # 주소 검색
+                geo_resp = requests.get('https://dapi.kakao.com/v2/local/search/address.json',
+                    params={'query': query}, headers=headers, timeout=5)
+                docs = geo_resp.json().get('documents', [])
+                if docs:
+                    x = docs[0].get('x', '')
+                    y = docs[0].get('y', '')
+                    break
+                # 키워드 검색
+                kw_resp = requests.get('https://dapi.kakao.com/v2/local/search/keyword.json',
+                    params={'query': query}, headers=headers, timeout=5)
+                docs = kw_resp.json().get('documents', [])
+                if docs:
+                    x = docs[0].get('x', '')
+                    y = docs[0].get('y', '')
+                    break
+        if not x or not y:
+            return jsonify({'ok': False, 'error': '위치를 찾을 수 없습니다'}), 200
+        # 공인중개사 검색
+        resp = requests.get('https://dapi.kakao.com/v2/local/search/keyword.json',
+            params={'query': '공인중개사', 'x': x, 'y': y, 'radius': radius, 'sort': 'distance'},
+            headers=headers, timeout=5)
+        places = resp.json().get('documents', [])
         result = [{
             'name': p.get('place_name', ''),
             'address': p.get('road_address_name') or p.get('address_name', ''),
             'phone': p.get('phone', ''),
             'distance': p.get('distance', ''),
-            'url': p.get('place_url', '')
         } for p in places]
         return jsonify({'ok': True, 'items': result})
     except Exception as e:
