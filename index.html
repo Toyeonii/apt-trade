@@ -1294,7 +1294,6 @@ function setupInfiniteScroll(){
 function loadMoreData(){
   const tp=Math.ceil(filteredData.length/PAGE_SIZE)||1;
   if(currentPage>=tp) return;
-  currentPage++;
   appendNextPage();
 }
 function appendNextPage(){
@@ -1356,8 +1355,6 @@ function appendNextPage(){
   // sentinel 업데이트
   if(currentPage>=tp){
     sentinel.outerHTML=`<div style="text-align:center;padding:16px;font-size:12px;color:#aaa">총 ${filteredData.length.toLocaleString()}건 · 전체 표시</div>`;
-  } else {
-    setupInfiniteScroll();
   }
 }
 
