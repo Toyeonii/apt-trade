@@ -3054,13 +3054,13 @@ function toggleFavPanel(){
   if(p.style.display==='block')renderFavList();
 }
 
-function addFav(aptNm, aptSeq, sggCd, sggName, umdNm, sido){
+function addFav(aptNm, aptSeq, sggCd, sggName, umdNm, sido, roadNm=''){
   if(!aptNm){showToast('아파트를 먼저 선택해 주세요');return;}
   const sidoShort=(sido||'').replace('특별시','').replace('광역시','').replace('특별자치시','').replace('특별자치도','').replace('도','');
   const favs=getFavs();
   if(favs.some(f=>f.aptSeq===aptSeq&&f.aptNm===aptNm)){showToast('이미 저장된 아파트입니다');return;}
   if(favs.length>=10){showToast('즐겨찾기는 최대 10개입니다');return;}
-  favs.push({aptNm, aptSeq, sggCd, sggName, umdNm, sido, sidoShort});
+  favs.push({aptNm, aptSeq, sggCd, sggName, umdNm, sido, sidoShort, roadNm});
   saveFavs(favs);
   renderFavList();
   showToast(`⭐ ${aptNm} 저장완료`);
@@ -3609,7 +3609,7 @@ function favModal(){
   const sido=sidoEl.value||'';
   const deals=allData.filter(d=>modalAptSeq?d.aptSeq===modalAptSeq:d.aptNm===modalAptNm);
   const umdNm=deals[0]?.umdNm||'';
-  addFav(modalAptNm, modalAptSeq, sggCd, sggName, umdNm, sido);
+  addFav(modalAptNm, modalAptSeq, sggCd, sggName, umdNm, sido, _modalRoadNm||'');
 }
 
 // ── 공유링크 ──
