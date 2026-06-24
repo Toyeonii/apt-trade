@@ -1284,7 +1284,7 @@ function setupInfiniteScroll(){
     const tp=Math.ceil(filteredData.length/PAGE_SIZE)||1;
     if(currentPage>=tp) return;
     const remaining=main.scrollHeight-main.scrollTop-main.clientHeight;
-    if(remaining<300){
+    if(remaining<100){
       _infiniteLoading=true;
       loadMoreData();
     }
