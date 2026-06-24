@@ -2688,6 +2688,14 @@ async function selectMapTab(btn, aptNm, roadNm='', aptSeq=''){
       });
       iw.open(kakaoMapInstance, marker);
 
+      // 내 위치 기반 중개사 검색 버튼
+      const gpsBtn=document.createElement('button');
+      gpsBtn.textContent='📍 내 위치 중개사';
+      gpsBtn.style.cssText='position:absolute;bottom:12px;left:50%;transform:translateX(-50%);z-index:10;height:32px;padding:0 14px;font-size:12px;font-weight:600;background:#185FA5;color:#fff;border:none;border-radius:16px;cursor:pointer;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.3)';
+      gpsBtn.onclick=()=>addNearbyAgentsByGPS(kakaoMapInstance);
+      document.getElementById('modalMapWrap').style.position='relative';
+      document.getElementById('modalMapWrap').appendChild(gpsBtn);
+
       // 주변 중개사 마커 추가
       fetch(`/api/nearby-agents?x=${x}&y=${y}&radius=200`)
         .then(r=>r.json())
@@ -3242,6 +3250,44 @@ async function openFavModal(fav, forceRefresh=false){
   }
 }
 
+// 지도에 내 위치 기반 주변 중개사 표시
+function addNearbyAgentsByGPS(map){
+  if(!navigator.geolocation){showToast('위치 서비스를 지원하지 않습니다');return;}
+  showToast('위치 확인 중...');
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const lat=pos.coords.latitude, lng=pos.coords.longitude;
+    const coords=new kakao.maps.LatLng(lat,lng);
+    map.setCenter(coords);
+    map.setLevel(3);
+    // 내 위치 마커
+    const circle=new kakao.maps.Circle({center:coords,radius:5,strokeWeight:3,strokeColor:'#4A90D9',strokeOpacity:1,fillColor:'#4A90D9',fillOpacity:0.9});
+    circle.setMap(map);
+    // 주변 중개사 검색
+    fetch(`/api/nearby-agents?x=${lng}&y=${lat}&radius=200`)
+      .then(r=>r.json())
+      .then(data=>{
+        if(!data.ok||!data.items.length){showToast('반경 200m 내 중개사 없음');return;}
+        data.items.forEach(a=>{
+          if(!a.x||!a.y) return;
+          const pos=new kakao.maps.LatLng(a.y,a.x);
+          const agentMarker=new kakao.maps.Marker({
+            position:pos, map,
+            image:new kakao.maps.MarkerImage('https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png',new kakao.maps.Size(24,35))
+          });
+          const agentIw=new kakao.maps.InfoWindow({
+            content:`<div style="padding:4px 8px;font-size:12px;white-space:nowrap">${a.name}<br>${a.phone?'📞 '+a.phone:''}</div>`
+          });
+          kakao.maps.event.addListener(agentMarker,'click',()=>{
+            if(window._openAgentIw2) window._openAgentIw2.close();
+            agentIw.open(map, agentMarker);
+            window._openAgentIw2=agentIw;
+          });
+        });
+        showToast(`주변 중개사 ${data.items.length}개 표시`);
+      }).catch(()=>showToast('중개사 검색 실패'));
+  },()=>showToast('위치를 가져올 수 없습니다'));
+}
+
 async function selectFavMapTab(btn){
   document.querySelectorAll('#favModalTabs .modal-tab').forEach(t=>t.classList.remove('active'));
   btn.classList.add('active');
@@ -3270,6 +3316,14 @@ async function selectFavMapTab(btn){
       content:`<div style="padding:6px 10px;font-size:13px;font-weight:600;white-space:nowrap">${aptNm}</div>`
     });
     iw.open(favMap, new kakao.maps.Marker({position:coords, map:favMap}));
+
+    // 내 위치 기반 중개사 검색 버튼
+    const favGpsBtn=document.createElement('button');
+    favGpsBtn.textContent='📍 내 위치 중개사';
+    favGpsBtn.style.cssText='position:absolute;bottom:12px;left:50%;transform:translateX(-50%);z-index:10;height:32px;padding:0 14px;font-size:12px;font-weight:600;background:#185FA5;color:#fff;border:none;border-radius:16px;cursor:pointer;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.3)';
+    favGpsBtn.onclick=()=>addNearbyAgentsByGPS(favMap);
+    mapWrap.style.position='relative';
+    mapWrap.appendChild(favGpsBtn);
 
     // 주변 중개사 마커
     fetch(`/api/nearby-agents?x=${x}&y=${y}&radius=200`)
