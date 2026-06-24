@@ -334,6 +334,8 @@ def nearby_agents():
             'address': p.get('road_address_name') or p.get('address_name', ''),
             'phone': p.get('phone', ''),
             'distance': p.get('distance', ''),
+            'x': p.get('x', ''),
+            'y': p.get('y', ''),
         } for p in places]
         return jsonify({'ok': True, 'items': result})
     except Exception as e:

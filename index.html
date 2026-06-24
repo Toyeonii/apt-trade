@@ -2680,11 +2680,37 @@ async function selectMapTab(btn, aptNm, roadNm='', aptSeq=''){
       const coords=new kakao.maps.LatLng(y, x);
       kakaoMapInstance.setCenter(coords);
       kakaoMapInstance.setLevel(3);
+      // 아파트 마커
       const marker=new kakao.maps.Marker({position:coords, map:kakaoMapInstance});
       const iw=new kakao.maps.InfoWindow({
         content:`<div style="padding:6px 10px;font-size:13px;font-weight:600;white-space:nowrap">${aptNm}</div>`
       });
       iw.open(kakaoMapInstance, marker);
+
+      // 주변 중개사 마커 추가
+      fetch(`/api/nearby-agents?x=${x}&y=${y}&radius=200`)
+        .then(r=>r.json())
+        .then(data=>{
+          if(!data.ok||!data.items.length) return;
+          data.items.forEach(a=>{
+            if(!a.x||!a.y) return;
+            const pos=new kakao.maps.LatLng(a.y, a.x);
+            const agentMarker=new kakao.maps.Marker({
+              position:pos,
+              map:kakaoMapInstance,
+              image:new kakao.maps.MarkerImage(
+                'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png',
+                new kakao.maps.Size(24,35)
+              )
+            });
+            const agentIw=new kakao.maps.InfoWindow({
+              content:`<div style="padding:4px 8px;font-size:12px;white-space:nowrap">${a.name}<br>${a.phone?'📞 '+a.phone:''}</div>`
+            });
+            kakao.maps.event.addListener(agentMarker,'click',()=>{
+              agentIw.open(kakaoMapInstance, agentMarker);
+            });
+          });
+        }).catch(()=>{});
     }
 
     // 키워드 검색 폴백
