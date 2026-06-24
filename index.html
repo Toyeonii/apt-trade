@@ -2631,7 +2631,7 @@ async function selectAgentTab(btn){
           <span style="font-size:12px;color:var(--text3)">${a.distance}m</span>
         </div>
         <div style="font-size:12px;color:var(--text2)">${a.address}</div>
-        ${a.phone?`<a href="tel:${a.phone}" style="font-size:12px;color:var(--primary)">📞 ${a.phone}</a>`:''}
+        ${a.phone?`<a href="tel:${a.phone}" style="font-size:12px;color:var(--primary);pointer-events:auto;touch-action:manipulation">📞 ${a.phone}</a>`:''}
       </div>`).join('');
   }catch(e){
     console.error('중개사 검색 오류:', e);
@@ -3399,7 +3399,7 @@ async function selectFavAgentTab(btn){
           <span style="font-size:12px;color:var(--text3)">${a.distance}m</span>
         </div>
         <div style="font-size:12px;color:var(--text2)">${a.address}</div>
-        ${a.phone?`<a href="tel:${a.phone}" style="font-size:12px;color:var(--primary)">📞 ${a.phone}</a>`:''}
+        ${a.phone?`<a href="tel:${a.phone}" style="font-size:12px;color:var(--primary);pointer-events:auto;touch-action:manipulation">📞 ${a.phone}</a>`:''}
       </div>`).join('');
   }catch(e){
     body.innerHTML='<div class="state-screen"><div class="state-icon">⚠️</div><div class="state-title">오류가 발생했습니다</div></div>';
