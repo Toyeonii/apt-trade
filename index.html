@@ -3210,6 +3210,35 @@ async function openFavModal(fav, forceRefresh=false){
   }
 }
 
+async function selectFavAgentTab(btn){
+  document.querySelectorAll('#favModalTabs .modal-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  const body=document.getElementById('favModalBody');
+  body.innerHTML='<div class="state-screen"><div class="spinner"></div><div class="state-title">주변 중개사 검색 중...</div></div>';
+  try{
+    const aptNm=_currentFav?.aptNm||'';
+    const addr=_currentFav?.roadNm||'';
+    const params=new URLSearchParams({addr, apt_nm:aptNm, radius:200});
+    const resp=await fetch(`/api/nearby-agents?${params}`);
+    const data=await resp.json();
+    if(!data.ok||!data.items.length){
+      body.innerHTML='<div class="state-screen"><div class="state-icon">🏢</div><div class="state-title">반경 200m 내 중개사 없음</div></div>';
+      return;
+    }
+    body.innerHTML=data.items.map(a=>`
+      <div class="modal-list-item" style="flex-direction:column;align-items:flex-start;gap:4px">
+        <div style="display:flex;justify-content:space-between;width:100%">
+          <span style="font-weight:600;font-size:14px;color:var(--text)">${a.name}</span>
+          <span style="font-size:12px;color:var(--text3)">${a.distance}m</span>
+        </div>
+        <div style="font-size:12px;color:var(--text2)">${a.address}</div>
+        ${a.phone?`<a href="tel:${a.phone}" style="font-size:12px;color:var(--primary)">📞 ${a.phone}</a>`:''}
+      </div>`).join('');
+  }catch(e){
+    body.innerHTML='<div class="state-screen"><div class="state-icon">⚠️</div><div class="state-title">오류가 발생했습니다</div></div>';
+  }
+}
+
 function renderFavTabs(tradeDeals, rentDeals){
   const jeonseDeals=rentDeals.filter(d=>!parsePrice(d.monthlyRent));
   const wolseDeals=rentDeals.filter(d=>parsePrice(d.monthlyRent)>0);
@@ -3219,7 +3248,7 @@ function renderFavTabs(tradeDeals, rentDeals){
     {label:`월세 (${wolseDeals.length}건)`, deals:wolseDeals, mode:'wolse'},
   ];
   const tabsEl=document.getElementById('favModalTabs');
-  tabsEl.innerHTML=tabs.map((t,i)=>`<button class="modal-tab ${i===0?'active':''}" onclick="selectFavTab(${i},this)">${t.label}</button>`).join('');
+  tabsEl.innerHTML=tabs.map((t,i)=>`<button class="modal-tab ${i===0?'active':''}" onclick="selectFavTab(${i},this)">${t.label}</button>`).join('')+`<button class="modal-tab" onclick="selectFavAgentTab(this)">🏢 중개사</button>`;
   window._favTabData=tabs;
   document.body.classList.remove('mode-trade','mode-jeonse','mode-wolse');
   document.body.classList.add('mode-trade');
