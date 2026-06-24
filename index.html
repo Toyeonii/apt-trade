@@ -2608,31 +2608,34 @@ async function selectAgentTab(btn){
 
   // 아파트 좌표 가져오기
   try{
-    const geo=new kakao.maps.services.Geocoder();
-    const addr=_modalRoadNm||modalAptNm;
-    geo.addressSearch(addr, async (result, status)=>{
-      if(status!==kakao.maps.services.Status.OK||!result.length){
-        body.innerHTML='<div class="state-screen"><div class="state-icon">📍</div><div class="state-title">위치를 찾을 수 없습니다</div></div>';
-        return;
-      }
-      const {x,y}=result[0];
-      const resp=await fetch(`/api/nearby-agents?x=${x}&y=${y}&radius=200`);
-      const data=await resp.json();
-      if(!data.ok||!data.items.length){
-        body.innerHTML='<div class="state-screen"><div class="state-icon">🏢</div><div class="state-title">반경 200m 내 중개사 없음</div></div>';
-        return;
-      }
-      body.innerHTML=data.items.map(a=>`
-        <div class="modal-list-item" style="flex-direction:column;align-items:flex-start;gap:4px">
-          <div style="display:flex;justify-content:space-between;width:100%">
-            <span style="font-weight:600;font-size:14px;color:var(--text)">${a.name}</span>
-            <span style="font-size:12px;color:var(--text3)">${a.distance}m</span>
-          </div>
-          <div style="font-size:12px;color:var(--text2)">${a.address}</div>
-          ${a.phone?`<a href="tel:${a.phone}" style="font-size:12px;color:var(--primary)">📞 ${a.phone}</a>`:''}
-        </div>`).join('');
+    const addr=encodeURIComponent(_modalRoadNm||modalAptNm);
+    const geoResp=await fetch(`https://dapi.kakao.com/v2/local/search/address.json?query=${addr}`,{
+      headers:{'Authorization':`KakaoAK ${kakaoKeyLoaded}`}
     });
+    const geoData=await geoResp.json();
+    const docs=geoData.documents||[];
+    if(!docs.length){
+      body.innerHTML='<div class="state-screen"><div class="state-icon">📍</div><div class="state-title">위치를 찾을 수 없습니다</div></div>';
+      return;
+    }
+    const {x,y}=docs[0];
+    const resp=await fetch(`/api/nearby-agents?x=${x}&y=${y}&radius=200`);
+    const data=await resp.json();
+    if(!data.ok||!data.items.length){
+      body.innerHTML='<div class="state-screen"><div class="state-icon">🏢</div><div class="state-title">반경 200m 내 중개사 없음</div></div>';
+      return;
+    }
+    body.innerHTML=data.items.map(a=>`
+      <div class="modal-list-item" style="flex-direction:column;align-items:flex-start;gap:4px">
+        <div style="display:flex;justify-content:space-between;width:100%">
+          <span style="font-weight:600;font-size:14px;color:var(--text)">${a.name}</span>
+          <span style="font-size:12px;color:var(--text3)">${a.distance}m</span>
+        </div>
+        <div style="font-size:12px;color:var(--text2)">${a.address}</div>
+        ${a.phone?`<a href="tel:${a.phone}" style="font-size:12px;color:var(--primary)">📞 ${a.phone}</a>`:''}
+      </div>`).join('');
   }catch(e){
+    console.error('중개사 검색 오류:', e);
     body.innerHTML='<div class="state-screen"><div class="state-icon">⚠️</div><div class="state-title">오류가 발생했습니다</div></div>';
   }
 }
