@@ -329,12 +329,15 @@ def nearby_agents():
             params={'query': '공인중개사', 'x': x, 'y': y, 'radius': radius, 'sort': 'distance'},
             headers=headers, timeout=5)
         places = resp.json().get('documents', [])
+        # 공인중개사 관련만 필터링
+        keywords = ['공인중개사', '부동산', '중개사무소', '공인중개', '중개법인']
+        filtered = [p for p in places if any(kw in p.get('place_name','') or kw in p.get('category_name','') for kw in keywords)]
         result = [{
             'name': p.get('place_name', ''),
             'address': p.get('road_address_name') or p.get('address_name', ''),
             'phone': p.get('phone', ''),
             'distance': p.get('distance', ''),
-        } for p in places]
+        } for p in filtered]
         return jsonify({'ok': True, 'items': result})
     except Exception as e:
         return jsonify({'ok': False, 'error': str(e)}), 500
