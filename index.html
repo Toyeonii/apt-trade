@@ -3312,6 +3312,7 @@ async function selectFavMapTab(btn){
   const mapContainer=document.getElementById('favKakaoMap');
   const mapOption={center:new kakao.maps.LatLng(37.5665,126.9780),level:3};
   const favMap=new kakao.maps.Map(mapContainer, mapOption);
+  setTimeout(()=>favMap.relayout(), 100);
 
   const geocoder=new kakao.maps.services.Geocoder();
   const ps=new kakao.maps.services.Places();
