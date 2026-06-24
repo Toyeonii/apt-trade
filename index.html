@@ -1281,8 +1281,8 @@ function setupInfiniteScroll(){
     if(remaining<300){
       _infiniteLoading=true;
       loadMoreData();
-      // 최대 1초 후 강제 해제 (뱅글뱅글 고착 방지)
-      setTimeout(()=>{_infiniteLoading=false;},1000);
+      // 완료 후 즉시 해제
+      _infiniteLoading=false;
     }
   };
 }
