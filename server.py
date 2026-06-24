@@ -290,6 +290,38 @@ def apt_info():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/nearby-agents')
+def nearby_agents():
+    x = request.args.get('x', '')
+    y = request.args.get('y', '')
+    radius = request.args.get('radius', '200')
+    kakao_rest_key = os.environ.get('KAKAO_REST_KEY', '')
+    if not kakao_rest_key:
+        return jsonify({'error': 'KAKAO_REST_KEY 미설정'}), 500
+    try:
+        url = f"https://dapi.kakao.com/v2/local/search/keyword.json"
+        params = {
+            'query': '공인중개사',
+            'x': x,
+            'y': y,
+            'radius': radius,
+            'sort': 'distance'
+        }
+        headers = {'Authorization': f'KakaoAK {kakao_rest_key}'}
+        resp = requests.get(url, params=params, headers=headers, timeout=5)
+        data = resp.json()
+        places = data.get('documents', [])
+        result = [{
+            'name': p.get('place_name', ''),
+            'address': p.get('road_address_name') or p.get('address_name', ''),
+            'phone': p.get('phone', ''),
+            'distance': p.get('distance', ''),
+            'url': p.get('place_url', '')
+        } for p in places]
+        return jsonify({'ok': True, 'items': result})
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
 @app.route('/')
 def index():
     return open('index.html', encoding='utf-8').read()
