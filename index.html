@@ -1183,6 +1183,7 @@ function renderTradeTable(){
     bindLongPress(el, el.dataset.apt, el.dataset.road||'', el.dataset.seq||'');
   });
   renderChart();
+  setTimeout(setupInfiniteScroll, 100);
 }
 
 function renderRentTable(){
