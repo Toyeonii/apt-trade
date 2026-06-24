@@ -516,6 +516,7 @@ body{padding-bottom:0}
       <div style="display:flex;align-items:center">
         <button class="modal-share" onclick="shareModal()" title="공유">📤</button>
         <button class="modal-share" onclick="favModal()" title="즐겨찾기" id="btnFavModal">⭐</button>
+        <button class="modal-share" onclick="selectMapTab(this, modalAptNm, _modalRoadNm||'', modalAptSeq||'')" title="지도" id="btnModalMap">🗺️</button>
         <button class="modal-close" onclick="closeModal()">✕</button>
       </div>
     </div>
@@ -555,6 +556,7 @@ body{padding-bottom:0}
         </div>
         <div style="display:flex;gap:6px;align-items:center">
           <button onclick="shareFavModal()" style="width:32px;height:32px;border-radius:50%;border:none;background:#f0f0f0;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center" title="공유">📤</button>
+          <button onclick="selectFavMapTab(this)" style="width:32px;height:32px;border-radius:50%;border:none;background:#f0f0f0;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center" title="지도">🗺️</button>
           <button class="modal-close" onclick="closeFavModal()">✕</button>
         </div>
       </div>
@@ -1691,7 +1693,7 @@ function renderModalWithData({items, deals}, type){
   const tabsEl=document.getElementById('modalTabs');
   tabsEl.innerHTML=modalAreaKeys.map((k,i)=>
     `<button class="modal-tab ${i===0?'active':''}" onclick="selectModalTab('${k}',this)">${k} (${modalAreaGroups[k].length}건)</button>`
-  ).join('') + `<button class="modal-tab" onclick="selectMapTab(this,'${modalAptNm.replace(/'/g,"\'")}',' ','${modalAptSeq||''}')">🗺️ 지도</button>`;
+  ).join('');
 
   // _allDataForModal 임시 저장 (차트용 구 전체 데이터)
   window._allDataForModal=items;
@@ -3415,7 +3417,7 @@ function renderFavTabs(tradeDeals, rentDeals){
     {label:`월세 (${wolseDeals.length}건)`, deals:wolseDeals, mode:'wolse'},
   ];
   const tabsEl=document.getElementById('favModalTabs');
-  tabsEl.innerHTML=tabs.map((t,i)=>`<button class="modal-tab ${i===0?'active':''}" onclick="selectFavTab(${i},this)">${t.label}</button>`).join('')+`<button class="modal-tab" onclick="selectFavMapTab(this)">🗺️ 지도</button>`;
+  tabsEl.innerHTML=tabs.map((t,i)=>`<button class="modal-tab ${i===0?'active':''}" onclick="selectFavTab(${i},this)">${t.label}</button>`).join('');
   window._favTabData=tabs;
   document.body.classList.remove('mode-trade','mode-jeonse','mode-wolse');
   document.body.classList.add('mode-trade');
