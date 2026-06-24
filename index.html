@@ -352,6 +352,14 @@ body{padding-bottom:0}
       </div>
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:13px;font-weight:600;color:var(--text)">🏢 중개사 반경</span>
+      <div style="display:flex;gap:5px">
+        <button id="agentRadius100" class="setting-btn" onclick="setAgentRadius(100)">100m</button>
+        <button id="agentRadius200" class="setting-btn" onclick="setAgentRadius(200)">200m</button>
+        <button id="agentRadius500" class="setting-btn" onclick="setAgentRadius(500)">500m</button>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between">
       <span style="font-size:13px;font-weight:600;color:var(--text)">📊 차트 기본 접힘</span>
       <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer">
         <input type="checkbox" id="chartFoldSwitch" onchange="setChartFold(this.checked)" style="opacity:0;width:0;height:0;position:absolute">
@@ -2609,7 +2617,7 @@ async function selectAgentTab(btn){
 
   // 서버에서 좌표 검색 + 공인중개사 검색
   try{
-    const params=new URLSearchParams({addr:_modalRoadNm||'', apt_nm:modalAptNm, radius:200});
+    const params=new URLSearchParams({addr:_modalRoadNm||'', apt_nm:modalAptNm, radius:_agentRadius});
     const resp=await fetch(`/api/nearby-agents?${params}`);
     const data=await resp.json();
     if(!data.ok||!data.items.length){
@@ -2697,7 +2705,7 @@ async function selectMapTab(btn, aptNm, roadNm='', aptSeq=''){
       document.getElementById('modalMapWrap').appendChild(gpsBtn);
 
       // 주변 중개사 마커 추가
-      fetch(`/api/nearby-agents?x=${x}&y=${y}&radius=200`)
+      fetch(`/api/nearby-agents?x=${x}&y=${y}&radius=${_agentRadius}`)
         .then(r=>r.json())
         .then(data=>{
           if(!data.ok||!data.items.length) return;
@@ -3263,7 +3271,7 @@ function addNearbyAgentsByGPS(map){
     const circle=new kakao.maps.Circle({center:coords,radius:5,strokeWeight:3,strokeColor:'#4A90D9',strokeOpacity:1,fillColor:'#4A90D9',fillOpacity:0.9});
     circle.setMap(map);
     // 주변 중개사 검색
-    fetch(`/api/nearby-agents?x=${lng}&y=${lat}&radius=200`)
+    fetch(`/api/nearby-agents?x=${lng}&y=${lat}&radius=${_agentRadius}`)
       .then(r=>r.json())
       .then(data=>{
         if(!data.ok||!data.items.length){showToast('반경 200m 내 중개사 없음');return;}
@@ -3326,7 +3334,7 @@ async function selectFavMapTab(btn){
     mapWrap.appendChild(favGpsBtn);
 
     // 주변 중개사 마커
-    fetch(`/api/nearby-agents?x=${x}&y=${y}&radius=200`)
+    fetch(`/api/nearby-agents?x=${x}&y=${y}&radius=${_agentRadius}`)
       .then(r=>r.json())
       .then(data=>{
         if(!data.ok||!data.items.length) return;
@@ -3375,7 +3383,7 @@ async function selectFavAgentTab(btn){
     const aptNm=_currentFav?.aptNm||'';
     const addr=_currentFav?.roadNm||'';
     // 아파트명 먼저, 주소는 폴백
-    const params=new URLSearchParams({addr, apt_nm:aptNm, radius:200});
+    const params=new URLSearchParams({addr, apt_nm:aptNm, radius:_agentRadius});
     const resp=await fetch(`/api/nearby-agents?${params}`);
     const data=await resp.json();
     if(!data.ok||!data.items.length){
@@ -3909,6 +3917,12 @@ function initSettings(){
   if(sw) sw.checked=chartFold;
   if(track) track.style.background=chartFold?'#185FA5':'#ccc';
   if(thumb) thumb.style.transform=chartFold?'translateX(20px)':'translateX(0)';
+  // 중개사 반경 버튼 초기화
+  _agentRadius=parseInt(localStorage.getItem('apt_agent_radius')||'200');
+  ['100','200','500'].forEach(v=>{
+    const btn=document.getElementById(`agentRadius${v}`);
+    if(btn) btn.classList.toggle('active', parseInt(v)===_agentRadius);
+  });
   // 면적 필터 방식 버튼 active 직접 설정
   ['default','all','step5'].forEach(m=>{
     const btn=document.getElementById(`areaFilterMode_${m}`);
@@ -3967,6 +3981,17 @@ function rebuildAreaFilter(){
     });
   }
   if(curVal) sel.value=curVal;
+}
+
+// ── 중개사 검색 반경 ──
+let _agentRadius=parseInt(localStorage.getItem('apt_agent_radius')||'200');
+function setAgentRadius(r){
+  _agentRadius=r;
+  localStorage.setItem('apt_agent_radius', r);
+  ['100','200','500'].forEach(v=>{
+    const btn=document.getElementById(`agentRadius${v}`);
+    if(btn) btn.classList.toggle('active', parseInt(v)===r);
+  });
 }
 
 // ── 설정 패널 ──
