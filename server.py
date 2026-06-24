@@ -304,7 +304,7 @@ def nearby_agents():
     try:
         # 좌표가 없으면 주소/아파트명으로 검색
         if not x or not y:
-            for query in [addr, apt_nm]:
+            for query in [apt_nm, addr]:  # 아파트명 먼저 검색
                 if not query: continue
                 # 주소 검색
                 geo_resp = requests.get('https://dapi.kakao.com/v2/local/search/address.json',
