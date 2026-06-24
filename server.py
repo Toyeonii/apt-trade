@@ -326,18 +326,15 @@ def nearby_agents():
             return jsonify({'ok': False, 'error': '위치를 찾을 수 없습니다'}), 200
         # 공인중개사 검색
         resp = requests.get('https://dapi.kakao.com/v2/local/search/keyword.json',
-            params={'query': '공인중개사', 'x': x, 'y': y, 'radius': radius, 'sort': 'distance'},
+            params={'query': '부동산', 'x': x, 'y': y, 'radius': radius, 'sort': 'distance', 'category_group_code': 'AG2'},
             headers=headers, timeout=5)
         places = resp.json().get('documents', [])
-        # 공인중개사 관련만 필터링
-        keywords = ['공인중개사', '부동산', '중개사무소', '공인중개', '중개법인']
-        filtered = [p for p in places if any(kw in p.get('place_name','') or kw in p.get('category_name','') for kw in keywords)]
         result = [{
             'name': p.get('place_name', ''),
             'address': p.get('road_address_name') or p.get('address_name', ''),
             'phone': p.get('phone', ''),
             'distance': p.get('distance', ''),
-        } for p in filtered]
+        } for p in places]
         return jsonify({'ok': True, 'items': result})
     except Exception as e:
         return jsonify({'ok': False, 'error': str(e)}), 500
