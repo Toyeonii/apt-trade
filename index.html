@@ -1273,7 +1273,12 @@ function setupInfiniteScroll(){
   const main=document.getElementById('main');
   if(!main) return;
   main.onscroll=null;
+  let firstScroll=false;
   main.onscroll=function(){
+    if(!firstScroll){
+      if(main.scrollTop>0) firstScroll=true;
+      else return;
+    }
     if(_infiniteLoading) return;
     const tp=Math.ceil(filteredData.length/PAGE_SIZE)||1;
     if(currentPage>=tp) return;
