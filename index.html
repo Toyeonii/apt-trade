@@ -563,6 +563,7 @@ body{padding-bottom:0}
     <div class="modal-chart" id="favModalChartWrap">
       <div class="modal-chart-wrap"><canvas id="favModalChart"></canvas></div>
     </div>
+    <div class="modal-map-wrap" id="favModalMapWrap" style="display:none"><div id="favKakaoMap" style="width:100%;height:100%"></div></div>
     <div class="modal-body" id="favModalBody"><div class="state-screen"><div class="spinner"></div><div class="state-title">조회 중...</div></div></div>
   </div>
 </div>
@@ -2707,7 +2708,12 @@ async function selectMapTab(btn, aptNm, roadNm='', aptSeq=''){
               content:`<div style="padding:4px 8px;font-size:12px;white-space:nowrap">${a.name}<br>${a.phone?'📞 '+a.phone:''}</div>`
             });
             kakao.maps.event.addListener(agentMarker,'click',()=>{
+              if(window._openAgentIw) window._openAgentIw.close();
               agentIw.open(kakaoMapInstance, agentMarker);
+              window._openAgentIw=agentIw;
+            });
+            kakao.maps.event.addListener(kakaoMapInstance,'click',()=>{
+              if(window._openAgentIw){window._openAgentIw.close();window._openAgentIw=null;}
             });
           });
         }).catch(()=>{});
@@ -3236,6 +3242,76 @@ async function openFavModal(fav, forceRefresh=false){
   }
 }
 
+async function selectFavMapTab(btn){
+  document.querySelectorAll('#favModalTabs .modal-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('favModalChartWrap').style.display='none';
+  document.getElementById('favModalBody').style.display='none';
+  const mapWrap=document.getElementById('favModalMapWrap');
+  mapWrap.style.display='block';
+
+  const roadNm=_currentFav?.roadNm||'';
+  const aptNm=_currentFav?.aptNm||'';
+
+  await loadKakaoMap();
+  const mapContainer=document.getElementById('favKakaoMap');
+  const mapOption={center:new kakao.maps.LatLng(37.5665,126.9780),level:3};
+  const favMap=new kakao.maps.Map(mapContainer, mapOption);
+
+  const geocoder=new kakao.maps.services.Geocoder();
+  const ps=new kakao.maps.services.Places();
+
+  function placeFavMarker(x,y){
+    const coords=new kakao.maps.LatLng(y,x);
+    favMap.setCenter(coords);
+    favMap.setLevel(3);
+    new kakao.maps.Marker({position:coords, map:favMap});
+    const iw=new kakao.maps.InfoWindow({
+      content:`<div style="padding:6px 10px;font-size:13px;font-weight:600;white-space:nowrap">${aptNm}</div>`
+    });
+    iw.open(favMap, new kakao.maps.Marker({position:coords, map:favMap}));
+
+    // 주변 중개사 마커
+    fetch(`/api/nearby-agents?x=${x}&y=${y}&radius=200`)
+      .then(r=>r.json())
+      .then(data=>{
+        if(!data.ok||!data.items.length) return;
+        data.items.forEach(a=>{
+          if(!a.x||!a.y) return;
+          const pos=new kakao.maps.LatLng(a.y,a.x);
+          const agentMarker=new kakao.maps.Marker({
+            position:pos, map:favMap,
+            image:new kakao.maps.MarkerImage('https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png',new kakao.maps.Size(24,35))
+          });
+          const agentIw=new kakao.maps.InfoWindow({
+            content:`<div style="padding:4px 8px;font-size:12px;white-space:nowrap">${a.name}<br>${a.phone?'📞 '+a.phone:''}</div>`
+          });
+          kakao.maps.event.addListener(agentMarker,'click',()=>{
+            if(window._openFavAgentIw) window._openFavAgentIw.close();
+            agentIw.open(favMap, agentMarker);
+            window._openFavAgentIw=agentIw;
+          });
+          kakao.maps.event.addListener(favMap,'click',()=>{
+            if(window._openFavAgentIw){window._openFavAgentIw.close();window._openFavAgentIw=null;}
+          });
+        });
+      }).catch(()=>{});
+  }
+
+  if(roadNm){
+    geocoder.addressSearch(roadNm,(result,status)=>{
+      if(status===kakao.maps.services.Status.OK) placeFavMarker(result[0].x,result[0].y);
+      else ps.keywordSearch(aptNm,(data,status)=>{
+        if(status===kakao.maps.services.Status.OK) placeFavMarker(data[0].x,data[0].y);
+      });
+    });
+  } else {
+    ps.keywordSearch(aptNm,(data,status)=>{
+      if(status===kakao.maps.services.Status.OK) placeFavMarker(data[0].x,data[0].y);
+    });
+  }
+}
+
 async function selectFavAgentTab(btn){
   document.querySelectorAll('#favModalTabs .modal-tab').forEach(t=>t.classList.remove('active'));
   btn.classList.add('active');
@@ -3275,7 +3351,7 @@ function renderFavTabs(tradeDeals, rentDeals){
     {label:`월세 (${wolseDeals.length}건)`, deals:wolseDeals, mode:'wolse'},
   ];
   const tabsEl=document.getElementById('favModalTabs');
-  tabsEl.innerHTML=tabs.map((t,i)=>`<button class="modal-tab ${i===0?'active':''}" onclick="selectFavTab(${i},this)">${t.label}</button>`).join('');
+  tabsEl.innerHTML=tabs.map((t,i)=>`<button class="modal-tab ${i===0?'active':''}" onclick="selectFavTab(${i},this)">${t.label}</button>`).join('')+`<button class="modal-tab" onclick="selectFavMapTab(this)">🗺️ 지도</button>`;
   window._favTabData=tabs;
   document.body.classList.remove('mode-trade','mode-jeonse','mode-wolse');
   document.body.classList.add('mode-trade');
@@ -3287,6 +3363,7 @@ function renderFavTabs(tradeDeals, rentDeals){
 function selectFavTab(idx, btn){
   document.querySelectorAll('#favModalTabs .modal-tab').forEach(t=>t.classList.remove('active'));
   btn.classList.add('active');
+  document.getElementById('favModalMapWrap').style.display='none';
   const tab=window._favTabData[idx];
   document.body.classList.remove('mode-trade','mode-jeonse','mode-wolse');
   document.body.classList.add(`mode-${tab.mode}`);
