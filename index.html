@@ -1281,15 +1281,15 @@ function setupInfiniteScroll(){
     if(remaining<300){
       _infiniteLoading=true;
       loadMoreData();
-      setTimeout(()=>{_infiniteLoading=false;},1000);
     }
   };
 }
 function loadMoreData(){
   const tp=Math.ceil(filteredData.length/PAGE_SIZE)||1;
-  if(currentPage>=tp) return;
+  if(currentPage>=tp){_infiniteLoading=false;return;}
   currentPage++;
   appendNextPage();
+  _infiniteLoading=false;
 }
 function appendNextPage(){
   const tp=Math.ceil(filteredData.length/PAGE_SIZE)||1;
