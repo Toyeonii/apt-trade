@@ -1283,7 +1283,7 @@ function setupInfiniteScroll(){
       return;
     }
     const remaining=main.scrollHeight-main.scrollTop-main.clientHeight;
-    if(remaining<300){
+    if(remaining<300 && main.scrollTop>10){
       _infiniteLoading=true;
       currentPage++;
       appendNextPage();
