@@ -2723,7 +2723,7 @@ async function selectMapTab(btn, aptNm, roadNm='', aptSeq=''){
               )
             });
             const agentIw=new kakao.maps.InfoWindow({
-              content:`<div style="padding:4px 8px;font-size:12px;white-space:nowrap">${a.name}<br>${a.phone?'📞 '+a.phone:''}</div>`
+              content:`<div style="padding:4px 8px;font-size:12px;white-space:nowrap">${a.name}${a.phone?`<br><a href='tel:${a.phone}' style='color:#185FA5;text-decoration:none;display:block;padding:4px 0'>📞 ${a.phone}</a>`:''}</div>`
             });
             kakao.maps.event.addListener(agentMarker,'click',()=>{
               if(window._openAgentIw) window._openAgentIw.close();
@@ -3285,7 +3285,7 @@ function addNearbyAgentsByGPS(map){
             image:new kakao.maps.MarkerImage('https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png',new kakao.maps.Size(24,35))
           });
           const agentIw=new kakao.maps.InfoWindow({
-            content:`<div style="padding:4px 8px;font-size:12px;white-space:nowrap">${a.name}<br>${a.phone?'📞 '+a.phone:''}</div>`
+            content:`<div style="padding:4px 8px;font-size:12px;white-space:nowrap">${a.name}${a.phone?`<br><a href='tel:${a.phone}' style='color:#185FA5;text-decoration:none;display:block;padding:4px 0'>📞 ${a.phone}</a>`:''}</div>`
           });
           kakao.maps.event.addListener(agentMarker,'click',()=>{
             if(window._openAgentIw2) window._openAgentIw2.close();
@@ -3350,7 +3350,7 @@ async function selectFavMapTab(btn){
             image:new kakao.maps.MarkerImage('https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png',new kakao.maps.Size(24,35))
           });
           const agentIw=new kakao.maps.InfoWindow({
-            content:`<div style="padding:4px 8px;font-size:12px;white-space:nowrap">${a.name}<br>${a.phone?'📞 '+a.phone:''}</div>`
+            content:`<div style="padding:4px 8px;font-size:12px;white-space:nowrap">${a.name}${a.phone?`<br><a href='tel:${a.phone}' style='color:#185FA5;text-decoration:none;display:block;padding:4px 0'>📞 ${a.phone}</a>`:''}</div>`
           });
           kakao.maps.event.addListener(agentMarker,'click',()=>{
             if(window._openFavAgentIw) window._openFavAgentIw.close();
