@@ -3217,7 +3217,7 @@ async function selectFavAgentTab(btn){
   body.innerHTML='<div class="state-screen"><div class="spinner"></div><div class="state-title">주변 중개사 검색 중...</div></div>';
   try{
     const aptNm=_currentFav?.aptNm||'';
-    const addr=_currentFav?.roadNm||'';
+    const addr=_currentFav?.roadNm||[_currentFav?.sggName, _currentFav?.umdNm].filter(Boolean).join(' ')||'';
     const params=new URLSearchParams({addr, apt_nm:aptNm, radius:200});
     const resp=await fetch(`/api/nearby-agents?${params}`);
     const data=await resp.json();
