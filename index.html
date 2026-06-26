@@ -4074,7 +4074,8 @@ function clearDarkSchedule(){
   localStorage.removeItem('apt_dark_schedule');
   document.getElementById('darkStart').value='';
   document.getElementById('darkEnd').value='';
-  showToast('다크 시간 해제됨');
+  setDarkMode(false); // 라이트모드로 복귀
+  showToast('다크모드 해제됨');
 }
 function applyDarkSchedule(){
   const s=localStorage.getItem('apt_dark_schedule');
