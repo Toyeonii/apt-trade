@@ -2052,6 +2052,30 @@ function selectModalCompareTab(btn){
   const thStyleL=`style="padding:8px 6px;font-size:11px;font-weight:600;color:${isDark?'#aaa':'#888'};text-align:left;border-bottom:1px solid ${isDark?'#333':'#eee'}"`;
   const modeColor=_modalType==='trade'?(isDark?'#89C4F4':'#185FA5'):_modalType==='wolse'?(isDark?'#E8A87C':'#B87A52'):(isDark?'#4DD4A0':'#0F6E56');
 
+  // 전세가율 계산용 - 매매/전세 캐시에서 면적별 평균 추출
+  const tradeCache=_modalTypeCache[`trade_${_modalMonths}`];
+  const jeonseCache=_modalTypeCache[`jeonse_${_modalMonths}`];
+  const tradeAvgByArea={}, jeonseAvgByArea={};
+  if(tradeCache){
+    const groups={};
+    tradeCache.deals.forEach(d=>{
+      const k=parseFloat(d.excluUseAr||0).toFixed(1);
+      const p=parsePrice(d.dealAmount);
+      if(p>0){if(!groups[k])groups[k]=[];groups[k].push(p);}
+    });
+    Object.keys(groups).forEach(k=>{ tradeAvgByArea[k]=Math.round(groups[k].reduce((a,b)=>a+b,0)/groups[k].length); });
+  }
+  if(jeonseCache){
+    const groups={};
+    jeonseCache.deals.filter(d=>!parsePrice(d.monthlyRent)).forEach(d=>{
+      const k=parseFloat(d.excluUseAr||0).toFixed(1);
+      const p=parsePrice(d.deposit);
+      if(p>0){if(!groups[k])groups[k]=[];groups[k].push(p);}
+    });
+    Object.keys(groups).forEach(k=>{ jeonseAvgByArea[k]=Math.round(groups[k].reduce((a,b)=>a+b,0)/groups[k].length); });
+  }
+  const hasJeonseRate=Object.keys(tradeAvgByArea).length>0&&Object.keys(jeonseAvgByArea).length>0;
+
   const tableHtml=`
   <table style="width:100%;border-collapse:collapse;font-size:12px">
     <thead>
@@ -2060,6 +2084,7 @@ function selectModalCompareTab(btn){
         <th ${thStyle}>평균</th>
         <th ${thStyle}>최고</th>
         <th ${thStyle}>최저</th>
+        <th ${thStyle}>전세가율</th>
         <th ${thStyle}>건수</th>
       </tr>
     </thead>
@@ -2068,16 +2093,24 @@ function selectModalCompareTab(btn){
         const rowBg=i%2===0?(isDark?'rgba(255,255,255,0.03)':'rgba(0,0,0,0.02)'):'transparent';
         const tdStyle=`style="padding:9px 6px;text-align:right;border-bottom:0.5px solid ${isDark?'#2a2a2a':'#f5f5f5'}"`;
         const tdStyleL=`style="padding:9px 6px;text-align:left;border-bottom:0.5px solid ${isDark?'#2a2a2a':'#f5f5f5'};font-weight:600;color:${modeColor}"`;
+        // 전세가율
+        const tAvg=tradeAvgByArea[r.k]||0;
+        const jAvg=jeonseAvgByArea[r.k]||0;
+        const ratio=tAvg&&jAvg?Math.round(jAvg/tAvg*100):null;
+        const ratioColor=ratio===null?'':(ratio>=80?(isDark?'#ff8a80':'#c0392b'):ratio>=60?(isDark?'#FFD54F':'#e67e22'):(isDark?'#82b1ff':'#2563eb'));
+        const ratioStr=ratio!==null?`<span style="color:${ratioColor};font-weight:600">${ratio}%</span>`:`<span style="color:#aaa">-</span>`;
         return `<tr style="background:${rowBg}">
           <td ${tdStyleL}>${r.k}<span style="font-size:10px;color:${isDark?'#666':'#aaa'};font-weight:400;margin-left:3px">(${r.pyung}평)</span></td>
           <td ${tdStyle}>${fmtPrice(r.avg)}</td>
           <td ${tdStyle} style="color:${isDark?'#ff8a80':'#c0392b'};text-align:right;padding:9px 6px;border-bottom:0.5px solid ${isDark?'#2a2a2a':'#f5f5f5'}">${fmtPrice(r.max)}</td>
           <td ${tdStyle} style="color:${isDark?'#82b1ff':'#2563eb'};text-align:right;padding:9px 6px;border-bottom:0.5px solid ${isDark?'#2a2a2a':'#f5f5f5'}">${fmtPrice(r.min)}</td>
+          <td ${tdStyle}>${ratioStr}</td>
           <td ${tdStyle}>${r.cnt}건</td>
         </tr>`;
       }).join('')}
     </tbody>
-  </table>`;
+  </table>
+  ${!hasJeonseRate?`<div style="padding:8px 12px;font-size:11px;color:#aaa">💡 전세 탭을 한 번 클릭하면 전세가율이 표시됩니다</div>`:''}`;
 
   document.getElementById('modalBody').innerHTML=`<div style="padding:0 4px">${tableHtml}</div>`;
 }
