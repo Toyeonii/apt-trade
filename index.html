@@ -311,11 +311,14 @@ body{padding-bottom:0}
   <div style="display:flex;flex-direction:column;gap:12px;max-width:400px;margin:0 auto;width:100%">
     <div style="display:flex;align-items:center;justify-content:space-between">
       <span style="font-size:13px;font-weight:600;color:var(--text)">🌙 다크모드</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button onclick="setSystemDarkMode()" style="height:22px;padding:0 8px;font-size:11px;border:0.5px solid #ddd;border-radius:6px;background:var(--surface);cursor:pointer;color:var(--text2)">시스템 따르기</button>
       <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer">
         <input type="checkbox" id="darkModeSwitch" onchange="toggleDarkMode()" style="opacity:0;width:0;height:0;position:absolute">
         <span id="darkModeTrack" style="position:absolute;inset:0;background:#ccc;border-radius:24px;transition:0.3s"></span>
         <span id="darkModeThumb" style="position:absolute;left:3px;top:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:0.3s;box-shadow:0 1px 3px rgba(0,0,0,0.3)"></span>
       </label>
+      </div>
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between">
       <span style="font-size:13px;font-weight:600;color:var(--text)">📅 기본 조회기간</span>
@@ -4051,6 +4054,13 @@ function toggleSettings(){
 }
 
 // ── 다크모드 ──
+function setSystemDarkMode(){
+  localStorage.removeItem('apt_dark_mode');
+  const isDark=window.matchMedia('(prefers-color-scheme: dark)').matches;
+  setDarkMode(isDark);
+  showToast('시스템 설정을 따릅니다');
+}
+
 function toggleDarkMode(){
   const isDark=document.documentElement.getAttribute('data-theme')==='dark';
   setDarkMode(!isDark);
