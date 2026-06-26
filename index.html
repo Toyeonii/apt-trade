@@ -2057,10 +2057,27 @@ function selectModalCompareTab(btn){
   document.getElementById('modalMapWrap').style.display='none';
   document.getElementById('modalBody').style.display='block';
 
+  // 프리캐시 완료 대기 후 렌더링
+  const tradeKey=`trade_${_modalMonths}`, jeonseKey=`jeonse_${_modalMonths}`;
+  if(!_modalTypeCache[tradeKey]||!_modalTypeCache[jeonseKey]){
+    document.getElementById('modalBody').innerHTML='<div style="padding:20px;text-align:center;color:#aaa"><div class="spinner" style="margin:0 auto 8px"></div>전세가율 데이터 로딩 중...</div>';
+    const waitAndRender=()=>{
+      if(_modalTypeCache[tradeKey]&&_modalTypeCache[jeonseKey]){ _renderCompareTable(); return; }
+      setTimeout(waitAndRender, 300);
+    };
+    waitAndRender();
+    return;
+  }
+  _renderCompareTable();
+}
+
   const isDark=document.documentElement.getAttribute('data-theme')==='dark';
   const isRent=_modalType==='jeonse'||_modalType==='wolse';
+  _renderCompareTable();
+}
 
-  // 평형별 통계 계산
+function _renderCompareTable(){
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
   const rows=modalAreaKeys.map(k=>{
     const deals=modalAreaGroups[k]||[];
     const prices=deals.map(d=>{
@@ -2092,7 +2109,8 @@ function selectModalCompareTab(btn){
   if(tradeCache){
     const groups={};
     tradeCache.deals.forEach(d=>{
-      const k=parseFloat(d.excluUseAr||0).toFixed(1);
+      const ar=parseFloat(d.excluUseAr||0);
+      const k=ar>0?`${ar.toFixed(1)}㎡`:'기타';
       const p=parsePrice(d.dealAmount);
       if(p>0){if(!groups[k])groups[k]=[];groups[k].push(p);}
     });
@@ -2101,7 +2119,8 @@ function selectModalCompareTab(btn){
   if(jeonseCache){
     const groups={};
     jeonseCache.deals.filter(d=>!parsePrice(d.monthlyRent)).forEach(d=>{
-      const k=parseFloat(d.excluUseAr||0).toFixed(1);
+      const ar=parseFloat(d.excluUseAr||0);
+      const k=ar>0?`${ar.toFixed(1)}㎡`:'기타';
       const p=parsePrice(d.deposit);
       if(p>0){if(!groups[k])groups[k]=[];groups[k].push(p);}
     });
