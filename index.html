@@ -299,7 +299,7 @@ body{padding-bottom:0}
     <div style="display:flex;align-items:center;gap:8px">
       <span id="modeLabel" class="mode-label mode-label-map">지도</span>
       <button id="settingsBtn" onclick="toggleSettings()" style="width:28px;height:28px;border-radius:50%;border:none;background:rgba(255,255,255,0.2);color:#fff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center" title="다크모드">⚙️</button>
-      <button id="searchPanelToggleBtn" onclick="toggleSearchPanel()" style="display:none;height:26px;padding:0 8px;border-radius:13px;border:none;background:rgba(255,255,255,0.2);color:#fff;cursor:pointer;font-size:11px;align-items:center;justify-content:center;gap:3px;white-space:nowrap"><span id="searchPanelToggleIcon">▼</span> <span id="searchPanelToggleText">검색접기</span></button>
+
     </div>
   </div>
   <div class="header-sub">국토교통부 실거래가 공개시스템</div>
@@ -358,6 +358,14 @@ body{padding-bottom:0}
         <button id="agentRadius200" class="setting-btn" onclick="setAgentRadius(200)">200m</button>
         <button id="agentRadius500" class="setting-btn" onclick="setAgentRadius(500)">500m</button>
       </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:13px;font-weight:600;color:var(--text)">🔍 검색패널 접기</span>
+      <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer">
+        <input type="checkbox" id="searchPanelSwitch" onchange="toggleSearchPanel()" style="opacity:0;width:0;height:0;position:absolute">
+        <span id="searchPanelTrack" style="position:absolute;inset:0;background:#ccc;border-radius:24px;transition:0.3s"></span>
+        <span id="searchPanelThumb" style="position:absolute;left:3px;top:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:0.3s;box-shadow:0 1px 3px rgba(0,0,0,0.3)"></span>
+      </label>
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between">
       <span style="font-size:13px;font-weight:600;color:var(--text)">📊 차트 기본 접힘</span>
@@ -1048,7 +1056,6 @@ function sortData(){
   else if(currentSort==='area')       filteredData.sort((a,b)=>gA(b)-gA(a));
   currentPage=1;
   renderTable();
-  showSearchPanelToggle();
 }
 
 function renderTable(){
@@ -3855,19 +3862,16 @@ function loadFromUrl(){
 let _searchPanelCollapsed=false;
 function toggleSearchPanel(){
   const panel=document.querySelector('.search-panel');
-  const btn=document.getElementById('searchPanelToggleBtn');
   _searchPanelCollapsed=!_searchPanelCollapsed;
   panel.classList.toggle('collapsed', _searchPanelCollapsed);
-  document.getElementById('searchPanelToggleIcon').textContent=_searchPanelCollapsed?'▲':'▼';
-  document.getElementById('searchPanelToggleText').textContent=_searchPanelCollapsed?'검색펼치기':'검색접기';
+  const sw=document.getElementById('searchPanelSwitch');
+  const track=document.getElementById('searchPanelTrack');
+  const thumb=document.getElementById('searchPanelThumb');
+  if(sw) sw.checked=_searchPanelCollapsed;
+  if(track) track.style.background=_searchPanelCollapsed?'#185FA5':'#ccc';
+  if(thumb) thumb.style.transform=_searchPanelCollapsed?'translateX(20px)':'translateX(0)';
 }
-// 조회 완료 후 모바일에서 버튼 표시
-function showSearchPanelToggle(){
-  const btn=document.getElementById('searchPanelToggleBtn');
-  if(btn&&window.innerWidth<=480){
-    btn.style.display='flex';
-  }
-}
+
 
 // ── 설정 기능 ──
 function setSettingBtn(prefix, val){
