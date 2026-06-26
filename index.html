@@ -1695,7 +1695,13 @@ async function loadModalTypeData(){
   const curMode=currentMode==='map'?mapDataMode:currentMode;
   const curTypeMatch=((_modalType==='trade'&&curMode==='trade')||
     ((_modalType==='jeonse'||_modalType==='wolse')&&(curMode==='jeonse'||curMode==='wolse'||curMode==='rent')));
-  if(curTypeMatch && allData.length>0){
+  // 기간 일치 여부: 메인 조회기간과 팝업 조회기간 비교
+  const _now=new Date();
+  const _expStart=new Date(_now.getFullYear(),_now.getMonth()-_modalMonths+1,1);
+  const _expStartStr=`${_expStart.getFullYear()}-${String(_expStart.getMonth()+1).padStart(2,'0')}`;
+  const _actualStart=document.getElementById('startM')?.value||'';
+  const periodMatch=_actualStart===_expStartStr;
+  if(curTypeMatch && periodMatch && allData.length>0){
     let items=allData;
     if(curMode==='jeonse'||curMode==='wolse') items=rawRentData.length?rawRentData:allData;
     if(_modalType==='jeonse') items=items.filter(d=>!parsePrice(d.monthlyRent));
