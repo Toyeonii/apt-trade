@@ -308,12 +308,12 @@ body{padding-bottom:0}
 
 
 <!-- 설정 패널 -->
-<div id="settingsPanel" style="display:none;position:fixed;top:0;right:12px;z-index:999;background:var(--surface);border:0.5px solid var(--border);border-radius:12px;padding:14px 16px;box-shadow:0 4px 16px rgba(0,0,0,0.15);min-width:480px;box-sizing:border-box">
-  <div style="display:flex;flex-direction:column;gap:12px;max-width:400px;margin:0 auto;width:100%">
+<div id="settingsPanel" style="display:none;position:fixed;top:0;left:0;right:0;z-index:999;background:var(--surface);border-bottom:0.5px solid var(--border);border-radius:0 0 12px 12px;padding:14px 16px;box-shadow:0 4px 16px rgba(0,0,0,0.15);box-sizing:border-box">
+  <div style="display:flex;flex-direction:column;gap:10px;max-width:480px;margin:0 auto;width:100%">
 
-    <div style="display:flex;align-items:center;justify-content:space-between">
-      <span style="font-size:13px;font-weight:600;color:var(--text)">🏠 기본 탭</span>
-      <div style="display:flex;gap:5px">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:13px;font-weight:600;color:var(--text);min-width:90px;flex-shrink:0">🏠 기본 탭</span>
+      <div style="display:flex;gap:5px;flex-wrap:wrap">
         <button id="defTabMap" onclick="setDefTab('map')" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">지도</button>
         <button id="defTabTrade" onclick="setDefTab('trade')" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">매매</button>
         <button id="defTabJeonse" onclick="setDefTab('jeonse')" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">전세</button>
@@ -321,9 +321,9 @@ body{padding-bottom:0}
       </div>
     </div>
 
-    <div style="display:flex;align-items:center;justify-content:space-between">
-      <span style="font-size:13px;font-weight:600;color:var(--text)">📅 기본 조회기간</span>
-      <div style="display:flex;gap:5px">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:13px;font-weight:600;color:var(--text);min-width:90px;flex-shrink:0">📅 기본 조회기간</span>
+      <div style="display:flex;gap:5px;flex-wrap:wrap">
         <button id="defPeriod3" onclick="setDefPeriod(3)" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">3개월</button>
         <button id="defPeriod6" onclick="setDefPeriod(6)" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">6개월</button>
         <button id="defPeriod12" onclick="setDefPeriod(12)" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">12개월</button>
@@ -331,8 +331,8 @@ body{padding-bottom:0}
       </div>
     </div>
 
-    <div style="display:flex;align-items:center;justify-content:space-between">
-      <span style="font-size:13px;font-weight:600;color:var(--text)">📐 면적 표기</span>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:13px;font-weight:600;color:var(--text);min-width:90px;flex-shrink:0">📐 면적 표기</span>
       <div style="display:flex;gap:5px">
         <button id="dispAreaM2" onclick="setAreaDisplay('m2')" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">㎡</button>
         <button id="dispAreaPyung" onclick="setAreaDisplay('pyung')" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">평</button>
@@ -340,8 +340,8 @@ body{padding-bottom:0}
       </div>
     </div>
 
-    <div style="display:flex;align-items:center;justify-content:space-between">
-      <span style="font-size:13px;font-weight:600;color:var(--text)">📐 면적 필터 방식</span>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:13px;font-weight:600;color:var(--text);min-width:90px;flex-shrink:0">📐 면적 필터 방식</span>
       <div style="display:flex;gap:5px">
         <button id="areaFilterMode_default" class="setting-btn" onclick="setAreaFilterMode('default')">기본</button>
         <button id="areaFilterMode_all" class="setting-btn" onclick="setAreaFilterMode('all')">전체</button>
@@ -349,8 +349,8 @@ body{padding-bottom:0}
       </div>
     </div>
 
-    <div style="display:flex;align-items:center;justify-content:space-between">
-      <span style="font-size:13px;font-weight:600;color:var(--text)">🏢 중개사 반경</span>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:13px;font-weight:600;color:var(--text);min-width:90px;flex-shrink:0">🏢 중개사 반경</span>
       <div style="display:flex;gap:5px">
         <button id="agentRadius100" class="setting-btn" onclick="setAgentRadius(100)">100m</button>
         <button id="agentRadius200" class="setting-btn" onclick="setAgentRadius(200)">200m</button>
@@ -358,25 +358,25 @@ body{padding-bottom:0}
       </div>
     </div>
 
-    <div style="display:flex;align-items:center;justify-content:space-between">
-      <span style="font-size:13px;font-weight:600;color:var(--text)">🔍 검색패널 접기</span>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:13px;font-weight:600;color:var(--text);min-width:90px;flex-shrink:0">🔍 검색패널 접기</span>
       <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer">
         <input type="checkbox" id="searchPanelSwitch" onchange="toggleSearchPanel()" style="opacity:0;width:0;height:0;position:absolute">
         <span id="searchPanelTrack" style="position:absolute;inset:0;background:#ccc;border-radius:24px;transition:0.3s"></span>
         <span id="searchPanelThumb" style="position:absolute;left:3px;top:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:0.3s;box-shadow:0 1px 3px rgba(0,0,0,0.3)"></span>
       </label>
     </div>
-    <div style="display:flex;align-items:center;justify-content:space-between">
-      <span style="font-size:13px;font-weight:600;color:var(--text)">📊 차트 기본 접힘</span>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:13px;font-weight:600;color:var(--text);min-width:90px;flex-shrink:0">📊 차트 기본 접힘</span>
       <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer">
         <input type="checkbox" id="chartFoldSwitch" onchange="setChartFold(this.checked)" style="opacity:0;width:0;height:0;position:absolute">
         <span id="chartFoldTrack" style="position:absolute;inset:0;background:#ccc;border-radius:24px;transition:0.3s"></span>
         <span id="chartFoldThumb" style="position:absolute;left:3px;top:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:0.3s;box-shadow:0 1px 3px rgba(0,0,0,0.3)"></span>
       </label>
     </div>
-    <div style="display:flex;align-items:center;justify-content:space-between">
-      <span style="font-size:13px;font-weight:600;color:var(--text)">🌙 다크모드</span>
-      <div style="display:flex;align-items:center;gap:6px">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:13px;font-weight:600;color:var(--text);min-width:90px;flex-shrink:0">🌙 다크모드</span>
+      <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
         <input type="time" id="darkStart" onchange="saveDarkSchedule()" style="height:26px;border:0.5px solid var(--border);border-radius:7px;padding:0 6px;font-size:12px;background:var(--surface);color:var(--text);color-scheme:var(--color-scheme,light)">
         <span style="font-size:12px;color:var(--text2)">~</span>
         <input type="time" id="darkEnd" onchange="saveDarkSchedule()" style="height:26px;border:0.5px solid var(--border);border-radius:7px;padding:0 6px;font-size:12px;background:var(--surface);color:var(--text);color-scheme:var(--color-scheme,light)">
