@@ -316,7 +316,7 @@ body{padding-bottom:0}
         <input type="time" id="darkStart" onchange="saveDarkSchedule()" style="height:26px;border:0.5px solid var(--border);border-radius:7px;padding:0 6px;font-size:12px;background:var(--surface);color:var(--text)">
         <span style="font-size:12px;color:var(--text2)">~</span>
         <input type="time" id="darkEnd" onchange="saveDarkSchedule()" style="height:26px;border:0.5px solid var(--border);border-radius:7px;padding:0 6px;font-size:12px;background:var(--surface);color:var(--text)">
-        <button onclick="clearDarkSchedule()" style="height:26px;padding:0 8px;font-size:11px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">해제</button>
+        <button id="darkScheduleToggle" onclick="toggleDarkSchedule()" style="height:26px;padding:0 8px;font-size:11px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">비활성</button>
       </div>
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between">
@@ -3945,15 +3945,16 @@ function initSettings(){
   if(sw) sw.checked=chartFold;
   if(track) track.style.background=chartFold?'#185FA5':'#ccc';
   if(thumb) thumb.style.transform=chartFold?'translateX(20px)':'translateX(0)';
-  // 다크 시간 스케줄 초기화
-  const scheduleStr=localStorage.getItem('apt_dark_schedule');
-  if(scheduleStr){
-    const {start,end}=JSON.parse(scheduleStr);
-    const ds=document.getElementById('darkStart');
-    const de=document.getElementById('darkEnd');
-    if(ds) ds.value=start;
-    if(de) de.value=end;
+  // 다크 시간 스케줄 초기화 (기본값 21:00~09:00)
+  let scheduleData=JSON.parse(localStorage.getItem('apt_dark_schedule')||'{"start":"21:00","end":"09:00","active":false}');
+  if(!localStorage.getItem('apt_dark_schedule')){
+    localStorage.setItem('apt_dark_schedule', JSON.stringify(scheduleData));
   }
+  const ds=document.getElementById('darkStart');
+  const de=document.getElementById('darkEnd');
+  if(ds) ds.value=scheduleData.start;
+  if(de) de.value=scheduleData.end;
+  updateDarkScheduleBtn(scheduleData.active!==false);
   // 중개사 반경 버튼 초기화
   _agentRadius=parseInt(localStorage.getItem('apt_agent_radius')||'200');
   ['100','200','500'].forEach(v=>{
@@ -4066,21 +4067,35 @@ function saveDarkSchedule(){
   const start=document.getElementById('darkStart').value;
   const end=document.getElementById('darkEnd').value;
   if(start&&end){
-    localStorage.setItem('apt_dark_schedule', JSON.stringify({start,end}));
-    applyDarkSchedule();
+    const active=localStorage.getItem('apt_dark_schedule_active')!=='0';
+    localStorage.setItem('apt_dark_schedule', JSON.stringify({start,end,active}));
+    if(active) applyDarkSchedule();
   }
 }
-function clearDarkSchedule(){
-  localStorage.removeItem('apt_dark_schedule');
-  document.getElementById('darkStart').value='';
-  document.getElementById('darkEnd').value='';
-  setDarkMode(false); // 라이트모드로 복귀
-  showToast('다크모드 해제됨');
+function toggleDarkSchedule(){
+  const s=localStorage.getItem('apt_dark_schedule');
+  const data=s?JSON.parse(s):{start:'21:00',end:'09:00',active:true};
+  data.active=!data.active;
+  localStorage.setItem('apt_dark_schedule', JSON.stringify(data));
+  updateDarkScheduleBtn(data.active);
+  if(data.active) applyDarkSchedule();
+  else setDarkMode(false);
+  showToast(data.active?'다크모드 예약 활성':'다크모드 예약 비활성');
+}
+function updateDarkScheduleBtn(active){
+  const btn=document.getElementById('darkScheduleToggle');
+  if(!btn) return;
+  btn.textContent=active?'활성':'비활성';
+  btn.style.borderColor=active?'#185FA5':'#ddd';
+  btn.style.background=active?'#E6F1FB':'var(--surface)';
+  btn.style.color=active?'#0C447C':'var(--text2)';
+  btn.style.fontWeight=active?'600':'400';
 }
 function applyDarkSchedule(){
   const s=localStorage.getItem('apt_dark_schedule');
   if(!s) return;
-  const {start,end}=JSON.parse(s);
+  const {start,end,active}=JSON.parse(s);
+  if(active===false) return;
   const now=new Date();
   const cur=now.getHours()*60+now.getMinutes();
   const [sh,sm]=start.split(':').map(Number);
@@ -4119,8 +4134,11 @@ function setDarkMode(dark){
       const [sh,sm]=start.split(':').map(Number);
       const [eh,em]=end.split(':').map(Number);
       const sv=sh*60+sm, ev=eh*60+em;
-      const isDark=sv<=ev ? cur>=sv&&cur<ev : cur>=sv||cur<ev;
-      if(isDark){ document.documentElement.setAttribute('data-theme','dark'); return; }
+      const schedObj=JSON.parse(schedStr);
+      if(schedObj.active!==false){
+        const isDark=sv<=ev ? cur>=sv&&cur<ev : cur>=sv||cur<ev;
+        if(isDark){ document.documentElement.setAttribute('data-theme','dark'); return; }
+      }
     }catch(e){}
   }
   const saved=localStorage.getItem('apt_dark_mode');
