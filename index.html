@@ -1693,24 +1693,6 @@ async function loadModalTypeData(){
 
   // 현재 allData가 같은 타입/기간이면 바로 사용
   const curMode=currentMode==='map'?mapDataMode:currentMode;
-  const curTypeMatch=((_modalType==='trade'&&curMode==='trade')||
-    ((_modalType==='jeonse'||_modalType==='wolse')&&(curMode==='jeonse'||curMode==='wolse'||curMode==='rent')));
-  // 기간 일치 여부: 메인 조회기간과 팝업 조회기간 비교
-  const _now=new Date();
-  const _expStart=new Date(_now.getFullYear(),_now.getMonth()-_modalMonths+1,1);
-  const _expStartStr=`${_expStart.getFullYear()}-${String(_expStart.getMonth()+1).padStart(2,'0')}`;
-  const _actualStart=document.getElementById('startM')?.value||'';
-  const periodMatch=_actualStart===_expStartStr;
-  if(curTypeMatch && periodMatch && allData.length>0){
-    let items=allData;
-    if(curMode==='jeonse'||curMode==='wolse') items=rawRentData.length?rawRentData:allData;
-    if(_modalType==='jeonse') items=items.filter(d=>!parsePrice(d.monthlyRent));
-    else if(_modalType==='wolse') items=items.filter(d=>parsePrice(d.monthlyRent)>0);
-    const deals=items.filter(d=>modalAptSeq?d.aptSeq===modalAptSeq:d.aptNm===modalAptNm).sort((a,b)=>{const da=`${a.dealYear}${String(a.dealMonth).padStart(2,'0')}${String(a.dealDay||'').padStart(2,'0')}`,db=`${b.dealYear}${String(b.dealMonth).padStart(2,'0')}${String(b.dealDay||'').padStart(2,'0')}`;return db.localeCompare(da);});
-    _modalTypeCache[cacheKey]={items, deals};
-    renderModalWithData({items, deals}, _modalType);
-    return;
-  }
 
   // 로딩 표시
   document.getElementById('modalBody').innerHTML='<div class="state-screen" style="width:100%;min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="spinner"></div><div class="state-title">조회 중...</div></div>';
