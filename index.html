@@ -311,13 +311,19 @@ body{padding-bottom:0}
   <div style="display:flex;flex-direction:column;gap:12px;max-width:400px;margin:0 auto;width:100%">
     <div style="display:flex;align-items:center;justify-content:space-between">
       <span style="font-size:13px;font-weight:600;color:var(--text)">🌙 다크모드</span>
-      <div style="display:flex;align-items:center;gap:8px">
-        <button onclick="setSystemDarkMode()" style="height:22px;padding:0 8px;font-size:11px;border:0.5px solid #ddd;border-radius:6px;background:var(--surface);cursor:pointer;color:var(--text2)">시스템 따르기</button>
       <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer">
         <input type="checkbox" id="darkModeSwitch" onchange="toggleDarkMode()" style="opacity:0;width:0;height:0;position:absolute">
         <span id="darkModeTrack" style="position:absolute;inset:0;background:#ccc;border-radius:24px;transition:0.3s"></span>
         <span id="darkModeThumb" style="position:absolute;left:3px;top:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:0.3s;box-shadow:0 1px 3px rgba(0,0,0,0.3)"></span>
       </label>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:13px;font-weight:600;color:var(--text)">🌙 다크 시간</span>
+      <div style="display:flex;align-items:center;gap:6px">
+        <input type="time" id="darkStart" onchange="saveDarkSchedule()" style="height:26px;border:0.5px solid var(--border);border-radius:7px;padding:0 6px;font-size:12px;background:var(--surface);color:var(--text)">
+        <span style="font-size:12px;color:var(--text2)">~</span>
+        <input type="time" id="darkEnd" onchange="saveDarkSchedule()" style="height:26px;border:0.5px solid var(--border);border-radius:7px;padding:0 6px;font-size:12px;background:var(--surface);color:var(--text)">
+        <button onclick="clearDarkSchedule()" style="height:26px;padding:0 8px;font-size:11px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">해제</button>
       </div>
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between">
@@ -3946,6 +3952,15 @@ function initSettings(){
   if(sw) sw.checked=chartFold;
   if(track) track.style.background=chartFold?'#185FA5':'#ccc';
   if(thumb) thumb.style.transform=chartFold?'translateX(20px)':'translateX(0)';
+  // 다크 시간 스케줄 초기화
+  const scheduleStr=localStorage.getItem('apt_dark_schedule');
+  if(scheduleStr){
+    const {start,end}=JSON.parse(scheduleStr);
+    const ds=document.getElementById('darkStart');
+    const de=document.getElementById('darkEnd');
+    if(ds) ds.value=start;
+    if(de) de.value=end;
+  }
   // 중개사 반경 버튼 초기화
   _agentRadius=parseInt(localStorage.getItem('apt_agent_radius')||'200');
   ['100','200','500'].forEach(v=>{
@@ -4054,12 +4069,34 @@ function toggleSettings(){
 }
 
 // ── 다크모드 ──
-function setSystemDarkMode(){
-  localStorage.removeItem('apt_dark_mode');
-  const isDark=window.matchMedia('(prefers-color-scheme: dark)').matches;
-  setDarkMode(isDark);
-  showToast('시스템 설정을 따릅니다');
+function saveDarkSchedule(){
+  const start=document.getElementById('darkStart').value;
+  const end=document.getElementById('darkEnd').value;
+  if(start&&end){
+    localStorage.setItem('apt_dark_schedule', JSON.stringify({start,end}));
+    applyDarkSchedule();
+  }
 }
+function clearDarkSchedule(){
+  localStorage.removeItem('apt_dark_schedule');
+  document.getElementById('darkStart').value='';
+  document.getElementById('darkEnd').value='';
+  showToast('다크 시간 해제됨');
+}
+function applyDarkSchedule(){
+  const s=localStorage.getItem('apt_dark_schedule');
+  if(!s) return;
+  const {start,end}=JSON.parse(s);
+  const now=new Date();
+  const cur=now.getHours()*60+now.getMinutes();
+  const [sh,sm]=start.split(':').map(Number);
+  const [eh,em]=end.split(':').map(Number);
+  const sv=sh*60+sm, ev=eh*60+em;
+  const isDark=sv<=ev ? cur>=sv&&cur<ev : cur>=sv||cur<ev;
+  setDarkMode(isDark);
+}
+// 1분마다 스케줄 체크
+setInterval(applyDarkSchedule, 60000);
 
 function toggleDarkMode(){
   const isDark=document.documentElement.getAttribute('data-theme')==='dark';
@@ -4078,6 +4115,20 @@ function setDarkMode(dark){
 }
 // 시스템 다크모드 + 저장된 설정 적용
 (function(){
+  // 다크 시간 스케줄 적용
+  const schedStr=localStorage.getItem('apt_dark_schedule');
+  if(schedStr){
+    try{
+      const {start,end}=JSON.parse(schedStr);
+      const now=new Date();
+      const cur=now.getHours()*60+now.getMinutes();
+      const [sh,sm]=start.split(':').map(Number);
+      const [eh,em]=end.split(':').map(Number);
+      const sv=sh*60+sm, ev=eh*60+em;
+      const isDark=sv<=ev ? cur>=sv&&cur<ev : cur>=sv||cur<ev;
+      if(isDark){ document.documentElement.setAttribute('data-theme','dark'); return; }
+    }catch(e){}
+  }
   const saved=localStorage.getItem('apt_dark_mode');
   if(saved==='1') setDarkMode(true);
   else if(saved===null&&window.matchMedia('(prefers-color-scheme: dark)').matches) setDarkMode(true);
