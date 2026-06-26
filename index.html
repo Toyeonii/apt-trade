@@ -1753,11 +1753,11 @@ function renderModalWithData({items, deals}, type){
   modalAreaKeys=Object.keys(modalAreaGroups).sort((a,b)=>parseFloat(a)-parseFloat(b));
   document.getElementById('modalSub').textContent=`총 ${deals.length}건 거래 이력`;
 
-  // 탭 재생성 (면적 탭)
+  // 탭 재생성 (면적 탭 + 평형비교 탭)
   const tabsEl=document.getElementById('modalTabs');
   tabsEl.innerHTML=modalAreaKeys.map((k,i)=>
     `<button class="modal-tab ${i===0?'active':''}" onclick="selectModalTab('${k}',this)">${k} (${modalAreaGroups[k].length}건)</button>`
-  ).join('');
+  ).join('') + `<button class="modal-tab" onclick="selectModalCompareTab(this)">📊 평형비교</button>`;
 
   // _allDataForModal 임시 저장 (차트용 구 전체 데이터)
   window._allDataForModal=items;
@@ -2012,6 +2012,74 @@ async function shareModal(){
     showToast('공유 중 오류가 발생했습니다');
     console.error(e);
   }
+}
+
+function selectModalCompareTab(btn){
+  // 탭 활성화
+  document.querySelectorAll('#modalTabs .modal-tab').forEach(t=>t.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+
+  // 차트 숨기고 비교 테이블 표시
+  document.getElementById('modalChartWrap').style.display='none';
+  document.getElementById('modalMapWrap').style.display='none';
+  document.getElementById('modalBody').style.display='block';
+
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  const isRent=_modalType==='jeonse'||_modalType==='wolse';
+
+  // 평형별 통계 계산
+  const rows=modalAreaKeys.map(k=>{
+    const deals=modalAreaGroups[k]||[];
+    const prices=deals.map(d=>{
+      const p=_modalType==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
+      return p>0?p:null;
+    }).filter(Boolean);
+    if(!prices.length) return null;
+    const avg=Math.round(prices.reduce((a,b)=>a+b,0)/prices.length);
+    const max=Math.max(...prices);
+    const min=Math.min(...prices);
+    const ar=parseFloat(k)||0;
+    const pyung=ar>0?Math.round(ar/3.3):0;
+    return {k, ar, pyung, avg, max, min, cnt:prices.length};
+  }).filter(Boolean);
+
+  if(!rows.length){
+    document.getElementById('modalBody').innerHTML='<div style="padding:20px;text-align:center;color:#aaa">데이터 없음</div>';
+    return;
+  }
+
+  const thStyle=`style="padding:8px 6px;font-size:11px;font-weight:600;color:${isDark?'#aaa':'#888'};text-align:right;border-bottom:1px solid ${isDark?'#333':'#eee'};white-space:nowrap"`;
+  const thStyleL=`style="padding:8px 6px;font-size:11px;font-weight:600;color:${isDark?'#aaa':'#888'};text-align:left;border-bottom:1px solid ${isDark?'#333':'#eee'}"`;
+  const modeColor=_modalType==='trade'?(isDark?'#89C4F4':'#185FA5'):_modalType==='wolse'?(isDark?'#E8A87C':'#B87A52'):(isDark?'#4DD4A0':'#0F6E56');
+
+  const tableHtml=`
+  <table style="width:100%;border-collapse:collapse;font-size:12px">
+    <thead>
+      <tr>
+        <th ${thStyleL}>면적</th>
+        <th ${thStyle}>평균</th>
+        <th ${thStyle}>최고</th>
+        <th ${thStyle}>최저</th>
+        <th ${thStyle}>건수</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rows.map((r,i)=>{
+        const rowBg=i%2===0?(isDark?'rgba(255,255,255,0.03)':'rgba(0,0,0,0.02)'):'transparent';
+        const tdStyle=`style="padding:9px 6px;text-align:right;border-bottom:0.5px solid ${isDark?'#2a2a2a':'#f5f5f5'}"`;
+        const tdStyleL=`style="padding:9px 6px;text-align:left;border-bottom:0.5px solid ${isDark?'#2a2a2a':'#f5f5f5'};font-weight:600;color:${modeColor}"`;
+        return `<tr style="background:${rowBg}">
+          <td ${tdStyleL}>${r.k}<span style="font-size:10px;color:${isDark?'#666':'#aaa'};font-weight:400;margin-left:3px">(${r.pyung}평)</span></td>
+          <td ${tdStyle}>${fmtPrice(r.avg)}</td>
+          <td ${tdStyle} style="color:${isDark?'#ff8a80':'#c0392b'};text-align:right;padding:9px 6px;border-bottom:0.5px solid ${isDark?'#2a2a2a':'#f5f5f5'}">${fmtPrice(r.max)}</td>
+          <td ${tdStyle} style="color:${isDark?'#82b1ff':'#2563eb'};text-align:right;padding:9px 6px;border-bottom:0.5px solid ${isDark?'#2a2a2a':'#f5f5f5'}">${fmtPrice(r.min)}</td>
+          <td ${tdStyle}>${r.cnt}건</td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table>`;
+
+  document.getElementById('modalBody').innerHTML=`<div style="padding:0 4px">${tableHtml}</div>`;
 }
 
 
