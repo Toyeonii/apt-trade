@@ -2071,11 +2071,6 @@ function selectModalCompareTab(btn){
   _renderCompareTable();
 }
 
-  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
-  const isRent=_modalType==='jeonse'||_modalType==='wolse';
-  _renderCompareTable();
-}
-
 function _renderCompareTable(){
   const isDark=document.documentElement.getAttribute('data-theme')==='dark';
   const rows=modalAreaKeys.map(k=>{
