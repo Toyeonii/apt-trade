@@ -1658,6 +1658,7 @@ function showAptModal(aptNm, roadNm, aptSeq){
 
 function switchModalType(type){
   _modalType=type;
+  _modalSelectedArea=''; // 탭 초기화
   document.body.classList.remove('mode-trade','mode-jeonse','mode-wolse');
   document.body.classList.add(`mode-${type}`);
   const sheet=document.querySelector('#aptModal .modal-sheet');
@@ -1670,6 +1671,7 @@ function switchModalType(type){
 
 function setModalPeriod(months){
   _modalMonths=months;
+  _modalSelectedArea=''; // 탭 초기화
   document.querySelectorAll('[onclick^="setModalPeriod"]').forEach(b=>b.classList.remove('active'));
   event.target.classList.add('active');
   // 해당 타입 캐시 무효화
@@ -1686,7 +1688,9 @@ async function loadModalTypeData(){
     return;
   }
 
-  // 로딩 표시
+  // 로딩 표시 - 기존 데이터 초기화
+  document.getElementById('modalSub').textContent='조회 중...';
+  document.getElementById('modalTabs').innerHTML='';
   document.getElementById('modalBody').innerHTML='<div class="state-screen" style="width:100%;min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="spinner"></div><div class="state-title">조회 중...</div></div>';
   document.getElementById('modalChartWrap').style.display='none';
 
