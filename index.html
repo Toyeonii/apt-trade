@@ -286,6 +286,7 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
 .nav-icon{font-size:35px;line-height:1}
 .nav-label{font-size:11px;font-weight:500}
 .nav-btn.active .nav-label{font-weight:700}
+.nav-badge{position:absolute;top:2px;right:8px;min-width:16px;height:16px;background:#E53935;border-radius:8px;font-size:10px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;pointer-events:none}
 body{padding-bottom:0}
 .app-footer{text-align:center;font-size:11px;color:#888;padding:16px;background:#2C2C2A}
 @media(min-width:481px){.card-list{display:none}}
@@ -622,6 +623,7 @@ body{padding-bottom:0}
   <button class="nav-btn" id="nav-fav" onclick="toggleFavPanel()">
     <span class="nav-icon">⭐</span>
     <span class="nav-label">즐겨찾기</span>
+    <span class="nav-badge" id="favBadge" style="display:none"></span>
   </button>
   <button class="nav-btn" id="nav-share" onclick="copyShareUrl()">
     <span class="nav-icon">🔗</span>
@@ -666,6 +668,31 @@ async function requestNotificationPermission(){
 function showPushNotification(title, body){
   if(!('Notification' in window)||Notification.permission!=='granted') return;
   new Notification(title,{body, icon:'/icon.png'});
+}
+
+function updateFavBadge(delta){
+  const key='apt_fav_new_count';
+  const cur=parseInt(localStorage.getItem(key)||'0');
+  const next=Math.max(0, cur+delta);
+  localStorage.setItem(key, next.toString());
+  const el=document.getElementById('favBadge');
+  if(!el) return;
+  if(next>0){ el.style.display='flex'; el.textContent=next>99?'99+':next; }
+  else { el.style.display='none'; }
+}
+
+function clearFavBadge(){
+  localStorage.setItem('apt_fav_new_count','0');
+  const el=document.getElementById('favBadge');
+  if(el) el.style.display='none';
+}
+
+function initFavBadge(){
+  const n=parseInt(localStorage.getItem('apt_fav_new_count')||'0');
+  const el=document.getElementById('favBadge');
+  if(!el) return;
+  if(n>0){ el.style.display='flex'; el.textContent=n>99?'99+':n; }
+  else { el.style.display='none'; }
 }
 
 async function checkFavNewDeals(){
@@ -713,6 +740,7 @@ async function checkFavNewDeals(){
           `${latest.dealYear}.${latest.dealMonth}.${latest.dealDay} · ${fmtPrice(price)} · ${parseFloat(latest.excluUseAr||0).toFixed(1)}㎡`
         );
         showToast(`🔔 ${fav.aptNm} 신규 거래 발생!`);
+        updateFavBadge(1);
       }
       lastChecked[fav.aptNm]=latestDate;
     } catch(e){}
@@ -748,6 +776,7 @@ function init(){
   switchMode(defTab);
   renderRecentSearches();
   initSettings();
+  initFavBadge();
   // 즐겨찾기 신규 거래 체크 (3초 후 - 앱 로드 후)
   setTimeout(()=>checkFavNewDeals(), 3000);
 }
@@ -3136,7 +3165,7 @@ function renderFavList(){
 function toggleFavPanel(){
   const p=document.getElementById('favPanel');
   p.style.display=p.style.display==='none'?'block':'none';
-  if(p.style.display==='block')renderFavList();
+  if(p.style.display==='block'){ renderFavList(); clearFavBadge(); }
 }
 
 function addFav(aptNm, aptSeq, sggCd, sggName, umdNm, sido, roadNm=''){
