@@ -1726,7 +1726,10 @@ async function loadModalTypeData(){
       months.push(`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`);
     }
     const apiMode=(_modalType==='jeonse'||_modalType==='wolse')?'rent':'trade';
-    const result=await fetch(`/api/trade/bulk?${new URLSearchParams({LAWD_CD:lawdCd,months:months.join(','),mode:apiMode})}`).then(r=>r.json());
+    const controller=new AbortController();
+    const fetchTimeout=setTimeout(()=>controller.abort(), 30000);
+    const result=await fetch(`/api/trade/bulk?${new URLSearchParams({LAWD_CD:lawdCd,months:months.join(','),mode:apiMode})}`,{signal:controller.signal}).then(r=>r.json());
+    clearTimeout(fetchTimeout);
     let items=result.items||[];
     // 중복 제거 (거래일+아파트명+면적+금액 기준)
     const seen=new Set();
@@ -1742,7 +1745,8 @@ async function loadModalTypeData(){
     _modalTypeCache[cacheKey]={items, deals};
     renderModalWithData({items, deals}, _modalType);
   } catch(e){
-    document.getElementById('modalBody').innerHTML='<div style="text-align:center;padding:30px;color:#c00">조회 오류</div>';
+    const msg=e.name==='AbortError'?'조회 시간이 초과됐습니다. 다시 시도해주세요.':'조회 오류가 발생했습니다.';
+    document.getElementById('modalBody').innerHTML=`<div style="text-align:center;padding:30px;color:#c00">${msg}</div>`;
   }
 }
 
