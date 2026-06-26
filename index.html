@@ -314,14 +314,15 @@ body{padding-bottom:0}
   <div style="display:flex;flex-direction:column;gap:12px;max-width:400px;margin:0 auto;width:100%">
 
     <div style="display:flex;align-items:center;justify-content:space-between">
-      <span style="font-size:13px;font-weight:600;color:var(--text)">🌙 다크모드</span>
-      <div style="display:flex;align-items:center;gap:6px">
-        <input type="time" id="darkStart" onchange="saveDarkSchedule()" style="height:26px;border:0.5px solid var(--border);border-radius:7px;padding:0 6px;font-size:12px;background:var(--surface);color:var(--text);color-scheme:var(--color-scheme,light)">
-        <span style="font-size:12px;color:var(--text2)">~</span>
-        <input type="time" id="darkEnd" onchange="saveDarkSchedule()" style="height:26px;border:0.5px solid var(--border);border-radius:7px;padding:0 6px;font-size:12px;background:var(--surface);color:var(--text);color-scheme:var(--color-scheme,light)">
-        <button id="darkScheduleToggle" onclick="toggleDarkSchedule()" style="height:26px;padding:0 8px;font-size:11px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">비활성</button>
+      <span style="font-size:13px;font-weight:600;color:var(--text)">🏠 기본 탭</span>
+      <div style="display:flex;gap:5px">
+        <button id="defTabMap" onclick="setDefTab('map')" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">지도</button>
+        <button id="defTabTrade" onclick="setDefTab('trade')" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">매매</button>
+        <button id="defTabJeonse" onclick="setDefTab('jeonse')" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">전세</button>
+        <button id="defTabWolse" onclick="setDefTab('wolse')" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">월세</button>
       </div>
     </div>
+
     <div style="display:flex;align-items:center;justify-content:space-between">
       <span style="font-size:13px;font-weight:600;color:var(--text)">📅 기본 조회기간</span>
       <div style="display:flex;gap:5px">
@@ -331,15 +332,7 @@ body{padding-bottom:0}
         <button id="defPeriod24" onclick="setDefPeriod(24)" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">24개월</button>
       </div>
     </div>
-    <div style="display:flex;align-items:center;justify-content:space-between">
-      <span style="font-size:13px;font-weight:600;color:var(--text)">🏠 기본 탭</span>
-      <div style="display:flex;gap:5px">
-        <button id="defTabMap" onclick="setDefTab('map')" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">지도</button>
-        <button id="defTabTrade" onclick="setDefTab('trade')" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">매매</button>
-        <button id="defTabJeonse" onclick="setDefTab('jeonse')" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">전세</button>
-        <button id="defTabWolse" onclick="setDefTab('wolse')" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">월세</button>
-      </div>
-    </div>
+
     <div style="display:flex;align-items:center;justify-content:space-between">
       <span style="font-size:13px;font-weight:600;color:var(--text)">📐 면적 표기</span>
       <div style="display:flex;gap:5px">
@@ -348,6 +341,7 @@ body{padding-bottom:0}
         <button id="dispAreaBoth" onclick="setAreaDisplay('both')" style="height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">둘다</button>
       </div>
     </div>
+
     <div style="display:flex;align-items:center;justify-content:space-between">
       <span style="font-size:13px;font-weight:600;color:var(--text)">📐 면적 필터 방식</span>
       <div style="display:flex;gap:5px">
@@ -356,6 +350,7 @@ body{padding-bottom:0}
         <button id="areaFilterMode_step5" class="setting-btn" onclick="setAreaFilterMode('step5')">5㎡단위</button>
       </div>
     </div>
+
     <div style="display:flex;align-items:center;justify-content:space-between">
       <span style="font-size:13px;font-weight:600;color:var(--text)">🏢 중개사 반경</span>
       <div style="display:flex;gap:5px">
@@ -364,6 +359,7 @@ body{padding-bottom:0}
         <button id="agentRadius500" class="setting-btn" onclick="setAgentRadius(500)">500m</button>
       </div>
     </div>
+
     <div style="display:flex;align-items:center;justify-content:space-between">
       <span style="font-size:13px;font-weight:600;color:var(--text)">🔍 검색패널 접기</span>
       <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer">
@@ -380,7 +376,9 @@ body{padding-bottom:0}
         <span id="chartFoldThumb" style="position:absolute;left:3px;top:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:0.3s;box-shadow:0 1px 3px rgba(0,0,0,0.3)"></span>
       </label>
     </div>
-  </div>
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:13px;font-weight:600;color:var(--text)">🌙 다크모드</span>
+    </div>
 </div>
 <div id="favPanel" class="fav-panel" style="display:none">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
