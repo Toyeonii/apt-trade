@@ -1652,9 +1652,6 @@ function showAptModal(aptNm, roadNm, aptSeq){
   // 거래유형/기간 기반으로 데이터 로드
   loadModalTypeData();
 
-  // 전세가율 계산을 위해 매매+전세 백그라운드 프리캐시
-  setTimeout(()=>prefetchModalCache(), 500);
-
   // 단지 정보 비동기 로드
   loadAptInfo(aptSeq||'', (deals[0]||{}).roadNm||'', (deals[0]||{}).roadNmBonbun||'', (deals[0]||{}).buildYear||'');
 }
@@ -1678,8 +1675,6 @@ function setModalPeriod(months){
   // 해당 타입 캐시 무효화
   delete _modalTypeCache[_modalType];
   loadModalTypeData();
-  // 기간 변경 시 프리캐시 재실행
-  setTimeout(()=>prefetchModalCache(), 500);
 }
 
 async function loadModalTypeData(){
@@ -1693,6 +1688,18 @@ async function loadModalTypeData(){
 
   // 현재 allData가 같은 타입/기간이면 바로 사용
   const curMode=currentMode==='map'?mapDataMode:currentMode;
+  const curTypeMatch=((_modalType==='trade'&&curMode==='trade')||
+    ((_modalType==='jeonse'||_modalType==='wolse')&&(curMode==='jeonse'||curMode==='wolse'||curMode==='rent')));
+  if(curTypeMatch && allData.length>0){
+    let items=allData;
+    if(curMode==='jeonse'||curMode==='wolse') items=rawRentData.length?rawRentData:allData;
+    if(_modalType==='jeonse') items=items.filter(d=>!parsePrice(d.monthlyRent));
+    else if(_modalType==='wolse') items=items.filter(d=>parsePrice(d.monthlyRent)>0);
+    const deals=items.filter(d=>modalAptSeq?d.aptSeq===modalAptSeq:d.aptNm===modalAptNm).sort((a,b)=>{const da=`${a.dealYear}${String(a.dealMonth).padStart(2,'0')}${String(a.dealDay||'').padStart(2,'0')}`,db=`${b.dealYear}${String(b.dealMonth).padStart(2,'0')}${String(b.dealDay||'').padStart(2,'0')}`;return db.localeCompare(da);});
+    _modalTypeCache[cacheKey]={items, deals};
+    renderModalWithData({items, deals}, _modalType);
+    return;
+  }
 
   // 로딩 표시
   document.getElementById('modalBody').innerHTML='<div class="state-screen" style="width:100%;min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="spinner"></div><div class="state-title">조회 중...</div></div>';
@@ -1708,10 +1715,7 @@ async function loadModalTypeData(){
       months.push(`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`);
     }
     const apiMode=(_modalType==='jeonse'||_modalType==='wolse')?'rent':'trade';
-    const controller=new AbortController();
-    const fetchTimeout=setTimeout(()=>controller.abort(), 30000);
-    const result=await fetch(`/api/trade/bulk?${new URLSearchParams({LAWD_CD:lawdCd,months:months.join(','),mode:apiMode})}`,{signal:controller.signal}).then(r=>r.json());
-    clearTimeout(fetchTimeout);
+    const result=await fetch(`/api/trade/bulk?${new URLSearchParams({LAWD_CD:lawdCd,months:months.join(','),mode:apiMode})}`).then(r=>r.json());
     let items=result.items||[];
     // 중복 제거 (거래일+아파트명+면적+금액 기준)
     const seen=new Set();
@@ -1727,38 +1731,7 @@ async function loadModalTypeData(){
     _modalTypeCache[cacheKey]={items, deals};
     renderModalWithData({items, deals}, _modalType);
   } catch(e){
-    const msg=e.name==='AbortError'?'조회 시간이 초과됐습니다. 다시 시도해주세요.':'조회 오류가 발생했습니다.';
-    document.getElementById('modalBody').innerHTML=`<div style="text-align:center;padding:30px;color:#c00">${msg}</div>`;
-  }
-}
-
-async function prefetchModalCache(){
-  const lawdCd=document.getElementById('sigungu').value||window._mapLawdCd||'';
-  if(!lawdCd) return;
-  const now=new Date();
-  const months=[];
-  for(let i=0;i<_modalMonths;i++){
-    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
-    months.push(`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`);
-  }
-  const monthStr=months.join(',');
-
-  // 매매/전세 둘 다 캐시에 없으면 백그라운드 로드
-  for(const [type, apiMode] of [['trade','trade'],['jeonse','rent']]){
-    const key=`${type}_${_modalMonths}`;
-    if(_modalTypeCache[key]) continue;
-    try{
-      const result=await fetch(`/api/trade/bulk?${new URLSearchParams({LAWD_CD:lawdCd,months:monthStr,mode:apiMode})}`).then(r=>r.json());
-      let items=result.items||[];
-      const seen=new Set();
-      items=items.filter(d=>{
-        const k=`${d.dealYear}${d.dealMonth}${d.dealDay}_${d.aptNm}_${d.excluUseAr}_${d.dealAmount||d.deposit}`;
-        if(seen.has(k))return false; seen.add(k); return true;
-      });
-      const tradeItems=type==='trade'?items:items.filter(d=>!parsePrice(d.monthlyRent));
-      const deals=tradeItems.filter(d=>modalAptSeq?d.aptSeq===modalAptSeq:d.aptNm===modalAptNm);
-      _modalTypeCache[key]={items:tradeItems, deals};
-    } catch(e){}
+    document.getElementById('modalBody').innerHTML='<div style="text-align:center;padding:30px;color:#c00">조회 오류</div>';
   }
 }
 
@@ -1780,11 +1753,11 @@ function renderModalWithData({items, deals}, type){
   modalAreaKeys=Object.keys(modalAreaGroups).sort((a,b)=>parseFloat(a)-parseFloat(b));
   document.getElementById('modalSub').textContent=`총 ${deals.length}건 거래 이력`;
 
-  // 탭 재생성 (면적 탭 + 평형비교 탭)
+  // 탭 재생성 (면적 탭)
   const tabsEl=document.getElementById('modalTabs');
   tabsEl.innerHTML=modalAreaKeys.map((k,i)=>
     `<button class="modal-tab ${i===0?'active':''}" onclick="selectModalTab('${k}',this)">${k} (${modalAreaGroups[k].length}건)</button>`
-  ).join('') + `<button class="modal-tab" onclick="selectModalCompareTab(this)">📊 평형비교</button>`;
+  ).join('');
 
   // _allDataForModal 임시 저장 (차트용 구 전체 데이터)
   window._allDataForModal=items;
@@ -2039,125 +2012,6 @@ async function shareModal(){
     showToast('공유 중 오류가 발생했습니다');
     console.error(e);
   }
-}
-
-function selectModalCompareTab(btn){
-  // 탭 활성화
-  document.querySelectorAll('#modalTabs .modal-tab').forEach(t=>t.classList.remove('active'));
-  if(btn) btn.classList.add('active');
-
-  // 차트 숨기고 비교 테이블 표시
-  document.getElementById('modalChartWrap').style.display='none';
-  document.getElementById('modalMapWrap').style.display='none';
-  document.getElementById('modalBody').style.display='block';
-
-  // 매매 탭일 때만 전세가율 프리캐시 대기
-  if(_modalType==='trade'){
-    const tradeKey=`trade_${_modalMonths}`, jeonseKey=`jeonse_${_modalMonths}`;
-    if(!_modalTypeCache[tradeKey]||!_modalTypeCache[jeonseKey]){
-      document.getElementById('modalBody').innerHTML='<div style="padding:20px;text-align:center;color:#aaa"><div class="spinner" style="margin:0 auto 8px"></div>전세가율 데이터 로딩 중...</div>';
-      const deadline=Date.now()+10000;
-      const waitAndRender=()=>{
-        if(_modalTypeCache[tradeKey]&&_modalTypeCache[jeonseKey]){ _renderCompareTable(); return; }
-        if(Date.now()>deadline){ _renderCompareTable(); return; }
-        setTimeout(waitAndRender, 300);
-      };
-      waitAndRender();
-      return;
-    }
-  }
-  _renderCompareTable();
-}
-
-function _renderCompareTable(){
-  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
-  const rows=modalAreaKeys.map(k=>{
-    const deals=modalAreaGroups[k]||[];
-    const prices=deals.map(d=>{
-      const p=_modalType==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
-      return p>0?p:null;
-    }).filter(Boolean);
-    if(!prices.length) return null;
-    const avg=Math.round(prices.reduce((a,b)=>a+b,0)/prices.length);
-    const max=Math.max(...prices);
-    const min=Math.min(...prices);
-    const ar=parseFloat(k)||0;
-    const pyung=ar>0?Math.round(ar/3.3):0;
-    return {k, ar, pyung, avg, max, min, cnt:prices.length};
-  }).filter(Boolean);
-
-  if(!rows.length){
-    document.getElementById('modalBody').innerHTML='<div style="padding:20px;text-align:center;color:#aaa">데이터 없음</div>';
-    return;
-  }
-
-  const thStyle=`style="padding:8px 6px;font-size:11px;font-weight:600;color:${isDark?'#aaa':'#888'};text-align:right;border-bottom:1px solid ${isDark?'#333':'#eee'};white-space:nowrap"`;
-  const thStyleL=`style="padding:8px 6px;font-size:11px;font-weight:600;color:${isDark?'#aaa':'#888'};text-align:left;border-bottom:1px solid ${isDark?'#333':'#eee'}"`;
-  const modeColor=_modalType==='trade'?(isDark?'#89C4F4':'#185FA5'):_modalType==='wolse'?(isDark?'#E8A87C':'#B87A52'):(isDark?'#4DD4A0':'#0F6E56');
-
-  // 전세가율 계산용 - 매매/전세 캐시에서 면적별 평균 추출
-  const tradeCache=_modalTypeCache[`trade_${_modalMonths}`];
-  const jeonseCache=_modalTypeCache[`jeonse_${_modalMonths}`];
-  const tradeAvgByArea={}, jeonseAvgByArea={};
-  if(tradeCache){
-    const groups={};
-    tradeCache.deals.forEach(d=>{
-      const ar=parseFloat(d.excluUseAr||0);
-      const k=ar>0?`${ar.toFixed(1)}㎡`:'기타';
-      const p=parsePrice(d.dealAmount);
-      if(p>0){if(!groups[k])groups[k]=[];groups[k].push(p);}
-    });
-    Object.keys(groups).forEach(k=>{ tradeAvgByArea[k]=Math.round(groups[k].reduce((a,b)=>a+b,0)/groups[k].length); });
-  }
-  if(jeonseCache){
-    const groups={};
-    jeonseCache.deals.filter(d=>!parsePrice(d.monthlyRent)).forEach(d=>{
-      const ar=parseFloat(d.excluUseAr||0);
-      const k=ar>0?`${ar.toFixed(1)}㎡`:'기타';
-      const p=parsePrice(d.deposit);
-      if(p>0){if(!groups[k])groups[k]=[];groups[k].push(p);}
-    });
-    Object.keys(groups).forEach(k=>{ jeonseAvgByArea[k]=Math.round(groups[k].reduce((a,b)=>a+b,0)/groups[k].length); });
-  }
-  const hasJeonseRate=_modalType==='trade'&&Object.keys(tradeAvgByArea).length>0&&Object.keys(jeonseAvgByArea).length>0;
-  const showJeonseCol=_modalType==='trade';
-
-  const tableHtml=`
-  <table style="width:100%;border-collapse:collapse;font-size:12px">
-    <thead>
-      <tr>
-        <th ${thStyleL}>면적</th>
-        <th ${thStyle}>평균</th>
-        <th ${thStyle}>최고</th>
-        <th ${thStyle}>최저</th>
-        ${showJeonseCol?`<th ${thStyle}>전세가율</th>`:''}
-        <th ${thStyle}>건수</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${rows.map((r,i)=>{
-        const rowBg=i%2===0?(isDark?'rgba(255,255,255,0.03)':'rgba(0,0,0,0.02)'):'transparent';
-        const tdStyle=`style="padding:9px 6px;text-align:right;border-bottom:0.5px solid ${isDark?'#2a2a2a':'#f5f5f5'}"`;
-        const tdStyleL=`style="padding:9px 6px;text-align:left;border-bottom:0.5px solid ${isDark?'#2a2a2a':'#f5f5f5'};font-weight:600;color:${modeColor}"`;
-        const tAvg=tradeAvgByArea[r.k]||0;
-        const jAvg=jeonseAvgByArea[r.k]||0;
-        const ratio=tAvg&&jAvg?Math.round(jAvg/tAvg*100):null;
-        const ratioColor=ratio===null?'':(ratio>=80?(isDark?'#ff8a80':'#c0392b'):ratio>=60?(isDark?'#FFD54F':'#e67e22'):(isDark?'#82b1ff':'#2563eb'));
-        const ratioStr=ratio!==null?`<span style="color:${ratioColor};font-weight:600">${ratio}%</span>`:`<span style="color:#aaa">-</span>`;
-        return `<tr style="background:${rowBg}">
-          <td ${tdStyleL}>${r.k}<span style="font-size:10px;color:${isDark?'#666':'#aaa'};font-weight:400;margin-left:3px">(${r.pyung}평)</span></td>
-          <td ${tdStyle}>${fmtPrice(r.avg)}</td>
-          <td ${tdStyle} style="color:${isDark?'#ff8a80':'#c0392b'};text-align:right;padding:9px 6px;border-bottom:0.5px solid ${isDark?'#2a2a2a':'#f5f5f5'}">${fmtPrice(r.max)}</td>
-          <td ${tdStyle} style="color:${isDark?'#82b1ff':'#2563eb'};text-align:right;padding:9px 6px;border-bottom:0.5px solid ${isDark?'#2a2a2a':'#f5f5f5'}">${fmtPrice(r.min)}</td>
-          ${showJeonseCol?`<td ${tdStyle}>${ratioStr}</td>`:''}
-          <td ${tdStyle}>${r.cnt}건</td>
-        </tr>`;
-      }).join('')}
-    </tbody>
-  </table>
-  ${showJeonseCol&&!hasJeonseRate?`<div style="padding:8px 12px;font-size:11px;color:#aaa">💡 잠시 후 전세가율이 표시됩니다</div>`:''}`;
-
-  document.getElementById('modalBody').innerHTML=`<div style="padding:0 4px">${tableHtml}</div>`;
 }
 
 
