@@ -2057,16 +2057,18 @@ function selectModalCompareTab(btn){
   document.getElementById('modalMapWrap').style.display='none';
   document.getElementById('modalBody').style.display='block';
 
-  // 프리캐시 완료 대기 후 렌더링
-  const tradeKey=`trade_${_modalMonths}`, jeonseKey=`jeonse_${_modalMonths}`;
-  if(!_modalTypeCache[tradeKey]||!_modalTypeCache[jeonseKey]){
-    document.getElementById('modalBody').innerHTML='<div style="padding:20px;text-align:center;color:#aaa"><div class="spinner" style="margin:0 auto 8px"></div>전세가율 데이터 로딩 중...</div>';
-    const waitAndRender=()=>{
-      if(_modalTypeCache[tradeKey]&&_modalTypeCache[jeonseKey]){ _renderCompareTable(); return; }
-      setTimeout(waitAndRender, 300);
-    };
-    waitAndRender();
-    return;
+  // 매매 탭일 때만 전세가율 프리캐시 대기
+  if(_modalType==='trade'){
+    const tradeKey=`trade_${_modalMonths}`, jeonseKey=`jeonse_${_modalMonths}`;
+    if(!_modalTypeCache[tradeKey]||!_modalTypeCache[jeonseKey]){
+      document.getElementById('modalBody').innerHTML='<div style="padding:20px;text-align:center;color:#aaa"><div class="spinner" style="margin:0 auto 8px"></div>전세가율 데이터 로딩 중...</div>';
+      const waitAndRender=()=>{
+        if(_modalTypeCache[tradeKey]&&_modalTypeCache[jeonseKey]){ _renderCompareTable(); return; }
+        setTimeout(waitAndRender, 300);
+      };
+      waitAndRender();
+      return;
+    }
   }
   _renderCompareTable();
 }
@@ -2121,7 +2123,8 @@ function _renderCompareTable(){
     });
     Object.keys(groups).forEach(k=>{ jeonseAvgByArea[k]=Math.round(groups[k].reduce((a,b)=>a+b,0)/groups[k].length); });
   }
-  const hasJeonseRate=Object.keys(tradeAvgByArea).length>0&&Object.keys(jeonseAvgByArea).length>0;
+  const hasJeonseRate=_modalType==='trade'&&Object.keys(tradeAvgByArea).length>0&&Object.keys(jeonseAvgByArea).length>0;
+  const showJeonseCol=_modalType==='trade';
 
   const tableHtml=`
   <table style="width:100%;border-collapse:collapse;font-size:12px">
@@ -2131,7 +2134,7 @@ function _renderCompareTable(){
         <th ${thStyle}>평균</th>
         <th ${thStyle}>최고</th>
         <th ${thStyle}>최저</th>
-        <th ${thStyle}>전세가율</th>
+        ${showJeonseCol?`<th ${thStyle}>전세가율</th>`:''}
         <th ${thStyle}>건수</th>
       </tr>
     </thead>
@@ -2140,7 +2143,6 @@ function _renderCompareTable(){
         const rowBg=i%2===0?(isDark?'rgba(255,255,255,0.03)':'rgba(0,0,0,0.02)'):'transparent';
         const tdStyle=`style="padding:9px 6px;text-align:right;border-bottom:0.5px solid ${isDark?'#2a2a2a':'#f5f5f5'}"`;
         const tdStyleL=`style="padding:9px 6px;text-align:left;border-bottom:0.5px solid ${isDark?'#2a2a2a':'#f5f5f5'};font-weight:600;color:${modeColor}"`;
-        // 전세가율
         const tAvg=tradeAvgByArea[r.k]||0;
         const jAvg=jeonseAvgByArea[r.k]||0;
         const ratio=tAvg&&jAvg?Math.round(jAvg/tAvg*100):null;
@@ -2151,13 +2153,13 @@ function _renderCompareTable(){
           <td ${tdStyle}>${fmtPrice(r.avg)}</td>
           <td ${tdStyle} style="color:${isDark?'#ff8a80':'#c0392b'};text-align:right;padding:9px 6px;border-bottom:0.5px solid ${isDark?'#2a2a2a':'#f5f5f5'}">${fmtPrice(r.max)}</td>
           <td ${tdStyle} style="color:${isDark?'#82b1ff':'#2563eb'};text-align:right;padding:9px 6px;border-bottom:0.5px solid ${isDark?'#2a2a2a':'#f5f5f5'}">${fmtPrice(r.min)}</td>
-          <td ${tdStyle}>${ratioStr}</td>
+          ${showJeonseCol?`<td ${tdStyle}>${ratioStr}</td>`:''}
           <td ${tdStyle}>${r.cnt}건</td>
         </tr>`;
       }).join('')}
     </tbody>
   </table>
-  ${!hasJeonseRate?`<div style="padding:8px 12px;font-size:11px;color:#aaa">💡 전세 탭을 한 번 클릭하면 전세가율이 표시됩니다</div>`:''}`;
+  ${showJeonseCol&&!hasJeonseRate?`<div style="padding:8px 12px;font-size:11px;color:#aaa">💡 잠시 후 전세가율이 표시됩니다</div>`:''}`;
 
   document.getElementById('modalBody').innerHTML=`<div style="padding:0 4px">${tableHtml}</div>`;
 }
