@@ -1652,6 +1652,9 @@ function showAptModal(aptNm, roadNm, aptSeq){
   // 거래유형/기간 기반으로 데이터 로드
   loadModalTypeData();
 
+  // 전세가율 계산을 위해 매매+전세 백그라운드 프리캐시
+  setTimeout(()=>prefetchModalCache(), 500);
+
   // 단지 정보 비동기 로드
   loadAptInfo(aptSeq||'', (deals[0]||{}).roadNm||'', (deals[0]||{}).roadNmBonbun||'', (deals[0]||{}).buildYear||'');
 }
@@ -1732,6 +1735,36 @@ async function loadModalTypeData(){
     renderModalWithData({items, deals}, _modalType);
   } catch(e){
     document.getElementById('modalBody').innerHTML='<div style="text-align:center;padding:30px;color:#c00">조회 오류</div>';
+  }
+}
+
+async function prefetchModalCache(){
+  const lawdCd=document.getElementById('sigungu').value||window._mapLawdCd||'';
+  if(!lawdCd) return;
+  const now=new Date();
+  const months=[];
+  for(let i=0;i<_modalMonths;i++){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    months.push(`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`);
+  }
+  const monthStr=months.join(',');
+
+  // 매매/전세 둘 다 캐시에 없으면 백그라운드 로드
+  for(const [type, apiMode] of [['trade','trade'],['jeonse','rent']]){
+    const key=`${type}_${_modalMonths}`;
+    if(_modalTypeCache[key]) continue;
+    try{
+      const result=await fetch(`/api/trade/bulk?${new URLSearchParams({LAWD_CD:lawdCd,months:monthStr,mode:apiMode})}`).then(r=>r.json());
+      let items=result.items||[];
+      const seen=new Set();
+      items=items.filter(d=>{
+        const k=`${d.dealYear}${d.dealMonth}${d.dealDay}_${d.aptNm}_${d.excluUseAr}_${d.dealAmount||d.deposit}`;
+        if(seen.has(k))return false; seen.add(k); return true;
+      });
+      const tradeItems=type==='trade'?items:items.filter(d=>!parsePrice(d.monthlyRent));
+      const deals=tradeItems.filter(d=>modalAptSeq?d.aptSeq===modalAptSeq:d.aptNm===modalAptNm);
+      _modalTypeCache[key]={items:tradeItems, deals};
+    } catch(e){}
   }
 }
 
