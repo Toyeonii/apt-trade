@@ -41,9 +41,7 @@ html{overflow-x:hidden}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
 .header-sub{font-size:11px;color:rgba(255,255,255,0.6);margin-top:2px}
 
-@media(max-width:520px){
-  #settingsPanel{min-width:0!important;width:calc(100vw - 16px)!important;right:8px!important;padding:10px 12px!important;max-height:70vh!important;overflow-y:auto!important;}
-}
+
 .search-panel{background:var(--surface);border-bottom:0.5px solid var(--border);padding:1rem;overflow:hidden;max-height:600px;transition:max-height 0.5s cubic-bezier(0.4,0,0.2,1),opacity 0.5s ease,padding 0.5s ease}
 .search-panel.collapsed{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-events:none;border-bottom:none}
 .search-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
