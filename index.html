@@ -307,12 +307,12 @@ body{padding-bottom:0}
 
 
 <!-- 설정 패널 -->
-<div id="settingsPanel" style="display:none;position:fixed;top:0;right:12px;z-index:999;background:var(--surface);border:0.5px solid var(--border);border-radius:12px;padding:14px 16px;box-shadow:0 4px 16px rgba(0,0,0,0.15);min-width:360px">
+<div id="settingsPanel" style="display:none;position:fixed;top:0;right:12px;z-index:999;background:var(--surface);border:0.5px solid var(--border);border-radius:12px;padding:14px 16px;box-shadow:0 4px 16px rgba(0,0,0,0.15);min-width:420px">
   <div style="display:flex;flex-direction:column;gap:12px;max-width:400px;margin:0 auto;width:100%">
 
     <div style="display:flex;align-items:center;justify-content:space-between">
-      <span style="font-size:13px;font-weight:600;color:var(--text)">🌙 다크모드</span>
-      <div style="display:flex;align-items:center;gap:6px">
+      <span style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;min-width:70px">🌙 다크</span>
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:nowrap">
         <input type="time" id="darkStart" onchange="saveDarkSchedule()" style="height:26px;border:0.5px solid var(--border);border-radius:7px;padding:0 6px;font-size:12px;background:var(--surface);color:var(--text);color-scheme:var(--color-scheme,light)">
         <span style="font-size:12px;color:var(--text2)">~</span>
         <input type="time" id="darkEnd" onchange="saveDarkSchedule()" style="height:26px;border:0.5px solid var(--border);border-radius:7px;padding:0 6px;font-size:12px;background:var(--surface);color:var(--text);color-scheme:var(--color-scheme,light)">
