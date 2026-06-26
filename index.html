@@ -1678,6 +1678,8 @@ function setModalPeriod(months){
   // 해당 타입 캐시 무효화
   delete _modalTypeCache[_modalType];
   loadModalTypeData();
+  // 기간 변경 시 프리캐시 재실행
+  setTimeout(()=>prefetchModalCache(), 500);
 }
 
 async function loadModalTypeData(){
@@ -2062,8 +2064,10 @@ function selectModalCompareTab(btn){
     const tradeKey=`trade_${_modalMonths}`, jeonseKey=`jeonse_${_modalMonths}`;
     if(!_modalTypeCache[tradeKey]||!_modalTypeCache[jeonseKey]){
       document.getElementById('modalBody').innerHTML='<div style="padding:20px;text-align:center;color:#aaa"><div class="spinner" style="margin:0 auto 8px"></div>전세가율 데이터 로딩 중...</div>';
+      const deadline=Date.now()+10000;
       const waitAndRender=()=>{
         if(_modalTypeCache[tradeKey]&&_modalTypeCache[jeonseKey]){ _renderCompareTable(); return; }
+        if(Date.now()>deadline){ _renderCompareTable(); return; }
         setTimeout(waitAndRender, 300);
       };
       waitAndRender();
