@@ -3587,7 +3587,7 @@ function renderFavTab(idx, tab){
 
   // 면적 탭 생성
   const areaTabsHtml=arKeys.map((ar,i)=>`<button class="modal-tab ${i===0?'active':''}" style="font-size:11px;padding:6px 10px" onclick="selectFavAreaTab('${ar}',this,${idx})">${fmtArea(ar)} (${arGroups[ar].length}건)</button>`).join('');
-  body.innerHTML=`<div class="modal-tabs" style="overflow-x:auto;white-space:nowrap">${areaTabsHtml}</div><div id="favAreaBody"></div>`;
+  body.innerHTML=`<div style="display:flex;align-items:stretch;border-bottom:0.5px solid var(--border)"><div class="modal-tabs" style="flex:1;border-bottom:none;overflow-x:auto;white-space:nowrap">${areaTabsHtml}</div><button onclick="selectFavCompareTab(this,${idx})" style="flex-shrink:0;padding:0 12px;font-size:12px;border:none;border-left:0.5px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap">📊 비교</button></div><div id="favAreaBody"></div>`;
 
   window._favArGroups=arGroups;
   renderFavAreaDeals(arKeys[0], deals.filter(d=>parseFloat(d.excluUseAr||0).toFixed(1)===arKeys[0]), mode);
@@ -3596,9 +3596,70 @@ function renderFavTab(idx, tab){
 function selectFavAreaTab(ar, btn, tabIdx){
   document.querySelectorAll('#favModalBody .modal-tabs .modal-tab').forEach(t=>t.classList.remove('active'));
   btn.classList.add('active');
+  // 비교 버튼 비활성화
+  const cBtn=btn.closest('div')?.nextElementSibling?.previousElementSibling?.querySelector('button:last-child')||btn.parentElement?.parentElement?.querySelector('button[onclick^="selectFavCompareTab"]');
+  if(cBtn) cBtn.style.background='var(--surface)';
   const tab=window._favTabData[tabIdx];
   const deals=tab.deals.filter(d=>parseFloat(d.excluUseAr||0).toFixed(1)===ar);
   renderFavAreaDeals(ar, deals, tab.mode);
+}
+
+function selectFavCompareTab(btn, tabIdx){
+  document.querySelectorAll('#favModalBody .modal-tabs .modal-tab').forEach(t=>t.classList.remove('active'));
+  btn.style.background='var(--primary-bg, #E6F1FB)';
+  document.getElementById('favModalChartWrap').style.display='none';
+
+  const tab=window._favTabData[tabIdx];
+  const deals=tab.deals;
+  const mode=tab.mode;
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  const modeColor=mode==='trade'?(isDark?'#89C4F4':'#185FA5'):mode==='wolse'?(isDark?'#E8A87C':'#B87A52'):(isDark?'#4DD4A0':'#0F6E56');
+  const modeBg=mode==='trade'?(isDark?'rgba(137,196,244,0.08)':'rgba(24,95,165,0.05)'):mode==='wolse'?(isDark?'rgba(232,168,124,0.08)':'rgba(184,122,82,0.05)'):(isDark?'rgba(77,212,160,0.08)':'rgba(15,110,86,0.05)');
+
+  const arGroups=window._favArGroups||{};
+  const arKeys=Object.keys(arGroups).sort((a,b)=>parseFloat(a)-parseFloat(b));
+
+  const rows=arKeys.map(k=>{
+    const d=arGroups[k]||[];
+    const prices=d.map(x=>mode==='trade'?parsePrice(x.dealAmount):parsePrice(x.deposit)).filter(p=>p>0);
+    if(!prices.length) return null;
+    const avg=Math.round(prices.reduce((a,b)=>a+b,0)/prices.length);
+    const max=Math.max(...prices), min=Math.min(...prices);
+    const ar=parseFloat(k)||0;
+    const pyung=ar>0?Math.round(ar/3.3):0;
+    return {k:`${ar.toFixed(1)}㎡`, pyung, avg, max, min, cnt:prices.length};
+  }).filter(Boolean);
+
+  if(!rows.length){
+    document.getElementById('favAreaBody').innerHTML='<div style="padding:20px;text-align:center;color:#aaa">데이터 없음</div>';
+    return;
+  }
+
+  const cards=rows.map(r=>`
+    <div style="background:${isDark?'#1e1e1e':'#f8f9fa'};border:0.5px solid ${isDark?'#333':'#e8ecf0'};border-radius:10px;padding:12px 14px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <span style="font-size:13px;font-weight:700;color:${modeColor}">${r.k}</span>
+        <span style="font-size:11px;color:${isDark?'#666':'#aaa'};background:${modeBg};padding:2px 8px;border-radius:10px">${r.pyung}평 · ${r.cnt}건</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;gap:8px">
+        <div style="flex:1;text-align:center">
+          <div style="font-size:10px;color:${isDark?'#888':'#aaa'};margin-bottom:3px">평균</div>
+          <div style="font-size:13px;font-weight:600;color:${isDark?'#eee':'#222'}">${fmtPrice(r.avg)}</div>
+        </div>
+        <div style="width:0.5px;background:${isDark?'#333':'#eee'}"></div>
+        <div style="flex:1;text-align:center">
+          <div style="font-size:10px;color:${isDark?'#888':'#aaa'};margin-bottom:3px">최고</div>
+          <div style="font-size:13px;font-weight:600;color:${isDark?'#ff8a80':'#c0392b'}">${fmtPrice(r.max)}</div>
+        </div>
+        <div style="width:0.5px;background:${isDark?'#333':'#eee'}"></div>
+        <div style="flex:1;text-align:center">
+          <div style="font-size:10px;color:${isDark?'#888':'#aaa'};margin-bottom:3px">최저</div>
+          <div style="font-size:13px;font-weight:600;color:${isDark?'#82b1ff':'#2563eb'}">${fmtPrice(r.min)}</div>
+        </div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('favAreaBody').innerHTML=`<div style="padding:8px 12px">${cards}</div>`;
 }
 
 function renderFavAreaDeals(ar, deals, mode){
