@@ -240,7 +240,7 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
   #settingsPanel{top:8px;left:20px;right:20px;border-radius:12px;border-top:0.5px solid var(--border)}
 }
 @media(min-width:601px){
-  #settingsPanel{top:48px;right:8px;width:450px;border-radius:12px}
+  #settingsPanel{top:48px;right:8px;width:500px;border-radius:12px}
 }
 .modal-tabs{display:flex;gap:0;border-bottom:0.5px solid #eee;overflow-x:auto;flex-shrink:0}
 .modal-tab{height:36px;padding:0 14px;border:none;background:transparent;font-size:13px;color:#888;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;flex-shrink:0}
@@ -402,9 +402,9 @@ body{padding-bottom:0}
     <div style="display:flex;align-items:center;justify-content:space-between">
       <span style="font-size:13px;font-weight:600;color:var(--text);flex-shrink:0">🌙 어두운 테마</span>
       <div style="display:flex;align-items:center;gap:5px;flex-wrap:nowrap">
-        <input type="time" id="darkStart" onchange="saveDarkSchedule()" style="width:90px;height:26px;border:0.5px solid var(--border);border-radius:7px;padding:0 4px;font-size:11px;background:var(--surface);color:var(--text);color-scheme:var(--color-scheme,light)">
+        <input type="time" id="darkStart" onchange="saveDarkSchedule()" style="height:26px;border:0.5px solid var(--border);border-radius:7px;padding:0 6px;font-size:12px;background:var(--surface);color:var(--text);color-scheme:var(--color-scheme,light)">
         <span style="font-size:12px;color:var(--text2)">~</span>
-        <input type="time" id="darkEnd" onchange="saveDarkSchedule()" style="width:90px;height:26px;border:0.5px solid var(--border);border-radius:7px;padding:0 4px;font-size:11px;background:var(--surface);color:var(--text);color-scheme:var(--color-scheme,light)">
+        <input type="time" id="darkEnd" onchange="saveDarkSchedule()" style="height:26px;border:0.5px solid var(--border);border-radius:7px;padding:0 6px;font-size:12px;background:var(--surface);color:var(--text);color-scheme:var(--color-scheme,light)">
         <button id="darkScheduleToggle" onclick="toggleDarkSchedule()" style="flex-shrink:0;height:26px;padding:0 8px;font-size:11px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)">비활성</button>
       </div>
     </div>
