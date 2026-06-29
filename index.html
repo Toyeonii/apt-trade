@@ -3397,10 +3397,18 @@ async function openFavModal(fav, forceRefresh=false){
         ]);
         const newTrade=(tradeRes.items||[]).filter(d=>fav.aptSeq?d.aptSeq===fav.aptSeq:d.aptNm===fav.aptNm);
         const newRent=(rentRes.items||[]).filter(d=>fav.aptSeq?d.aptSeq===fav.aptSeq:d.aptNm===fav.aptNm);
-        // 이전 달 캐시 + 현재 달 신규 머지
+        // 이전 달 캐시 + 현재 달 신규 머지 + 중복 제거
         const curM=String(_now.getMonth()+1), curY=String(_now.getFullYear());
-        const mergedTrade=[...cachedTrade.filter(d=>!(d.dealMonth==curM&&d.dealYear==curY)),...newTrade];
-        const mergedRent=[...cachedRent.filter(d=>!(d.dealMonth==curM&&d.dealYear==curY)),...newRent];
+        const seen=new Set();
+        const mergedTrade=[...cachedTrade.filter(d=>!(d.dealMonth==curM&&d.dealYear==curY)),...newTrade].filter(d=>{
+          const k=`${d.dealYear}${d.dealMonth}${d.dealDay}_${d.aptNm}_${d.excluUseAr}_${d.dealAmount}`;
+          return seen.has(k)?false:seen.add(k);
+        });
+        const seen2=new Set();
+        const mergedRent=[...cachedRent.filter(d=>!(d.dealMonth==curM&&d.dealYear==curY)),...newRent].filter(d=>{
+          const k=`${d.dealYear}${d.dealMonth}${d.dealDay}_${d.aptNm}_${d.excluUseAr}_${d.deposit}_${d.monthlyRent}`;
+          return seen2.has(k)?false:seen2.add(k);
+        });
         // 캐시 업데이트 후 한번에 UI 갱신
         const cached2=JSON.parse(localStorage.getItem(cacheKey)||'{}');
         localStorage.setItem(cacheKey, JSON.stringify({...cached2, tradeDeals:mergedTrade, rentDeals:mergedRent, ts:Date.now()}));
@@ -3444,8 +3452,16 @@ async function openFavModal(fav, forceRefresh=false){
       aptInfoPromise
     ]);
 
-    const tradeDeals=(tradeRes.items||[]).filter(d=>fav.aptSeq?d.aptSeq===fav.aptSeq:d.aptNm===fav.aptNm);
-    const rentDeals=(rentRes.items||[]).filter(d=>fav.aptSeq?d.aptSeq===fav.aptSeq:d.aptNm===fav.aptNm);
+    const tradeItems=(tradeRes.items||[]).filter((d,_,arr)=>{
+      const key=`${d.dealYear}${d.dealMonth}${d.dealDay}_${d.aptNm}_${d.excluUseAr}_${d.dealAmount}`;
+      return arr.findIndex(x=>`${x.dealYear}${x.dealMonth}${x.dealDay}_${x.aptNm}_${x.excluUseAr}_${x.dealAmount}`===key)===arr.indexOf(d);
+    });
+    const rentItems=(rentRes.items||[]).filter((d,_,arr)=>{
+      const key=`${d.dealYear}${d.dealMonth}${d.dealDay}_${d.aptNm}_${d.excluUseAr}_${d.deposit}_${d.monthlyRent}`;
+      return arr.findIndex(x=>`${x.dealYear}${x.dealMonth}${x.dealDay}_${x.aptNm}_${x.excluUseAr}_${x.deposit}_${x.monthlyRent}`===key)===arr.indexOf(d);
+    });
+    const tradeDeals=tradeItems.filter(d=>fav.aptSeq?d.aptSeq===fav.aptSeq:d.aptNm===fav.aptNm);
+    const rentDeals=rentItems.filter(d=>fav.aptSeq?d.aptSeq===fav.aptSeq:d.aptNm===fav.aptNm);
 
     const d0=tradeDeals[0]||rentDeals[0];
     const addr=d0?(d0.roadNm?`${fav.sido} ${fav.sggName} ${d0.roadNm}${d0.roadNmBonbun?' '+parseInt(d0.roadNmBonbun,10):''}`:
