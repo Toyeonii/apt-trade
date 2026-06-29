@@ -63,6 +63,9 @@ html{overflow-x:hidden}
 .mode-label-wolse{background:rgba(255,255,255,0.95);color:#B87A52;border:1px solid rgba(255,255,255,0.5)}
 .mode-label-map{background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.8);border:1px solid rgba(255,255,255,0.2)}
 .btn-search:active{transform:scale(0.98)}
+.search-select{flex:1;min-width:0;height:38px;border:1px solid var(--border);border-radius:10px;padding:0 28px 0 12px;font-size:14px;background:var(--surface);color:var(--text);appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;cursor:pointer;transition:border-color 0.15s}
+.search-select:focus{outline:none;border-color:#1D9E75}
+.search-select:disabled{opacity:0.5;cursor:not-allowed}
 .btn-search:disabled{background:#B4B2A9;cursor:not-allowed}
 .search-tip{font-size:11px;color:#999;margin-top:7px;text-align:center;line-height:1.5}
 .recent-chip{display:inline-flex;align-items:center;gap:4px;background:var(--primary-bg);border:0.5px solid var(--primary-border);border-radius:16px;padding:4px 10px;font-size:12px;color:var(--primary);cursor:pointer;white-space:nowrap}
@@ -138,8 +141,8 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
 .state-icon{font-size:44px;margin-bottom:14px}
 .state-title{font-size:15px;font-weight:600;color:#333;margin-bottom:8px}
 .state-sub{font-size:13px;line-height:1.8;color:#888}
-.spinner{width:36px;height:36px;border:3px solid #dde5f4;border-top-color:#185FA5;border-radius:50%;animation:spin 0.7s linear infinite;margin-bottom:14px}
-[data-theme='dark'] .spinner{border-color:#333;border-top-color:#89C4F4}
+.spinner{width:36px;height:36px;border:3px solid rgba(29,158,117,0.15);border-top-color:#1D9E75;border-radius:50%;animation:spin 0.7s linear infinite;margin-bottom:14px}
+[data-theme='dark'] .spinner{border-color:rgba(93,202,165,0.15);border-top-color:#5DCAA5}
 [data-theme='dark'] .state-title{color:#ccc}
 [data-theme='dark'] .state-sub{color:#777}
 [data-theme='dark'] .prog-text{color:#ccc}
@@ -160,15 +163,15 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
 
 /* 카드형 (모바일) */
 .card-list{padding:8px;background:var(--bg)}
-.card{background:var(--surface);border-radius:12px;padding:12px 14px;margin-bottom:8px;box-shadow:var(--card-shadow);-webkit-user-select:none;user-select:none}
-.card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
-.card-name{font-size:14px;font-weight:600;color:var(--text);flex:1;margin-right:8px}
-.card-price{font-size:15px;font-weight:700;color:#0C447C;white-space:nowrap}
+.card{background:var(--surface);border-radius:14px;padding:14px 16px;margin-bottom:8px;box-shadow:var(--card-shadow);-webkit-user-select:none;user-select:none}
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.card-name{font-size:15px;font-weight:600;color:var(--text);flex:1;margin-right:8px}
+.card-price{font-size:16px;font-weight:700;color:#0C447C;white-space:nowrap}
 .card-price.hi{color:#A32D2D}
 .card-price.lo{color:#0F6E56}
 .card-price.deposit{color:#0F6E56}
-.card-mid{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
-.card-tag{font-size:11px;background:var(--surface2);border:0.5px solid var(--border);border-radius:4px;padding:2px 7px;color:var(--text2)}
+.card-mid{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.card-tag{font-size:11px;background:var(--surface2);border:0.5px solid var(--border);border-radius:5px;padding:3px 8px;color:var(--text2)}
 .card-tag.rent-tag{background:#FAEEDA;border-color:#FAC775;color:#633806}
 .card-tag.jeonse-tag{background:#E1F5EE;border-color:#9FE1CB;color:#085041}
 .card-bot{display:flex;justify-content:space-between;font-size:11px;color:var(--text3)}
@@ -415,9 +418,9 @@ body{padding-bottom:0}
 </div>
 <section class="search-panel">
   <div style="display:flex;gap:6px;margin-bottom:6px">
-    <select id="sido" onchange="loadSgg()" style="flex:1;min-width:0;height:38px;border:0.5px solid #ccc;border-radius:8px;padding:0 8px;font-size:14px;background:#fff;appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 6px center"><option value="">시/도</option></select>
-    <select id="sigungu" onchange="onSggChange()" style="flex:1;min-width:0;height:38px;border:0.5px solid #ccc;border-radius:8px;padding:0 8px;font-size:14px;background:#fff;appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 6px center"><option value="">시/군/구</option></select>
-    <select id="dong" style="flex:1;min-width:0;height:38px;border:0.5px solid #ccc;border-radius:8px;padding:0 8px;font-size:14px;background:#fff;appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 6px center" disabled onchange="applyFilter()">
+    <select id="sido" onchange="loadSgg()" class="search-select"><option value="">시/도</option></select>
+    <select id="sigungu" onchange="onSggChange()" class="search-select"><option value="">시/군/구</option></select>
+    <select id="dong" class="search-select" disabled onchange="applyFilter()">
       <option value="">동 (전체)</option>
     </select>
   </div>
@@ -563,15 +566,15 @@ body{padding-bottom:0}
         <button class="modal-close" onclick="closeModal()">✕</button>
       </div>
     </div>
-    <div class="modal-header" style="flex-direction:column;align-items:stretch;gap:6px;padding-bottom:8px">
-      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-        <span style="font-size:11px;color:#888">거래유형</span>
-        <button class="fav-period-btn active" id="modalTypeTrade" onclick="switchModalType('trade')">🏠 매매</button>
-        <button class="fav-period-btn" id="modalTypeJeonse" onclick="switchModalType('jeonse')">🏦 전세</button>
-        <button class="fav-period-btn" id="modalTypeWolse" onclick="switchModalType('wolse')">📋 월세</button>
+    <div class="modal-header" style="flex-direction:column;align-items:stretch;gap:0;padding-bottom:0">
+      <!-- 거래유형 언더라인 탭 -->
+      <div style="display:flex;align-items:stretch;border-bottom:0.5px solid var(--border);margin:0 -16px;padding:0 16px">
+        <button id="modalTypeTrade" onclick="switchModalType('trade')" style="background:none;border:none;border-bottom:2px solid transparent;color:var(--text2);font-size:14px;font-weight:500;padding:10px 16px 10px 0;cursor:pointer;letter-spacing:0.3px;transition:all 0.2s">매매</button>
+        <button id="modalTypeJeonse" onclick="switchModalType('jeonse')" style="background:none;border:none;border-bottom:2px solid transparent;color:var(--text2);font-size:14px;font-weight:500;padding:10px 16px;cursor:pointer;letter-spacing:0.3px;transition:all 0.2s">전세</button>
+        <button id="modalTypeWolse" onclick="switchModalType('wolse')" style="background:none;border:none;border-bottom:2px solid transparent;color:var(--text2);font-size:14px;font-weight:500;padding:10px 16px;cursor:pointer;letter-spacing:0.3px;transition:all 0.2s">월세</button>
       </div>
-      <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
-        <span style="font-size:11px;color:#888">조회기간</span>
+      <!-- 조회기간 -->
+      <div style="display:flex;align-items:center;gap:5px;padding:8px 0;flex-wrap:wrap">
         <button class="fav-period-btn" id="modalPeriodBtn3" onclick="setModalPeriod(3)">3개월</button>
         <button class="fav-period-btn active" id="modalPeriodBtn6" onclick="setModalPeriod(6)">6개월</button>
         <button class="fav-period-btn" id="modalPeriodBtn12" onclick="setModalPeriod(12)">12개월</button>
@@ -1645,6 +1648,7 @@ function showAptModal(aptNm, roadNm, aptSeq){
   setTimeout(()=>{
     const sheet=document.querySelector('#aptModal .modal-sheet');
     if(sheet){sheet.classList.remove('type-trade','type-jeonse','type-wolse');sheet.classList.add(`type-${_modalType}`);}
+    switchModalType(_modalType); // 언더라인 탭 초기 활성화
   },0);
   _modalMonths=6;
   // 메인 조회기간에서 개월수 계산해서 팝업 기간 동기화
@@ -1705,8 +1709,15 @@ function switchModalType(type){
   document.body.classList.add(`mode-${type}`);
   const sheet=document.querySelector('#aptModal .modal-sheet');
   if(sheet){sheet.classList.remove('type-trade','type-jeonse','type-wolse');sheet.classList.add(`type-${type}`);}
+  // 언더라인 탭 활성화
+  const colors={'trade':'#185FA5','jeonse':'#0F6E56','wolse':'#B87A52'};
   ['trade','jeonse','wolse'].forEach(t=>{
-    document.getElementById(`modalType${t.charAt(0).toUpperCase()+t.slice(1)}`)?.classList.toggle('active',t===type);
+    const el=document.getElementById(`modalType${t.charAt(0).toUpperCase()+t.slice(1)}`);
+    if(!el) return;
+    const isActive=t===type;
+    el.style.color=isActive?colors[t]:'var(--text2)';
+    el.style.fontWeight=isActive?'700':'500';
+    el.style.borderBottom=isActive?`2px solid ${colors[t]}`:'2px solid transparent';
   });
   loadModalTypeData();
 }
