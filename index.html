@@ -525,43 +525,17 @@ body{padding-bottom:0}
 </div>
 <main id="main" style="flex:1;overflow-y:auto;overflow-x:auto;-webkit-overflow-scrolling:touch">
   <div class="state-screen" style="padding:40px 24px">
-    <div style="margin-bottom:24px">
-      <div style="font-size:48px;font-weight:700;letter-spacing:-2px;line-height:1;font-family:serif">
+    <div style="margin-bottom:28px">
+      <div style="font-size:64px;font-weight:700;letter-spacing:-2px;line-height:1;font-family:serif">
         <span style="color:#0F6E56">空</span><span style="color:#1D9E75">間</span>
       </div>
-      <div style="font-size:12px;letter-spacing:6px;color:#5DCAA5;margin-top:6px;font-weight:500">S P A C E</div>
+      <div style="font-size:13px;letter-spacing:7px;color:#5DCAA5;margin-top:8px;font-weight:500">S P A C E</div>
     </div>
-    <div style="font-size:14px;color:var(--text2);letter-spacing:0.5px;margin-bottom:4px">당신의 공간을 찾아드립니다</div>
-    <div style="font-size:12px;color:#aaa;margin-bottom:28px">아파트 실거래가 조회 서비스</div>
-    <div style="background:var(--surface);border:0.5px solid var(--border);border-radius:12px;padding:14px 20px;width:100%;max-width:260px;margin-bottom:28px">
+    <div style="font-size:16px;color:var(--text2);letter-spacing:0.5px;margin-bottom:6px">당신의 공간을 찾아드립니다</div>
+    <div style="font-size:13px;color:#aaa;margin-bottom:32px">아파트 실거래가 조회 서비스</div>
+    <div style="background:var(--surface);border:0.5px solid var(--border);border-radius:12px;padding:14px 20px;width:100%;max-width:260px">
       <div style="font-size:11px;color:#aaa;margin-bottom:4px">시작하려면</div>
       <div style="font-size:13px;color:var(--text);font-weight:500">시/도 → 시/군/구 선택 후<br>조회하기를 누르세요</div>
-    </div>
-    <div style="display:flex;gap:20px">
-      <div style="text-align:center">
-        <div style="width:34px;height:34px;border-radius:50%;background:#E1F5EE;display:flex;align-items:center;justify-content:center;margin:0 auto 5px">
-          <span style="font-size:16px">🏠</span>
-        </div>
-        <div style="font-size:11px;color:#aaa">매매</div>
-      </div>
-      <div style="text-align:center">
-        <div style="width:34px;height:34px;border-radius:50%;background:#E1F5EE;display:flex;align-items:center;justify-content:center;margin:0 auto 5px">
-          <span style="font-size:16px">🏦</span>
-        </div>
-        <div style="font-size:11px;color:#aaa">전세</div>
-      </div>
-      <div style="text-align:center">
-        <div style="width:34px;height:34px;border-radius:50%;background:#E1F5EE;display:flex;align-items:center;justify-content:center;margin:0 auto 5px">
-          <span style="font-size:16px">💳</span>
-        </div>
-        <div style="font-size:11px;color:#aaa">월세</div>
-      </div>
-      <div style="text-align:center">
-        <div style="width:34px;height:34px;border-radius:50%;background:#E1F5EE;display:flex;align-items:center;justify-content:center;margin:0 auto 5px">
-          <span style="font-size:16px">⭐</span>
-        </div>
-        <div style="font-size:11px;color:#aaa">즐겨찾기</div>
-      </div>
     </div>
   </div>
 </main>
@@ -959,21 +933,15 @@ function resetResult(){
   document.getElementById('filterBar').style.display='none';
   document.getElementById('summaryStrip').style.display='none';
   document.getElementById('main').innerHTML=`<div class="state-screen" style="padding:40px 24px">
-    <div style="margin-bottom:24px">
-      <div style="font-size:48px;font-weight:700;letter-spacing:-2px;line-height:1;font-family:serif"><span style="color:#0F6E56">空</span><span style="color:#1D9E75">間</span></div>
-      <div style="font-size:12px;letter-spacing:6px;color:#5DCAA5;margin-top:6px;font-weight:500">S P A C E</div>
+    <div style="margin-bottom:28px">
+      <div style="font-size:64px;font-weight:700;letter-spacing:-2px;line-height:1;font-family:serif"><span style="color:#0F6E56">空</span><span style="color:#1D9E75">間</span></div>
+      <div style="font-size:13px;letter-spacing:7px;color:#5DCAA5;margin-top:8px;font-weight:500">S P A C E</div>
     </div>
-    <div style="font-size:14px;color:var(--text2);letter-spacing:0.5px;margin-bottom:4px">당신의 공간을 찾아드립니다</div>
-    <div style="font-size:12px;color:#aaa;margin-bottom:28px">아파트 실거래가 조회 서비스</div>
-    <div style="background:var(--surface);border:0.5px solid var(--border);border-radius:12px;padding:14px 20px;width:100%;max-width:260px;margin-bottom:28px">
+    <div style="font-size:16px;color:var(--text2);letter-spacing:0.5px;margin-bottom:6px">당신의 공간을 찾아드립니다</div>
+    <div style="font-size:13px;color:#aaa;margin-bottom:32px">아파트 실거래가 조회 서비스</div>
+    <div style="background:var(--surface);border:0.5px solid var(--border);border-radius:12px;padding:14px 20px;width:100%;max-width:260px">
       <div style="font-size:11px;color:#aaa;margin-bottom:4px">시작하려면</div>
       <div style="font-size:13px;color:var(--text);font-weight:500">시/도 → 시/군/구 선택 후<br>조회하기를 누르세요</div>
-    </div>
-    <div style="display:flex;gap:20px">
-      <div style="text-align:center"><div style="width:34px;height:34px;border-radius:50%;background:#E1F5EE;display:flex;align-items:center;justify-content:center;margin:0 auto 5px"><span style="font-size:16px">🏠</span></div><div style="font-size:11px;color:#aaa">매매</div></div>
-      <div style="text-align:center"><div style="width:34px;height:34px;border-radius:50%;background:#E1F5EE;display:flex;align-items:center;justify-content:center;margin:0 auto 5px"><span style="font-size:16px">🏦</span></div><div style="font-size:11px;color:#aaa">전세</div></div>
-      <div style="text-align:center"><div style="width:34px;height:34px;border-radius:50%;background:#E1F5EE;display:flex;align-items:center;justify-content:center;margin:0 auto 5px"><span style="font-size:16px">💳</span></div><div style="font-size:11px;color:#aaa">월세</div></div>
-      <div style="text-align:center"><div style="width:34px;height:34px;border-radius:50%;background:#E1F5EE;display:flex;align-items:center;justify-content:center;margin:0 auto 5px"><span style="font-size:16px">⭐</span></div><div style="font-size:11px;color:#aaa">즐겨찾기</div></div>
     </div>
   </div>`;
 }
