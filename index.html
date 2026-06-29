@@ -49,7 +49,7 @@ html{overflow-x:hidden}
 .search-grid select:focus,.full-select:focus{outline:none;border-color:#185FA5}
 .full-select:disabled{background:#f5f5f5;color:#aaa}
 .mb8{margin-bottom:8px}
-.month-label{font-size:11px;color:#5F5E5A;margin-bottom:4px}
+.month-label{font-size:13px;color:var(--text2);margin-bottom:4px}
 .month-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
 .month-row input[type=month]{height:38px;border:0.5px solid var(--border);border-radius:8px;padding:0 8px;font-size:14px;background:var(--surface);color:var(--text);width:100%}
 .month-row input:focus{outline:none;border-color:#185FA5}
@@ -434,9 +434,9 @@ body{padding-bottom:0}
   </div>
   <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center">
     <span class="month-label" style="margin-bottom:0;white-space:nowrap">시작</span>
-    <input type="month" id="startM" style="flex:1;height:38px;border:1px solid var(--border);border-radius:10px;padding:0 8px;font-size:14px;background:var(--surface);color:var(--text);color-scheme:var(--color-scheme,light)"/>
+    <input type="month" id="startM" style="flex:1;height:38px;border:1px solid var(--border);border-radius:10px;padding:0 8px;font-size:14px;background:var(--surface);color:var(--text);color-scheme:light dark"/>
     <span class="month-label" style="margin-bottom:0;white-space:nowrap">종료</span>
-    <input type="month" id="endM" style="flex:1;height:38px;border:1px solid var(--border);border-radius:10px;padding:0 8px;font-size:14px;background:var(--surface);color:var(--text);color-scheme:var(--color-scheme,light)"/>
+    <input type="month" id="endM" style="flex:1;height:38px;border:1px solid var(--border);border-radius:10px;padding:0 8px;font-size:14px;background:var(--surface);color:var(--text);color-scheme:light dark"/>
   </div>
   <button class="btn-search trade" id="btnSearch" onclick="doSearch()">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -444,7 +444,7 @@ body{padding-bottom:0}
   </button>
   <div class="search-tip" id="tip">시/군/구 → 동(선택) → 기간 선택 후 조회</div>
   <div id="recentSearchBar" style="display:none;margin-top:8px">
-    <div style="font-size:11px;color:#999;margin-bottom:5px">최근 조회</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:5px">최근 조회</div>
     <div id="recentSearchList" style="display:flex;flex-wrap:wrap;gap:5px"></div>
   </div>
 </section>
@@ -4328,6 +4328,11 @@ function toggleDarkMode(){
 function setDarkMode(dark){
   document.documentElement.setAttribute('data-theme', dark?'dark':'light');
   localStorage.setItem('apt_dark_mode', dark?'1':'0');
+  // month input color-scheme 동적 변경
+  ['startM','endM'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.colorScheme=dark?'dark':'light';
+  });
   // 토글 스위치 상태 업데이트
   const sw=document.getElementById('darkModeSwitch');
   const track=document.getElementById('darkModeTrack');
