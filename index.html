@@ -304,14 +304,21 @@ body{padding-bottom:0}
 </head>
 <body>
 <header class="app-header" id="appHeader">
-  <div style="display:flex;align-items:center;justify-content:space-between">
-    <h1 style="font-family:serif;font-size:22px;font-weight:700;letter-spacing:-1px;line-height:1;display:flex;align-items:center;gap:0">
+  <div style="display:flex;align-items:center;justify-content:space-between;height:44px">
+    <!-- 좌측: 로고 -->
+    <h1 style="font-family:serif;font-size:22px;font-weight:700;letter-spacing:-1px;line-height:1;display:flex;align-items:center;gap:0;flex-shrink:0">
       <span style="color:#5DCAA5">空</span><span style="color:#9FE1CB">間</span>
-      <span style="font-family:sans-serif;font-size:9px;letter-spacing:3px;color:rgba(255,255,255,0.5);margin-left:6px;font-weight:400;align-self:flex-end;padding-bottom:2px">SPACE</span>
+      <span style="font-family:sans-serif;font-size:9px;letter-spacing:3px;color:rgba(255,255,255,0.4);margin-left:6px;font-weight:400;align-self:flex-end;padding-bottom:2px">SPACE</span>
     </h1>
-    <div style="display:flex;align-items:center;gap:8px">
-      <span id="modeLabel" class="mode-label mode-label-map">지도</span>
-      <button id="settingsBtn" onclick="toggleSettings()" style="width:28px;height:28px;border-radius:50%;border:none;background:rgba(255,255,255,0.2);color:#fff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center" title="다크모드">⚙️</button>
+    <!-- 가운데: 모드 탭 -->
+    <div id="headerModeTabs" style="display:flex;align-items:flex-end;gap:0;height:100%">
+      <button onclick="switchMode('trade')" id="headerTabTrade" style="background:none;border:none;color:rgba(255,255,255,0.5);font-size:14px;font-weight:500;padding:0 14px;height:100%;cursor:pointer;border-bottom:2px solid transparent;letter-spacing:0.5px;transition:all 0.2s">매매</button>
+      <button onclick="switchMode('jeonse')" id="headerTabJeonse" style="background:none;border:none;color:rgba(255,255,255,0.5);font-size:14px;font-weight:500;padding:0 14px;height:100%;cursor:pointer;border-bottom:2px solid transparent;letter-spacing:0.5px;transition:all 0.2s">전세</button>
+      <button onclick="switchMode('wolse')" id="headerTabWolse" style="background:none;border:none;color:rgba(255,255,255,0.5);font-size:14px;font-weight:500;padding:0 14px;height:100%;cursor:pointer;border-bottom:2px solid transparent;letter-spacing:0.5px;transition:all 0.2s">월세</button>
+    </div>
+    <!-- 우측: 설정 -->
+    <div style="display:flex;align-items:center;flex-shrink:0">
+      <button id="settingsBtn" onclick="toggleSettings()" style="width:28px;height:28px;border-radius:50%;border:none;background:rgba(255,255,255,0.2);color:#fff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center" title="설정">⚙️</button>
     </div>
   </div>
   <div class="header-sub">국토교통부 실거래가 공개시스템</div>
@@ -897,6 +904,16 @@ function updateModeUI(mode){
     else if(mode==='map') header.style.background='#1a1a2e';
     else header.style.background='#0C447C';
   }
+  // 헤더 탭 언더라인 활성화
+  const tabMap={'trade':'headerTabTrade','jeonse':'headerTabJeonse','wolse':'headerTabWolse'};
+  ['headerTabTrade','headerTabJeonse','headerTabWolse'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    const isActive=tabMap[mode]===id;
+    el.style.color=isActive?'#fff':'rgba(255,255,255,0.45)';
+    el.style.fontWeight=isActive?'700':'500';
+    el.style.borderBottom=isActive?'2px solid #5DCAA5':'2px solid transparent';
+  });
 }
 
 function updateSummaryLabels(mode){
