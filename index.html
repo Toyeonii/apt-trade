@@ -3387,6 +3387,8 @@ async function openFavModal(fav, forceRefresh=false){
   if(cached){
     try{
       const {tradeDeals:cachedTrade, rentDeals:cachedRent, addr, aptInfo, ts}=JSON.parse(cached);
+      // 캐시 24시간 초과 시 전체 재조회
+      if(ts && Date.now()-ts > 86400000){ throw new Error('cache expired'); }
       // 현재 달 재조회 후 머지해서 한번에 표시
       try{
         const [tradeRes, rentRes]=await Promise.all([
