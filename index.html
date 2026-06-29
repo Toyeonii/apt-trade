@@ -3452,13 +3452,15 @@ async function openFavModal(fav, forceRefresh=false){
       aptInfoPromise
     ]);
 
-    const tradeItems=(tradeRes.items||[]).filter((d,_,arr)=>{
+    const seenT=new Set();
+    const tradeItems=(tradeRes.items||[]).filter(d=>{
       const key=`${d.dealYear}${d.dealMonth}${d.dealDay}_${d.aptNm}_${d.excluUseAr}_${d.dealAmount}`;
-      return arr.findIndex(x=>`${x.dealYear}${x.dealMonth}${x.dealDay}_${x.aptNm}_${x.excluUseAr}_${x.dealAmount}`===key)===arr.indexOf(d);
+      return seenT.has(key)?false:seenT.add(key);
     });
-    const rentItems=(rentRes.items||[]).filter((d,_,arr)=>{
+    const seenR=new Set();
+    const rentItems=(rentRes.items||[]).filter(d=>{
       const key=`${d.dealYear}${d.dealMonth}${d.dealDay}_${d.aptNm}_${d.excluUseAr}_${d.deposit}_${d.monthlyRent}`;
-      return arr.findIndex(x=>`${x.dealYear}${x.dealMonth}${x.dealDay}_${x.aptNm}_${x.excluUseAr}_${x.deposit}_${x.monthlyRent}`===key)===arr.indexOf(d);
+      return seenR.has(key)?false:seenR.add(key);
     });
     const tradeDeals=tradeItems.filter(d=>fav.aptSeq?d.aptSeq===fav.aptSeq:d.aptNm===fav.aptNm);
     const rentDeals=rentItems.filter(d=>fav.aptSeq?d.aptSeq===fav.aptSeq:d.aptNm===fav.aptNm);
