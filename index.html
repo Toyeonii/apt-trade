@@ -3391,11 +3391,13 @@ async function openFavModal(fav, forceRefresh=false){
       const {tradeDeals:cachedTrade, rentDeals:cachedRent, addr, aptInfo, ts}=JSON.parse(cached);
       // 캐시 24시간 초과 시 전체 재조회
       if(ts && Date.now()-ts > 86400000){ throw new Error('cache expired'); }
-      // 현재 달 재조회 후 머지해서 한번에 표시
+      // 현재 달 + 전체 기간 구 데이터 재조회
       try{
-        const [tradeRes, rentRes]=await Promise.all([
+        const [tradeRes, rentRes, allTradeRes, allRentRes]=await Promise.all([
           fetch(`/api/trade/bulk?LAWD_CD=${fav.sggCd}&months=${currentMonthStr}&mode=trade`).then(r=>r.json()),
           fetch(`/api/trade/bulk?LAWD_CD=${fav.sggCd}&months=${currentMonthStr}&mode=rent`).then(r=>r.json()),
+          fetch(`/api/trade/bulk?LAWD_CD=${fav.sggCd}&months=${monthStr}&mode=trade`).then(r=>r.json()),
+          fetch(`/api/trade/bulk?LAWD_CD=${fav.sggCd}&months=${monthStr}&mode=rent`).then(r=>r.json()),
         ]);
         const newTrade=(tradeRes.items||[]).filter(d=>fav.aptSeq?d.aptSeq===fav.aptSeq:d.aptNm===fav.aptNm);
         const newRent=(rentRes.items||[]).filter(d=>fav.aptSeq?d.aptSeq===fav.aptSeq:d.aptNm===fav.aptNm);
@@ -3417,7 +3419,7 @@ async function openFavModal(fav, forceRefresh=false){
         requestAnimationFrame(()=>{
           document.getElementById('favModalSub').textContent=`매매 ${mergedTrade.length}건 · 전월세 ${mergedRent.length}건`;
           document.getElementById('favModalAddr').textContent=addr||'';
-          renderFavTabs(mergedTrade, mergedRent);
+          renderFavTabs(mergedTrade, mergedRent, allTradeRes.items||[], allRentRes.items||[]);
           if(aptInfo){
             renderFavAptInfo(aptInfo, mergedTrade, mergedRent, addr||'');
           } else {
