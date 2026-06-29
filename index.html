@@ -629,7 +629,7 @@ body{padding-bottom:0}
       <div class="modal-chart-wrap"><canvas id="favModalChart"></canvas></div>
     </div>
     <div class="modal-map-wrap" id="favModalMapWrap" style="display:none;height:300px"><div id="favKakaoMap" style="width:100%;height:100%"></div></div>
-    <div class="modal-body" id="favModalBody"><div class="state-screen"><div class="spinner"></div><div class="state-title">조회 중...</div></div></div>
+    <div class="modal-body" id="favModalBody"></div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -3398,7 +3398,18 @@ async function openFavModal(fav, forceRefresh=false){
     } catch(e){}
   } else {
     document.getElementById('favModalSub').textContent='조회 중...';
-    document.getElementById('favModalBody').innerHTML='<div class="state-screen"><div class="spinner"></div><div class="state-title">조회 중...</div></div>';
+    document.getElementById('favModalBody').innerHTML=`<div style="padding:8px">
+      ${Array(4).fill().map(()=>`<div class="skeleton-card">
+        <div class="skeleton-card-top">
+          <div class="skeleton" style="width:50%;height:14px;border-radius:4px"></div>
+          <div class="skeleton" style="width:25%;height:16px;border-radius:4px"></div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <div class="skeleton" style="width:55px;height:20px;border-radius:4px"></div>
+          <div class="skeleton" style="width:45px;height:20px;border-radius:4px"></div>
+        </div>
+      </div>`).join('')}
+    </div>`;
   }
 
   // 캐시 없을 때 전체 조회
