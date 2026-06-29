@@ -1750,7 +1750,23 @@ async function loadModalTypeData(){
   // 로딩 표시 - 기존 데이터 초기화
   document.getElementById('modalSub').textContent='조회 중...';
   document.getElementById('modalTabs').innerHTML='';
-  document.getElementById('modalBody').innerHTML='<div class="state-screen" style="width:100%;min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="spinner"></div><div class="state-title">조회 중...</div></div>';
+  document.getElementById('modalBody').innerHTML=`<div style="padding:8px">
+    ${Array(5).fill().map(()=>`<div class="skeleton-card">
+      <div class="skeleton-card-top">
+        <div class="skeleton" style="width:40%;height:13px;border-radius:4px"></div>
+        <div class="skeleton" style="width:28%;height:16px;border-radius:4px"></div>
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:6px">
+        <div class="skeleton" style="width:55px;height:18px;border-radius:4px"></div>
+        <div class="skeleton" style="width:45px;height:18px;border-radius:4px"></div>
+        <div class="skeleton" style="width:50px;height:18px;border-radius:4px"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between">
+        <div class="skeleton" style="width:35%;height:11px;border-radius:4px"></div>
+        <div class="skeleton" style="width:25%;height:11px;border-radius:4px"></div>
+      </div>
+    </div>`).join('')}
+  </div>`;
   document.getElementById('modalChartWrap').style.display='none';
 
   try{
