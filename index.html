@@ -1558,10 +1558,12 @@ function updateFilterBadge(){
   else{badge.style.display='none';}
 }
 function resetFilters(){
-  ['areaFilter','priceFilter','floorFilter','buildFilter'].forEach(id=>{
+  ['aptFilter','areaFilter','priceFilter','floorFilter','buildFilter'].forEach(id=>{
     const el=document.getElementById(id);
     if(el) el.value='';
   });
+  const acList=document.getElementById('autocompleteList');
+  if(acList) acList.style.display='none';
   updateFilterBadge();
   applyFilter();
 }
