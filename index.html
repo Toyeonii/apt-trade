@@ -3800,19 +3800,29 @@ function renderFavAreaDeals(ar, deals, mode, allItems=[]){
     const color=mode==='trade'?(isDark?'#89C4F4':'#185FA5'):mode==='wolse'?(isDark?'#E8A87C':'#D4956A'):(isDark?'#4DD4A0':'#0F6E56');
     const shadowColor=mode==='trade'?(isDark?'rgba(137,196,244,0.2)':'rgba(24,95,165,0.12)'):mode==='wolse'?(isDark?'rgba(232,168,124,0.2)':'rgba(212,149,106,0.12)'):(isDark?'rgba(77,212,160,0.2)':'rgba(15,110,86,0.12)');
 
-    const avgData=monthLabels.map(m=>{const mPts=pts.filter(p=>p.x.startsWith(m));return mPts.length?Math.round(mPts.reduce((a,b)=>a+b.y,0)/mPts.length):null;});
-    const maxData=monthLabels.map(m=>{const mPts=pts.filter(p=>p.x.startsWith(m));return mPts.length?Math.max(...mPts.map(p=>p.y)):null;});
-    const minData=monthLabels.map(m=>{const mPts=pts.filter(p=>p.x.startsWith(m));return mPts.length?Math.min(...mPts.map(p=>p.y)):null;});
+    // 구 전체 동일 면적(±5%) 월별 평균 - 메인 팝업과 동일 방식
+    const arVal=parseFloat(ar)||0;
+    const arMin=arVal*0.95, arMax=arVal*1.05;
+    const districtByMonth={};
+    allItems.forEach(d=>{
+      const dAr=parseFloat(d.excluUseAr||0);
+      if(dAr<arMin||dAr>arMax) return;
+      const p=mode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
+      if(!p) return;
+      const key=`${d.dealYear}-${String(d.dealMonth).padStart(2,'0')}`;
+      if(!districtByMonth[key]) districtByMonth[key]=[];
+      districtByMonth[key].push(p);
+    });
 
-    // 구 전체 동일 면적 월별 평균
-    const districtAvg=allItems.length?monthLabels.map(m=>{
-      const mItems=allItems.filter(d=>{
-        const dM=`${d.dealYear}-${String(d.dealMonth).padStart(2,'0')}`;
-        const p=mode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
-        return dM===m && parseFloat(d.excluUseAr||0).toFixed(1)===ar && p>0;
-      });
-      return mItems.length?Math.round(mItems.reduce((s,d)=>s+(mode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit)),0)/mItems.length):null;
-    }):[];
+    // 전체 월 기준 x축 (아파트 거래월 + 구 데이터 월 합집합)
+    const aptByMonth={};
+    pts.forEach(p=>{const m=p.x.substring(0,7);if(!aptByMonth[m])aptByMonth[m]=[];aptByMonth[m].push(p.y);});
+    const allMonths=[...new Set([...Object.keys(aptByMonth),...Object.keys(districtByMonth)])].sort();
+
+    const avgData=allMonths.map(m=>{const arr=aptByMonth[m];return arr?Math.round(arr.reduce((a,b)=>a+b,0)/arr.length):null;});
+    const maxData=allMonths.map(m=>{const arr=aptByMonth[m];return arr?Math.max(...arr):null;});
+    const minData=allMonths.map(m=>{const arr=aptByMonth[m];return arr?Math.min(...arr):null;});
+    const districtAvg=allMonths.map(m=>{const arr=districtByMonth[m];return arr?Math.round(arr.reduce((a,b)=>a+b,0)/arr.length):null;});
     const hasDistrict=districtAvg.some(v=>v!==null);
 
     const datasets=[
@@ -3826,7 +3836,7 @@ function renderFavAreaDeals(ar, deals, mode, allItems=[]){
 
     window._favChart=new Chart(ctx,{
       type:'line',
-      data:{labels:monthLabels,datasets},
+      data:{labels:allMonths,datasets},
       options:{
         responsive:true,maintainAspectRatio:false,spanGaps:true,
         plugins:{legend:{display:hasDistrict,labels:{filter:i=>!i.text.startsWith('_'),font:{size:10},boxWidth:16,padding:8,color:isDark?'#aaa':'#666'}},tooltip:{callbacks:{
