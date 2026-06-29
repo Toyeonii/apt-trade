@@ -3335,6 +3335,21 @@ async function openFavModal(fav, forceRefresh=false){
   document.getElementById('favModalTabs').innerHTML='';
   document.getElementById('favModalChartWrap').style.display='none';
 
+  // 스켈레톤 먼저 표시
+  document.getElementById('favModalSub').textContent='조회 중...';
+  document.getElementById('favModalBody').innerHTML=`<div style="padding:8px">
+    ${Array(4).fill().map(()=>`<div class="skeleton-card">
+      <div class="skeleton-card-top">
+        <div class="skeleton" style="width:50%;height:14px;border-radius:4px"></div>
+        <div class="skeleton" style="width:25%;height:16px;border-radius:4px"></div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <div class="skeleton" style="width:55px;height:20px;border-radius:4px"></div>
+        <div class="skeleton" style="width:45px;height:20px;border-radius:4px"></div>
+      </div>
+    </div>`).join('')}
+  </div>`;
+
   // 캐시 확인 - 있으면 먼저 표시 (forceRefresh면 스킵)
   const cacheKey=`fav_data_${fav.aptSeq||fav.aptNm}_${fav.sggCd}_${_favMonths}`;
   const cached=localStorage.getItem(cacheKey);
@@ -3398,18 +3413,6 @@ async function openFavModal(fav, forceRefresh=false){
     } catch(e){}
   } else {
     document.getElementById('favModalSub').textContent='조회 중...';
-    document.getElementById('favModalBody').innerHTML=`<div style="padding:8px">
-      ${Array(4).fill().map(()=>`<div class="skeleton-card">
-        <div class="skeleton-card-top">
-          <div class="skeleton" style="width:50%;height:14px;border-radius:4px"></div>
-          <div class="skeleton" style="width:25%;height:16px;border-radius:4px"></div>
-        </div>
-        <div style="display:flex;gap:6px">
-          <div class="skeleton" style="width:55px;height:20px;border-radius:4px"></div>
-          <div class="skeleton" style="width:45px;height:20px;border-radius:4px"></div>
-        </div>
-      </div>`).join('')}
-    </div>`;
   }
 
   // 캐시 없을 때 전체 조회
