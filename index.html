@@ -276,7 +276,6 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
 [data-theme='dark'] .apt-info-chip span{color:#89C4F4}
 .apt-info-loading{font-size:11px;color:#aaa;padding:8px 16px;flex-shrink:0}
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;height:64px;background:var(--surface);border-top:0.5px solid var(--border);display:flex;justify-content:center;z-index:200;box-shadow:0 -2px 8px rgba(0,0,0,0.08);padding:0 8px;padding-bottom:env(safe-area-inset-bottom)}
-body.modal-open .bottom-nav{border-top:none;box-shadow:none}
 .nav-btn{flex:0 0 64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:none;background:transparent;cursor:pointer;color:#888;transition:color 0.15s,background 0.15s;padding:6px 4px;margin:0 4px;border-radius:12px;position:relative}
 @media(max-width:480px){.bottom-nav{padding:0 2px}.nav-btn{margin:0 1px}.filter-bar-row{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}.filter-bar-row::-webkit-scrollbar{display:none}}
 .nav-btn.active{color:#0C447C;background:rgba(12,68,124,0.08)}
@@ -1690,7 +1689,6 @@ function showAptModal(aptNm, roadNm, aptSeq){
   }
 
   document.getElementById('aptModal').classList.add('open');
-  document.body.classList.add('modal-open');
   document.body.style.overflow='hidden';
 
   // 거래유형/기간 기반으로 데이터 로드
@@ -2945,7 +2943,6 @@ function closeModal(e){
   document.body.classList.add(`mode-${currentMode}`);
   if(e&&e.target!==document.getElementById('aptModal')&&e.type==='click')return;
   document.getElementById('aptModal').classList.remove('open');
-  document.body.classList.remove('modal-open');
   document.body.style.overflow='';
   if(modalChartInstance){modalChartInstance.destroy();modalChartInstance=null;}
   kakaoMapInstance=null;
@@ -3309,7 +3306,6 @@ async function openFavModal(fav, forceRefresh=false){
   }
   if(!forceRefresh) _favMonths=6;
   document.getElementById('favModal').style.display='flex';
-  document.body.classList.add('modal-open');
   document.body.style.overflow='hidden';
   document.getElementById('favModalTitle').textContent=fav.aptNm;
   // 기간 버튼 active 동기화
@@ -3994,7 +3990,6 @@ async function shareFavModal(){
 function closeFavModal(e){
   if(e&&e.target!==document.getElementById('favModal'))return;
   document.getElementById('favModal').style.display='none';
-  document.body.classList.remove('modal-open');
   document.body.style.overflow='';
   if(window._favChart){window._favChart.destroy();window._favChart=null;}
 }
