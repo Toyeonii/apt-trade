@@ -3488,7 +3488,7 @@ async function openFavModal(fav, forceRefresh=false){
     requestAnimationFrame(()=>{
       document.getElementById('favModalSub').textContent=`매매 ${tradeDeals.length}건 · 전월세 ${rentDeals.length}건`;
       document.getElementById('favModalAddr').textContent=addr.trim();
-      renderFavTabs(tradeDeals, rentDeals);
+      renderFavTabs(tradeDeals, rentDeals, tradeItems, rentItems);
     });
 
   } catch(e){
@@ -3644,13 +3644,13 @@ async function selectFavAgentTab(btn){
   }
 }
 
-function renderFavTabs(tradeDeals, rentDeals){
+function renderFavTabs(tradeDeals, rentDeals, allTradeItems=[], allRentItems=[]){
   const jeonseDeals=rentDeals.filter(d=>!parsePrice(d.monthlyRent));
   const wolseDeals=rentDeals.filter(d=>parsePrice(d.monthlyRent)>0);
   const tabs=[
-    {label:`매매 (${tradeDeals.length}건)`, deals:tradeDeals, mode:'trade'},
-    {label:`전세 (${jeonseDeals.length}건)`, deals:jeonseDeals, mode:'jeonse'},
-    {label:`월세 (${wolseDeals.length}건)`, deals:wolseDeals, mode:'wolse'},
+    {label:`매매 (${tradeDeals.length}건)`, deals:tradeDeals, mode:'trade', allItems:allTradeItems},
+    {label:`전세 (${jeonseDeals.length}건)`, deals:jeonseDeals, mode:'jeonse', allItems:allRentItems.filter(d=>!parsePrice(d.monthlyRent))},
+    {label:`월세 (${wolseDeals.length}건)`, deals:wolseDeals, mode:'wolse', allItems:allRentItems.filter(d=>parsePrice(d.monthlyRent)>0)},
   ];
   const tabsEl=document.getElementById('favModalTabs');
   tabsEl.innerHTML=tabs.map((t,i)=>`<button class="modal-tab ${i===0?'active':''}" onclick="selectFavTab(${i},this)">${t.label}</button>`).join('');
@@ -3698,7 +3698,7 @@ function renderFavTab(idx, tab){
   body.innerHTML=`<div style="display:flex;align-items:stretch;border-bottom:0.5px solid var(--border)"><div class="modal-tabs" style="flex:1;border-bottom:none;overflow-x:auto;white-space:nowrap">${areaTabsHtml}</div><button onclick="selectFavCompareTab(this,${idx})" style="flex-shrink:0;padding:0 12px;font-size:12px;border:none;border-left:0.5px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap">📊 비교</button></div><div id="favAreaBody"></div>`;
 
   window._favArGroups=arGroups;
-  renderFavAreaDeals(arKeys[0], deals.filter(d=>parseFloat(d.excluUseAr||0).toFixed(1)===arKeys[0]), mode);
+  renderFavAreaDeals(arKeys[0], deals.filter(d=>parseFloat(d.excluUseAr||0).toFixed(1)===arKeys[0]), mode, tab.allItems||[]);
 }
 
 function selectFavAreaTab(ar, btn, tabIdx){
@@ -3709,7 +3709,7 @@ function selectFavAreaTab(ar, btn, tabIdx){
   if(cBtn) cBtn.style.background='var(--surface)';
   const tab=window._favTabData[tabIdx];
   const deals=tab.deals.filter(d=>parseFloat(d.excluUseAr||0).toFixed(1)===ar);
-  renderFavAreaDeals(ar, deals, tab.mode);
+  renderFavAreaDeals(ar, deals, tab.mode, tab.allItems||[]);
 }
 
 function selectFavCompareTab(btn, tabIdx){
@@ -3770,7 +3770,7 @@ function selectFavCompareTab(btn, tabIdx){
   document.getElementById('favAreaBody').innerHTML=`<div style="padding:8px 12px">${cards}</div>`;
 }
 
-function renderFavAreaDeals(ar, deals, mode){
+function renderFavAreaDeals(ar, deals, mode, allItems=[]){
   const chartWrap=document.getElementById('favModalChartWrap');
   if(window._favChart){window._favChart.destroy();window._favChart=null;}
 
@@ -3802,21 +3802,35 @@ function renderFavAreaDeals(ar, deals, mode){
     const maxData=monthLabels.map(m=>{const mPts=pts.filter(p=>p.x.startsWith(m));return mPts.length?Math.max(...mPts.map(p=>p.y)):null;});
     const minData=monthLabels.map(m=>{const mPts=pts.filter(p=>p.x.startsWith(m));return mPts.length?Math.min(...mPts.map(p=>p.y)):null;});
 
+    // 구 전체 동일 면적 월별 평균
+    const districtAvg=allItems.length?monthLabels.map(m=>{
+      const mItems=allItems.filter(d=>{
+        const dM=`${d.dealYear}-${String(d.dealMonth).padStart(2,'0')}`;
+        const p=mode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
+        return dM===m && parseFloat(d.excluUseAr||0).toFixed(1)===ar && p>0;
+      });
+      return mItems.length?Math.round(mItems.reduce((s,d)=>s+(mode==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit)),0)/mItems.length):null;
+    }):[];
+    const hasDistrict=districtAvg.some(v=>v!==null);
+
+    const datasets=[
+      {label:'_max',data:maxData,borderColor:'transparent',backgroundColor:shadowColor,borderWidth:0,pointRadius:0,fill:'+1',tension:0.3,spanGaps:true},
+      {label:'_min',data:minData,borderColor:'transparent',backgroundColor:shadowColor,borderWidth:0,pointRadius:0,fill:false,tension:0.3,spanGaps:true},
+      {label:'평균',data:avgData,borderColor:color,backgroundColor:'transparent',borderWidth:2,pointRadius:3,pointBackgroundColor:color,tension:0.3,spanGaps:true,fill:false},
+    ];
+    if(hasDistrict){
+      datasets.push({label:'구 전체 평균',data:districtAvg,borderColor:isDark?'rgba(180,180,180,0.6)':'rgba(120,120,120,0.5)',backgroundColor:'transparent',borderWidth:1.5,borderDash:[5,4],pointRadius:2,pointBackgroundColor:isDark?'rgba(180,180,180,0.6)':'rgba(120,120,120,0.5)',tension:0.3,spanGaps:true,fill:false});
+    }
+
     window._favChart=new Chart(ctx,{
       type:'line',
-      data:{
-        labels:monthLabels,
-        datasets:[
-          {label:'_max',data:maxData,borderColor:'transparent',backgroundColor:shadowColor,borderWidth:0,pointRadius:0,fill:'+1',tension:0.3,spanGaps:true},
-          {label:'_min',data:minData,borderColor:'transparent',backgroundColor:shadowColor,borderWidth:0,pointRadius:0,fill:false,tension:0.3,spanGaps:true},
-          {label:'평균',data:avgData,borderColor:color,backgroundColor:'transparent',borderWidth:2,pointRadius:3,pointBackgroundColor:color,tension:0.3,spanGaps:true,fill:false},
-        ]
-      },
+      data:{labels:monthLabels,datasets},
       options:{
         responsive:true,maintainAspectRatio:false,spanGaps:true,
-        plugins:{legend:{display:false},tooltip:{callbacks:{
+        plugins:{legend:{display:hasDistrict,labels:{filter:i=>!i.text.startsWith('_'),font:{size:10},boxWidth:16,padding:8,color:isDark?'#aaa':'#666'}},tooltip:{callbacks:{
           label:c=>{
             if(c.dataset.label.startsWith('_')) return null;
+            if(c.dataset.label==='구 전체 평균') return `구 평균: ${fmtPrice(c.raw)}`;
             return `평균: ${fmtPrice(c.raw)}`;
           },
           afterBody:ctx=>{
