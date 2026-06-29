@@ -235,7 +235,8 @@ td.deposit{font-weight:600;color:#0F6E56;text-align:right}
 .setting-btn{height:26px;padding:0 8px;font-size:12px;border:0.5px solid #ddd;border-radius:7px;background:var(--surface);cursor:pointer;color:var(--text2)}
 .setting-btn.active{border-color:#185FA5 !important;background:#E6F1FB !important;color:#0C447C !important;font-weight:600 !important}
 /* 설정 패널: 모바일=전체너비 상단, PC=우측 드롭다운 */
-#settingsPanel{position:fixed;z-index:999;background:var(--surface);border:0.5px solid var(--border);box-shadow:0 4px 16px rgba(0,0,0,0.15);box-sizing:border-box;padding:14px 16px}
+#settingsPanel{position:fixed;z-index:999;background:var(--surface);border:0.5px solid var(--border);box-shadow:0 4px 16px rgba(0,0,0,0.15);box-sizing:border-box;padding:14px 16px;transform:translateY(-8px);opacity:0;pointer-events:none;transition:transform 0.25s ease, opacity 0.25s ease}
+#settingsPanel.open{transform:translateY(0);opacity:1;pointer-events:auto}
 @media(max-width:600px){
   #settingsPanel{top:0;left:0;right:0;border-radius:0 0 12px 12px;border-top:none}
 }
@@ -333,7 +334,7 @@ body{padding-bottom:0}
 
 
 <!-- 설정 패널 -->
-<div id="settingsPanel" style="display:none">
+<div id="settingsPanel">
   <div style="display:flex;flex-direction:column;gap:10px;max-width:480px;margin:0 auto;width:100%">
 
     <div style="display:flex;align-items:center;justify-content:space-between">
@@ -4251,11 +4252,11 @@ function setAgentRadius(r){
 // ── 설정 패널 ──
 function toggleSettings(){
   const panel=document.getElementById('settingsPanel');
-  const isOpen=panel.style.display!=='none';
+  const isOpen=panel.classList.contains('open');
   if(!isOpen){
     const header=document.getElementById('appHeader');
     panel.style.top=(header?header.offsetHeight:60)+'px';
-    panel.style.display='block';
+    panel.classList.add('open');
     // 렌더링 후 설정 UI 최신화
     requestAnimationFrame(()=>{
       requestAnimationFrame(()=>{
@@ -4263,14 +4264,14 @@ function toggleSettings(){
       });
     });
   } else {
-    panel.style.display='none';
+    panel.classList.remove('open');
   }
   // 외부 클릭 시 닫기
   if(!isOpen){
     setTimeout(()=>{
       document.addEventListener('click',function closeSettings(e){
         if(!panel.contains(e.target)&&e.target.id!=='settingsBtn'){
-          panel.style.display='none';
+          panel.classList.remove('open');
           document.removeEventListener('click',closeSettings);
         }
       });
