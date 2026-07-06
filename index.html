@@ -2101,17 +2101,23 @@ function selectModalCompareTab(btn){
 
   const rows=modalAreaKeys.map(k=>{
     const deals=modalAreaGroups[k]||[];
-    const prices=deals.map(d=>{
+    const priceDeals=deals.map(d=>{
       const p=_modalType==='trade'?parsePrice(d.dealAmount):parsePrice(d.deposit);
-      return p>0?p:null;
+      return p>0?{p, d}:null;
     }).filter(Boolean);
-    if(!prices.length) return null;
+    if(!priceDeals.length) return null;
+    const prices=priceDeals.map(x=>x.p);
     const avg=Math.round(prices.reduce((a,b)=>a+b,0)/prices.length);
     const max=Math.max(...prices);
     const min=Math.min(...prices);
+    const maxDeal=priceDeals.find(x=>x.p===max)?.d;
+    const minDeal=priceDeals.find(x=>x.p===min)?.d;
+    const fmtDate=d=>d?`${d.dealYear}.${String(d.dealMonth).padStart(2,'0')}.${String(d.dealDay||'').padStart(2,'0')}`:'';
+    const maxDate=fmtDate(maxDeal);
+    const minDate=fmtDate(minDeal);
     const ar=parseFloat(k)||0;
     const pyung=ar>0?Math.round(ar/3.3):0;
-    return {k, pyung, avg, max, min, cnt:prices.length};
+    return {k, pyung, avg, max, min, maxDate, minDate, cnt:prices.length};
   }).filter(Boolean);
 
   if(!rows.length){
@@ -2134,11 +2140,13 @@ function selectModalCompareTab(btn){
         <div style="flex:1;text-align:center">
           <div style="font-size:10px;color:${isDark?'#888':'#aaa'};margin-bottom:3px">최고</div>
           <div style="font-size:13px;font-weight:600;color:${isDark?'#ff8a80':'#c0392b'}">${fmtPrice(r.max)}</div>
+          ${r.maxDate?`<div style="font-size:10px;color:${isDark?'#666':'#bbb'};margin-top:2px">${r.maxDate}</div>`:''}
         </div>
         <div style="width:0.5px;background:${isDark?'#333':'#eee'}"></div>
         <div style="flex:1;text-align:center">
           <div style="font-size:10px;color:${isDark?'#888':'#aaa'};margin-bottom:3px">최저</div>
           <div style="font-size:13px;font-weight:600;color:${isDark?'#82b1ff':'#2563eb'}">${fmtPrice(r.min)}</div>
+          ${r.minDate?`<div style="font-size:10px;color:${isDark?'#666':'#bbb'};margin-top:2px">${r.minDate}</div>`:''}
         </div>
       </div>
     </div>`).join('');
