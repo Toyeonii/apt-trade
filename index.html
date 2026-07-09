@@ -747,12 +747,20 @@ async function checkFavNewDeals(){
 
   for(const fav of favs){
     try{
-      const res=await fetch(`/api/trade/bulk?LAWD_CD=${fav.sggCd}&months=${monthStr}&mode=trade`).then(r=>r.json());
-      const deals=(res.items||[]).filter(d=>fav.aptSeq?d.aptSeq===fav.aptSeq:d.aptNm===fav.aptNm);
-      if(!deals.length) continue;
+      const [tradeRes, rentRes]=await Promise.all([
+        fetch(`/api/trade/bulk?LAWD_CD=${fav.sggCd}&months=${monthStr}&mode=trade`).then(r=>r.json()),
+        fetch(`/api/trade/bulk?LAWD_CD=${fav.sggCd}&months=${monthStr}&mode=rent`).then(r=>r.json()),
+      ]);
+      const tradeDeals=(tradeRes.items||[]).filter(d=>fav.aptSeq?d.aptSeq===fav.aptSeq:d.aptNm===fav.aptNm);
+      const rentDeals=(rentRes.items||[]).filter(d=>fav.aptSeq?d.aptSeq===fav.aptSeq:d.aptNm===fav.aptNm);
+      const allDeals=[
+        ...tradeDeals.map(d=>({...d, _type:'매매'})),
+        ...rentDeals.map(d=>({...d, _type:parsePrice(d.monthlyRent)>0?'월세':'전세'})),
+      ];
+      if(!allDeals.length) continue;
 
       // 최신 거래일
-      const latest=deals.sort((a,b)=>{
+      const latest=allDeals.sort((a,b)=>{
         const da=`${a.dealYear}${String(a.dealMonth).padStart(2,'0')}${String(a.dealDay||'').padStart(2,'0')}`;
         const db=`${b.dealYear}${String(b.dealMonth).padStart(2,'0')}${String(b.dealDay||'').padStart(2,'0')}`;
         return db.localeCompare(da);
@@ -762,12 +770,13 @@ async function checkFavNewDeals(){
 
       if(prevDate && latestDate>prevDate){
         // 새 거래 발생!
-        const price=parsePrice(latest.dealAmount);
+        const price=latest._type==='매매'?parsePrice(latest.dealAmount):parsePrice(latest.deposit);
+        const priceStr=latest._type==='월세'?`보증 ${fmtPrice(parsePrice(latest.deposit))} / ${fmtPrice(parsePrice(latest.monthlyRent))}만`:fmtPrice(price);
         showPushNotification(
-          `🏠 ${fav.aptNm} 신규 거래`,
-          `${latest.dealYear}.${latest.dealMonth}.${latest.dealDay} · ${fmtPrice(price)} · ${parseFloat(latest.excluUseAr||0).toFixed(1)}㎡`
+          `🏠 ${fav.aptNm} 신규 ${latest._type}`,
+          `${latest.dealYear}.${latest.dealMonth}.${latest.dealDay} · ${priceStr} · ${parseFloat(latest.excluUseAr||0).toFixed(1)}㎡`
         );
-        showToast(`🔔 ${fav.aptNm} 신규 거래 발생!`);
+        showToast(`🔔 ${fav.aptNm} 신규 ${latest._type} 발생!`);
         updateFavBadge(1);
       }
       lastChecked[fav.aptNm]=latestDate;
